@@ -1,0 +1,460 @@
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								body {
+									background-color: white; /* Ensure the iframe has a white background */
+								}
+
+								
+        body { font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; background: #1a1a1a; color: #eee; margin: 0; padding: 20px; }
+        canvas { background: #ffffff; border: 2px solid #444; border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .controls { 
+            margin-top: 15px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; 
+            background: #252525; padding: 20px; border-radius: 8px; width: 850px; border: 1px solid #333;
+        }
+        .control-group { display: flex; flex-direction: column; gap: 10px; }
+        .button-group { display: flex; flex-wrap: wrap; gap: 8px; }
+        button { padding: 8px 12px; cursor: pointer; font-weight: bold; border-radius: 4px; border: none; transition: 0.2s; font-size: 11px; min-width: 90px; text-transform: uppercase; }
+        .btn-pause { background: #d35400; color: white; }
+        .btn-reset { background: #c0392b; color: white; }
+        .btn-trace { background: #34495e; color: white; }
+        .btn-trace.active { background: #27ae60; }
+        .btn-export { background: #2980b9; color: white; }
+        .btn-record { background: #8e44ad; color: white; }
+        .recording { animation: pulse 1s infinite; background: #ff0000 !important; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        label { font-size: 10px; font-weight: bold; color: #aaa; text-transform: uppercase; }
+        .slider-container { display: flex; flex-direction: column; gap: 4px; }
+        .val-display { color: #2ecc71; float: right; }
+    
+
+							</style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brownian Motion - Layered Physics Lab</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; background: #1a1a1a; color: #eee; margin: 0; padding: 20px; }
+        canvas { background: #ffffff; border: 2px solid #444; border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .controls { 
+            margin-top: 15px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; 
+            background: #252525; padding: 20px; border-radius: 8px; width: 850px; border: 1px solid #333;
+        }
+        .control-group { display: flex; flex-direction: column; gap: 10px; }
+        .button-group { display: flex; flex-wrap: wrap; gap: 8px; }
+        button { padding: 8px 12px; cursor: pointer; font-weight: bold; border-radius: 4px; border: none; transition: 0.2s; font-size: 11px; min-width: 90px; text-transform: uppercase; }
+        .btn-pause { background: #d35400; color: white; }
+        .btn-reset { background: #c0392b; color: white; }
+        .btn-trace { background: #34495e; color: white; }
+        .btn-trace.active { background: #27ae60; }
+        .btn-export { background: #2980b9; color: white; }
+        .btn-record { background: #8e44ad; color: white; }
+        .recording { animation: pulse 1s infinite; background: #ff0000 !important; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        label { font-size: 10px; font-weight: bold; color: #aaa; text-transform: uppercase; }
+        .slider-container { display: flex; flex-direction: column; gap: 4px; }
+        .val-display { color: #2ecc71; float: right; }
+    </style>
+</head>
+<body>
+
+    <canvas id="simCanvas"></canvas>
+
+    <div class="controls">
+        <div class="control-group">
+            <label>System Controls</label>
+            <div class="button-group">
+                <button id="pauseBtn" class="btn-pause">Pause</button>
+                <button id="resetBtn" class="btn-reset">Reset</button>
+                <button id="traceBtn" class="btn-trace">Trace: OFF</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>Export Tools</label>
+            <div class="button-group">
+                <button id="exportImgBtn" class="btn-export">Save Image</button>
+                <button id="recordBtn" class="btn-record">Start Record</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="slider-container">
+                <label>Tiny Ball Temp <span id="tempVal" class="val-display">6</span></label>
+                <input type="range" id="tempRange" min="1" max="18" step="0.5" value="6">
+            </div>
+            
+            <div class="slider-container">
+                <label>Heavy Ball Mass <span id="massVal" class="val-display">60</span></label>
+                <input type="range" id="massRange" min="5" max="300" step="5" value="60">
+            </div>
+
+            <div class="slider-container">
+                <label>Tiny Ball Visibility</label>
+                <input type="range" id="visibilityRange" min="0" max="255" value="180">
+            </div>
+        </div>
+    </div>
+
+<script>
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+const pauseBtn = document.getElementById('pauseBtn'), resetBtn = document.getElementById('resetBtn'),
+      traceBtn = document.getElementById('traceBtn'), exportImgBtn = document.getElementById('exportImgBtn'),
+      recordBtn = document.getElementById('recordBtn'), tempRange = document.getElementById('tempRange'),
+      massRange = document.getElementById('massRange'), visibilityRange = document.getElementById('visibilityRange');
+
+const tempValDisp = document.getElementById('tempVal'), massValDisp = document.getElementById('massVal');
+
+canvas.width = 850; canvas.height = 480;
+
+let balls = [], isPaused = false, traceActive = false, temperature = 6, tinyColorVal = 180, heavyMass = 60;
+let mediaRecorder, recordedChunks = [];
+const COLORS = ['#e74c3c', '#2ecc71', '#3498db', '#f1c40f', '#9b59b6', '#e67e22'];
+
+class Ball {
+    constructor(x, y, r, m, color, isLarge = false) {
+        this.x = x; this.y = y; this.radius = r; this.mass = m;
+        this.color = color; this.isLarge = isLarge; this.history = [];
+        this.setRandomVelocity();
+    }
+
+    setRandomVelocity() {
+        const speed = this.isLarge ? 0.2 : temperature;
+        const angle = Math.random() * Math.PI * 2;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+    }
+
+    drawTrace() {
+        if (this.isLarge && traceActive && this.history.length > 1) {
+            ctx.beginPath(); 
+            ctx.lineWidth = 2.5; 
+            ctx.strokeStyle = this.color + "AA"; // slightly more opaque trace
+            ctx.moveTo(this.history[0].x, this.history[0].y);
+            for (let i = 1; i < this.history.length; i++) ctx.lineTo(this.history[i].x, this.history[i].y);
+            ctx.stroke();
+        }
+    }
+
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        if (this.isLarge) {
+            ctx.fillStyle = this.color; ctx.fill();
+            ctx.strokeStyle = "#000"; ctx.lineWidth = 1.5; ctx.stroke();
+        } else {
+            ctx.fillStyle = `rgb(${tinyColorVal},${tinyColorVal},${tinyColorVal})`; ctx.fill();
+        }
+    }
+
+    update() {
+        if (traceActive && this.isLarge) {
+            this.history.push({x: this.x, y: this.y});
+            if (this.history.length > 2000) this.history.shift();
+        }
+        this.x += this.vx; this.y += this.vy;
+        if (this.x - this.radius < 0) { this.vx = Math.abs(this.vx); this.x = this.radius; }
+        if (this.x + this.radius > canvas.width) { this.vx = -Math.abs(this.vx); this.x = canvas.width - this.radius; }
+        if (this.y - this.radius < 0) { this.vy = Math.abs(this.vy); this.y = this.radius; }
+        if (this.y + this.radius > canvas.height) { this.vy = -Math.abs(this.vy); this.y = canvas.height - this.radius; }
+    }
+}
+
+function resolveCollision(b1, b2) {
+    const dx = b2.x - b1.x, dy = b2.y - b1.y, dist = Math.sqrt(dx*dx + dy*dy);
+    const minDist = b1.radius + b2.radius;
+    if (dist < minDist) {
+        const overlap = minDist - dist, nx = dx/dist, ny = dy/dist, tm = b1.mass + b2.mass;
+        b1.x -= nx * overlap * (b2.mass/tm); b1.y -= ny * overlap * (b2.mass/tm);
+        b2.x += nx * overlap * (b1.mass/tm); b2.y += ny * overlap * (b1.mass/tm);
+        const vdx = b1.vx - b2.vx, vdy = b1.vy - b2.vy, dot = vdx*nx + vdy*ny;
+        if (dot > 0) {
+            const impulse = (2 * dot) / tm;
+            b1.vx -= impulse * b2.mass * nx; b1.vy -= impulse * b2.mass * ny;
+            b2.vx += impulse * b1.mass * nx; b2.vy += impulse * b1.mass * ny;
+        }
+    }
+}
+
+function init() {
+    balls = [];
+    for(let i=0; i<6; i++) balls.push(new Ball(Math.random()*800+25, Math.random()*400+25, 22, heavyMass, COLORS[i], true));
+    for(let i=0; i<400; i++) balls.push(new Ball(Math.random()*800+25, Math.random()*400+25, 3.5, 1, '#888', false));
+}
+
+function animate() {
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    if (!isPaused) {
+        for (let i = 0; i < balls.length; i++) {
+            for (let j = i + 1; j < balls.length; j++) resolveCollision(balls[i], balls[j]);
+        }
+        balls.forEach(b => b.update());
+    }
+
+    // DRAW ORDER (Z-Index):
+    // 1. Tiny Balls (Back)
+    balls.forEach(b => { if(!b.isLarge) b.draw(); });
+    // 2. Traces (Middle)
+    balls.forEach(b => { if(b.isLarge) b.drawTrace(); });
+    // 3. Heavy Balls (Front)
+    balls.forEach(b => { if(b.isLarge) b.draw(); });
+
+    requestAnimationFrame(animate);
+}
+
+massRange.oninput = (e) => {
+    heavyMass = parseFloat(e.target.value);
+    massValDisp.textContent = heavyMass;
+    balls.forEach(b => { if(b.isLarge) b.mass = heavyMass; });
+};
+
+tempRange.oninput = (e) => {
+    temperature = parseFloat(e.target.value);
+    tempValDisp.textContent = temperature;
+    balls.forEach(b => {
+        if(!b.isLarge) {
+            const currentSpeed = Math.sqrt(b.vx**2 + b.vy**2);
+            const ratio = temperature / (currentSpeed || 1);
+            b.vx *= ratio; b.vy *= ratio;
+        }
+    });
+};
+
+visibilityRange.oninput = (e) => tinyColorVal = e.target.value;
+traceBtn.onclick = () => {
+    traceActive = !traceActive;
+    traceBtn.textContent = `Trace: ${traceActive ? 'ON' : 'OFF'}`;
+    traceBtn.classList.toggle('active');
+    if (!traceActive) balls.forEach(b => b.history = []);
+};
+pauseBtn.onclick = () => { isPaused = !isPaused; pauseBtn.textContent = isPaused ? 'Resume' : 'Pause'; };
+resetBtn.onclick = init;
+exportImgBtn.onclick = () => { const link = document.createElement('a'); link.download = 'brownian-motion.png'; link.href = canvas.toDataURL('image/png'); link.click(); };
+
+recordBtn.onclick = () => {
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+        recordBtn.textContent = "Start Record"; recordBtn.classList.remove("recording");
+    } else {
+        recordedChunks = [];
+        const stream = canvas.captureStream(60);
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'brownian-experiment.webm'; a.click();
+        };
+        mediaRecorder.start();
+        recordBtn.textContent = "Stop Record"; recordBtn.classList.add("recording");
+    }
+};
+
+init(); animate();
+</script>
+</body>
+</html>
+
+
+
+
+							<script>
+                            	function animate() {
+    // 1. Clear with White Background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (!isPaused) {
+        for (let i = 0; i < balls.length; i++) {
+            for (let j = i + 1; j < balls.length; j++) resolveCollision(balls[i], balls[j]);
+        }
+        balls.forEach(b => b.update());
+    }
+
+    // 2. Draw Tiny Balls FIRST (Back)
+    balls.forEach(b => {
+        if (!b.isLarge) b.draw();
+    });
+
+    // 3. Draw Traces and Large Balls SECOND (Front)
+    balls.forEach(b => {
+        if (b.isLarge) b.draw();
+    });
+
+    requestAnimationFrame(animate);
+}
+
+
+
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+const pauseBtn = document.getElementById('pauseBtn'), resetBtn = document.getElementById('resetBtn'),
+      traceBtn = document.getElementById('traceBtn'), exportImgBtn = document.getElementById('exportImgBtn'),
+      recordBtn = document.getElementById('recordBtn'), tempRange = document.getElementById('tempRange'),
+      massRange = document.getElementById('massRange'), visibilityRange = document.getElementById('visibilityRange');
+
+const tempValDisp = document.getElementById('tempVal'), massValDisp = document.getElementById('massVal');
+
+canvas.width = 850; canvas.height = 480;
+
+let balls = [], isPaused = false, traceActive = false, temperature = 6, tinyColorVal = 180, heavyMass = 60;
+let mediaRecorder, recordedChunks = [];
+const COLORS = ['#e74c3c', '#2ecc71', '#3498db', '#f1c40f', '#9b59b6', '#e67e22'];
+
+class Ball {
+    constructor(x, y, r, m, color, isLarge = false) {
+        this.x = x; this.y = y; this.radius = r; this.mass = m;
+        this.color = color; this.isLarge = isLarge; this.history = [];
+        this.setRandomVelocity();
+    }
+
+    setRandomVelocity() {
+        const speed = this.isLarge ? 0.2 : temperature;
+        const angle = Math.random() * Math.PI * 2;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+    }
+
+    drawTrace() {
+        if (this.isLarge && traceActive && this.history.length > 1) {
+            ctx.beginPath(); 
+            ctx.lineWidth = 2.5; 
+            ctx.strokeStyle = this.color + "AA"; // slightly more opaque trace
+            ctx.moveTo(this.history[0].x, this.history[0].y);
+            for (let i = 1; i < this.history.length; i++) ctx.lineTo(this.history[i].x, this.history[i].y);
+            ctx.stroke();
+        }
+    }
+
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        if (this.isLarge) {
+            ctx.fillStyle = this.color; ctx.fill();
+            ctx.strokeStyle = "#000"; ctx.lineWidth = 1.5; ctx.stroke();
+        } else {
+            ctx.fillStyle = `rgb(${tinyColorVal},${tinyColorVal},${tinyColorVal})`; ctx.fill();
+        }
+    }
+
+    update() {
+        if (traceActive && this.isLarge) {
+            this.history.push({x: this.x, y: this.y});
+            if (this.history.length > 2000) this.history.shift();
+        }
+        this.x += this.vx; this.y += this.vy;
+        if (this.x - this.radius < 0) { this.vx = Math.abs(this.vx); this.x = this.radius; }
+        if (this.x + this.radius > canvas.width) { this.vx = -Math.abs(this.vx); this.x = canvas.width - this.radius; }
+        if (this.y - this.radius < 0) { this.vy = Math.abs(this.vy); this.y = this.radius; }
+        if (this.y + this.radius > canvas.height) { this.vy = -Math.abs(this.vy); this.y = canvas.height - this.radius; }
+    }
+}
+
+function resolveCollision(b1, b2) {
+    const dx = b2.x - b1.x, dy = b2.y - b1.y, dist = Math.sqrt(dx*dx + dy*dy);
+    const minDist = b1.radius + b2.radius;
+    if (dist < minDist) {
+        const overlap = minDist - dist, nx = dx/dist, ny = dy/dist, tm = b1.mass + b2.mass;
+        b1.x -= nx * overlap * (b2.mass/tm); b1.y -= ny * overlap * (b2.mass/tm);
+        b2.x += nx * overlap * (b1.mass/tm); b2.y += ny * overlap * (b1.mass/tm);
+        const vdx = b1.vx - b2.vx, vdy = b1.vy - b2.vy, dot = vdx*nx + vdy*ny;
+        if (dot > 0) {
+            const impulse = (2 * dot) / tm;
+            b1.vx -= impulse * b2.mass * nx; b1.vy -= impulse * b2.mass * ny;
+            b2.vx += impulse * b1.mass * nx; b2.vy += impulse * b1.mass * ny;
+        }
+    }
+}
+
+function init() {
+    balls = [];
+    for(let i=0; i<6; i++) balls.push(new Ball(Math.random()*800+25, Math.random()*400+25, 22, heavyMass, COLORS[i], true));
+    for(let i=0; i<400; i++) balls.push(new Ball(Math.random()*800+25, Math.random()*400+25, 3.5, 1, '#888', false));
+}
+
+function animate() {
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    if (!isPaused) {
+        for (let i = 0; i < balls.length; i++) {
+            for (let j = i + 1; j < balls.length; j++) resolveCollision(balls[i], balls[j]);
+        }
+        balls.forEach(b => b.update());
+    }
+
+    // DRAW ORDER (Z-Index):
+    // 1. Tiny Balls (Back)
+    balls.forEach(b => { if(!b.isLarge) b.draw(); });
+    // 2. Traces (Middle)
+    balls.forEach(b => { if(b.isLarge) b.drawTrace(); });
+    // 3. Heavy Balls (Front)
+    balls.forEach(b => { if(b.isLarge) b.draw(); });
+
+    requestAnimationFrame(animate);
+}
+
+massRange.oninput = (e) => {
+    heavyMass = parseFloat(e.target.value);
+    massValDisp.textContent = heavyMass;
+    balls.forEach(b => { if(b.isLarge) b.mass = heavyMass; });
+};
+
+tempRange.oninput = (e) => {
+    temperature = parseFloat(e.target.value);
+    tempValDisp.textContent = temperature;
+    balls.forEach(b => {
+        if(!b.isLarge) {
+            const currentSpeed = Math.sqrt(b.vx**2 + b.vy**2);
+            const ratio = temperature / (currentSpeed || 1);
+            b.vx *= ratio; b.vy *= ratio;
+        }
+    });
+};
+
+visibilityRange.oninput = (e) => tinyColorVal = e.target.value;
+traceBtn.onclick = () => {
+    traceActive = !traceActive;
+    traceBtn.textContent = `Trace: ${traceActive ? 'ON' : 'OFF'}`;
+    traceBtn.classList.toggle('active');
+    if (!traceActive) balls.forEach(b => b.history = []);
+};
+pauseBtn.onclick = () => { isPaused = !isPaused; pauseBtn.textContent = isPaused ? 'Resume' : 'Pause'; };
+resetBtn.onclick = init;
+exportImgBtn.onclick = () => { const link = document.createElement('a'); link.download = 'brownian-motion.png'; link.href = canvas.toDataURL('image/png'); link.click(); };
+
+recordBtn.onclick = () => {
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+        recordBtn.textContent = "Start Record"; recordBtn.classList.remove("recording");
+    } else {
+        recordedChunks = [];
+        const stream = canvas.captureStream(60);
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'brownian-experiment.webm'; a.click();
+        };
+        mediaRecorder.start();
+        recordBtn.textContent = "Stop Record"; recordBtn.classList.add("recording");
+    }
+};
+
+init(); animate();
+
+
+							</script>
+                        </body>
+                        </html>
+                    
