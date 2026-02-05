@@ -98,8 +98,8 @@
             </div>
 
             <div class="slider-container">
-                <label>Tiny Ball Visibility</label>
-                <input type="range" id="visibilityRange" min="0" max="255" value="180">
+                <label>Tiny Ball Invisibility</label>
+                <input type="range" id="invisibilityRange" min="0" max="255" value="180">
             </div>
         </div>
     </div>
@@ -110,7 +110,7 @@ const ctx = canvas.getContext('2d');
 const pauseBtn = document.getElementById('pauseBtn'), resetBtn = document.getElementById('resetBtn'),
       traceBtn = document.getElementById('traceBtn'), exportImgBtn = document.getElementById('exportImgBtn'),
       recordBtn = document.getElementById('recordBtn'), tempRange = document.getElementById('tempRange'),
-      massRange = document.getElementById('massRange'), visibilityRange = document.getElementById('visibilityRange');
+      massRange = document.getElementById('massRange'), invisibilityRange = document.getElementById('invisibilityRange');
 
 const tempValDisp = document.getElementById('tempVal'), massValDisp = document.getElementById('massVal');
 
@@ -230,7 +230,7 @@ tempRange.oninput = (e) => {
     });
 };
 
-visibilityRange.oninput = (e) => tinyColorVal = e.target.value;
+invisibilityRange.oninput = (e) => tinyColorVal = e.target.value;
 traceBtn.onclick = () => {
     traceActive = !traceActive;
     traceBtn.textContent = `Trace: ${traceActive ? 'ON' : 'OFF'}`;
@@ -301,7 +301,7 @@ const ctx = canvas.getContext('2d');
 const pauseBtn = document.getElementById('pauseBtn'), resetBtn = document.getElementById('resetBtn'),
       traceBtn = document.getElementById('traceBtn'), exportImgBtn = document.getElementById('exportImgBtn'),
       recordBtn = document.getElementById('recordBtn'), tempRange = document.getElementById('tempRange'),
-      massRange = document.getElementById('massRange'), visibilityRange = document.getElementById('visibilityRange');
+      massRange = document.getElementById('massRange'), invisibilityRange = document.getElementById('invisibilityRange');
 
 const tempValDisp = document.getElementById('tempVal'), massValDisp = document.getElementById('massVal');
 
@@ -421,7 +421,7 @@ tempRange.oninput = (e) => {
     });
 };
 
-visibilityRange.oninput = (e) => tinyColorVal = e.target.value;
+invisibilityRange.oninput = (e) => tinyColorVal = e.target.value;
 traceBtn.onclick = () => {
     traceActive = !traceActive;
     traceBtn.textContent = `Trace: ${traceActive ? 'ON' : 'OFF'}`;
