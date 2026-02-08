@@ -1,0 +1,486 @@
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								body {
+									background-color: white; /* Ensure the iframe has a white background */
+								}
+
+								
+        body { display: flex; flex-direction: row; font-family: sans-serif; background-color: #1a1a1a; color: #e0e0e0; margin: 0; height: 100vh; overflow: hidden; }
+        #controls { width: 320px; padding: 20px; background-color: #252525; border-right: 1px solid #444; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+        canvas { flex-grow: 1; background-color: #0f2d1e; cursor: crosshair; }
+        .control-group { display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid #333; padding-bottom: 8px; }
+        label { font-size: 0.85rem; font-weight: bold; color: #aaa; cursor: help; }
+        .value-display { font-family: monospace; color: #4CAF50; float: right; }
+        button { padding: 10px; border: none; color: white; font-weight: bold; border-radius: 4px; cursor: pointer; margin-bottom: 2px; transition: opacity 0.2s; }
+        button:hover { opacity: 0.8; }
+        #btn-pause { background-color: #f39c12; }
+        #btn-reset { background-color: #e74c3c; }
+        #btn-trace { background-color: #3498db; }
+        #btn-com { background-color: #9b59b6; }
+        #btn-record { background-color: #c0392b; border: 2px solid transparent; }
+        #btn-record.recording { border-color: white; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        input[type="range"] { cursor: pointer; accent-color: #4CAF50; width: 100%; }
+        h3 { margin: 10px 0 5px 0; font-size: 0.9rem; color: #4CAF50; text-transform: uppercase; letter-spacing: 1px; }
+        #momentum-display { background: #000; padding: 10px; border-radius: 4px; border: 1px solid #444; margin-top: 10px; }
+        .mom-line { font-family: monospace; font-size: 0.8rem; display: flex; justify-content: space-between; margin-bottom: 2px; }
+        .tooltip-info { font-size: 0.75rem; color: #888; font-style: italic; margin-top: 5px; }
+    
+
+							</style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billiard Sim - Final Lab Edition</title>
+    <style>
+        body { display: flex; flex-direction: row; font-family: sans-serif; background-color: #1a1a1a; color: #e0e0e0; margin: 0; height: 100vh; overflow: hidden; }
+        #controls { width: 320px; padding: 20px; background-color: #252525; border-right: 1px solid #444; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+        canvas { flex-grow: 1; background-color: #0f2d1e; cursor: crosshair; }
+        .control-group { display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid #333; padding-bottom: 8px; }
+        label { font-size: 0.85rem; font-weight: bold; color: #aaa; cursor: help; }
+        .value-display { font-family: monospace; color: #4CAF50; float: right; }
+        button { padding: 10px; border: none; color: white; font-weight: bold; border-radius: 4px; cursor: pointer; margin-bottom: 2px; transition: opacity 0.2s; }
+        button:hover { opacity: 0.8; }
+        #btn-pause { background-color: #f39c12; }
+        #btn-reset { background-color: #e74c3c; }
+        #btn-trace { background-color: #3498db; }
+        #btn-com { background-color: #9b59b6; }
+        #btn-record { background-color: #c0392b; border: 2px solid transparent; }
+        #btn-record.recording { border-color: white; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        input[type="range"] { cursor: pointer; accent-color: #4CAF50; width: 100%; }
+        h3 { margin: 10px 0 5px 0; font-size: 0.9rem; color: #4CAF50; text-transform: uppercase; letter-spacing: 1px; }
+        #momentum-display { background: #000; padding: 10px; border-radius: 4px; border: 1px solid #444; margin-top: 10px; }
+        .mom-line { font-family: monospace; font-size: 0.8rem; display: flex; justify-content: space-between; margin-bottom: 2px; }
+        .tooltip-info { font-size: 0.75rem; color: #888; font-style: italic; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div id="controls">
+    <h2 style="margin-top:0">Billiard Lab</h2>
+    
+    <button id="btn-record" title="Captures canvas video and collision audio. Uses a silent heartbeat to keep streams perfectly synced.">Start Recording</button>
+    <button id="btn-pause" title="Freezes time. While paused, you can drag balls or adjust velocities to set up a new experiment.">Pause / Resume</button>
+    <button id="btn-trace" title="Shows the history of the balls' movements. Useful for observing scattering angles.">Toggle Trace: OFF</button>
+    <button id="btn-com" title="Displays the Center of Mass (purple dot) and Net System Momentum (white arrow).">Center of Mass: OFF</button>
+    <button id="btn-reset" title="Restores balls to the center with equal and opposite velocities.">Full Reset</button>
+
+    <h3>Environment</h3>
+    <div class="control-group">
+        <label title="1.00 = Perfect bounce (Energy conserved). 0.00 = Totally inelastic (Balls stick).">Ball-Ball Elasticity <span id="val-eBall" class="value-display">1.00</span></label>
+        <input type="range" id="input-eBall" min="0" max="1" step="0.01" value="1.0">
+        
+        <label title="Determines how much energy is lost when hitting the boundaries.">Ball-Wall Elasticity <span id="val-eWall" class="value-display">0.80</span></label>
+        <input type="range" id="input-eWall" min="0" max="1" step="0.01" value="0.8">
+    </div>
+
+    <h3>Ball 1 (Red)</h3>
+    <div class="control-group">
+        <label title="Horizontal velocity of the red ball.">Vel X: <span id="val-v1x" class="value-display">5.0</span></label>
+        <input type="range" id="input-v1x" min="-15" max="15" step="0.1" value="5">
+        <label title="Vertical velocity of the red ball.">Vel Y: <span id="val-v1y" class="value-display">0.0</span></label>
+        <input type="range" id="input-v1y" min="-15" max="15" step="0.1" value="0">
+    </div>
+
+    <h3>Ball 2 (Yellow)</h3>
+    <div class="control-group">
+        <label title="Increasing mass makes this ball harder to move, increasing its momentum (p=mv).">Mass Ratio: <span id="val-mass" class="value-display">1.0</span></label>
+        <input type="range" id="input-mass" min="0.1" max="10" step="0.1" value="1">
+        <label title="Horizontal velocity of the yellow ball.">Vel X: <span id="val-v2x" class="value-display">-5.0</span></label>
+        <input type="range" id="input-v2x" min="-15" max="15" step="0.1" value="-5">
+        <label title="Vertical velocity of the yellow ball.">Vel Y: <span id="val-v2y" class="value-display">0.0</span></label>
+        <input type="range" id="input-v2y" min="-15" max="15" step="0.1" value="0">
+    </div>
+
+    <div id="momentum-display" title="Momentum (p) is mass times velocity. In a closed system, Total P remains constant.">
+        <div class="mom-line" style="color:#e74c3c"><span>P1 (Red):</span> <span id="mom-p1">0, 0</span></div>
+        <div class="mom-line" style="color:#f1c40f"><span>P2 (Yel):</span> <span id="mom-p2">0, 0</span></div>
+        <div class="mom-line" style="color:#fff; border-top:1px solid #444; margin-top:5px; padding-top:5px;"><span>Total P:</span> <span id="mom-total">0, 0</span></div>
+    </div>
+    <div class="tooltip-info">Hover over controls for info</div>
+</div>
+
+<canvas id="simCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    let audioCtx, audioDest, mediaRecorder, recordedChunks = [];
+    let silenceOsc = null;
+
+    function initAudio() { 
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            audioDest = audioCtx.createMediaStreamDestination();
+            silenceOsc = audioCtx.createOscillator();
+            const silenceGain = audioCtx.createGain();
+            silenceGain.gain.value = 0;
+            silenceOsc.connect(silenceGain);
+            silenceGain.connect(audioDest);
+            silenceOsc.start();
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playSound(energyLost, isWall) {
+        if (!audioCtx || energyLost <= 0.005) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const now = audioCtx.currentTime;
+        const vol = Math.min(energyLost / 40, 0.8);
+        osc.type = isWall ? 'triangle' : 'sine';
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(vol, now + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        osc.frequency.setValueAtTime((isWall ? 100 : 250) + (vol * 200), now);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        gain.connect(audioDest);
+        osc.start(now);
+        osc.stop(now + 0.15);
+    }
+
+    const eBallS = document.getElementById('input-eBall'), eWallS = document.getElementById('input-eWall');
+    const mSlider = document.getElementById('input-mass'), v1xS = document.getElementById('input-v1x'), v1yS = document.getElementById('input-v1y'), v2xS = document.getElementById('input-v2x'), v2yS = document.getElementById('input-v2y');
+    const resetBtn = document.getElementById('btn-reset'), pauseBtn = document.getElementById('btn-pause'), traceBtn = document.getElementById('btn-trace'), comBtn = document.getElementById('btn-com'), recordBtn = document.getElementById('btn-record');
+
+    let balls = [], isPaused = false, traceEnabled = false, comEnabled = false, draggedBall = null, isRecording = false;
+
+    function init() {
+        canvas.width = window.innerWidth - 320; canvas.height = window.innerHeight;
+        const centerX = canvas.width / 2, centerY = canvas.height / 2;
+        balls = [
+            { id: 0, x: centerX - 120, y: centerY, vx: 5, vy: 0, radius: 35, mass: 1, color: '#e74c3c', path: [] },
+            { id: 1, x: centerX + 120, y: centerY, vx: -5, vy: -0, radius: 35, mass: 1, color: '#f1c40f', path: [] }
+        ];
+        v1xS.value = 5; v1yS.value = 0; v2xS.value = -5; v2yS.value = 0; mSlider.value = 1;
+    }
+
+    function drawArrow(x, y, vx, vy, color, width=3) {
+        if (Math.abs(vx) < 0.1 && Math.abs(vy) < 0.1) return;
+        const headlen = 12, angle = Math.atan2(vy, vx);
+        ctx.beginPath(); ctx.lineWidth = width; ctx.strokeStyle = color;
+        ctx.moveTo(x, y); ctx.lineTo(x + vx, y + vy);
+        ctx.lineTo(x + vx - headlen * Math.cos(angle - Math.PI/6), y + vy - headlen * Math.sin(angle - Math.PI/6));
+        ctx.moveTo(x + vx, y + vy);
+        ctx.lineTo(x + vx - headlen * Math.cos(angle + Math.PI/6), y + vy - headlen * Math.sin(angle + Math.PI/6));
+        ctx.stroke();
+    }
+
+    recordBtn.onclick = () => {
+        initAudio();
+        if (!isRecording) {
+            recordedChunks = [];
+            const canvasStream = canvas.captureStream(60);
+            const combinedStream = new MediaStream([...canvasStream.getVideoTracks(), ...audioDest.stream.getAudioTracks()]);
+            mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm;codecs=vp9,opus' });
+            mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob); a.download = 'momentum_experiment.webm'; a.click();
+            };
+            mediaRecorder.start(100);
+            recordBtn.innerText = "Stop & Save"; recordBtn.classList.add('recording');
+        } else {
+            mediaRecorder.stop();
+            recordBtn.innerText = "Start Recording"; recordBtn.classList.remove('recording');
+        }
+        isRecording = !isRecording;
+    };
+
+    canvas.addEventListener('mousedown', (e) => {
+        initAudio();
+        if (!isPaused) return;
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+        balls.forEach(b => { if (Math.sqrt((mx-b.x)**2 + (my-b.y)**2) < b.radius) draggedBall = b; });
+    });
+    window.addEventListener('mousemove', (e) => { if (draggedBall && isPaused) { const rect = canvas.getBoundingClientRect(); draggedBall.x = e.clientX - rect.left; draggedBall.y = e.clientY - rect.top; } });
+    window.addEventListener('mouseup', () => draggedBall = null);
+
+    pauseBtn.onclick = () => { isPaused = !isPaused; pauseBtn.style.backgroundColor = isPaused ? "#2ecc71" : "#f39c12"; };
+    traceBtn.onclick = () => { traceEnabled = !traceEnabled; traceBtn.innerText = `Toggle Trace: ${traceEnabled ? 'ON' : 'OFF'}`; if(!traceEnabled) balls.forEach(b=>b.path=[]); };
+    comBtn.onclick = () => { comEnabled = !comEnabled; comBtn.innerText = `Center of Mass: ${comEnabled ? 'ON' : 'OFF'}`; };
+    resetBtn.onclick = init;
+
+    function updatePhysics() {
+        const eBall = parseFloat(eBallS.value), eWall = parseFloat(eWallS.value);
+        balls[1].mass = parseFloat(mSlider.value);
+        if (isPaused) {
+            balls[0].vx = parseFloat(v1xS.value); balls[0].vy = parseFloat(v1yS.value);
+            balls[1].vx = parseFloat(v2xS.value); balls[1].vy = parseFloat(v2yS.value);
+            return;
+        }
+        balls.forEach(ball => {
+            const keBefore = 0.5 * ball.mass * (ball.vx**2 + ball.vy**2);
+            ball.x += ball.vx; ball.y += ball.vy;
+            let hitWall = false;
+            if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) { ball.vx *= -eWall; ball.x = (ball.x < ball.radius) ? ball.radius : canvas.width - ball.radius; hitWall = true; }
+            if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) { ball.vy *= -eWall; ball.y = (ball.y < ball.radius) ? ball.radius : canvas.height - ball.radius; hitWall = true; }
+            if (hitWall) { 
+                playSound(keBefore - (0.5 * ball.mass * (ball.vx**2 + ball.vy**2)), true); 
+                v1xS.value = balls[0].vx; v1yS.value = balls[0].vy; v2xS.value = balls[1].vx; v2yS.value = balls[1].vy; 
+            }
+            if (traceEnabled) { ball.path.push({x: ball.x, y: ball.y}); if (ball.path.length > 200) ball.path.shift(); }
+        });
+        const b1 = balls[0], b2 = balls[1], dx = b2.x - b1.x, dy = b2.y - b1.y, dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < b1.radius + b2.radius) {
+            const keB = (0.5 * b1.mass * (b1.vx**2 + b1.vy**2)) + (0.5 * b2.mass * (b2.vx**2 + b2.vy**2));
+            const nx = dx/dist, ny = dy/dist, overlap = (b1.radius + b2.radius) - dist;
+            b1.x -= nx * (overlap/2); b1.y -= ny * (overlap/2); b2.x += nx * (overlap/2); b2.y += ny * (overlap/2);
+            const vNorm = (b2.vx - b1.vx) * nx + (b2.vy - b1.vy) * ny;
+            if (vNorm < 0) {
+                let j = -(1 + eBall) * vNorm / (1/b1.mass + 1/b2.mass);
+                b1.vx -= (j * nx) / b1.mass; b1.vy -= (j * ny) / b1.mass; b2.vx += (j * nx) / b2.mass; b2.vy += (j * ny) / b2.mass;
+                playSound(keB - ((0.5 * b1.mass * (b1.vx**2 + b1.vy**2)) + (0.5 * b2.mass * (b2.vx**2 + b2.vy**2))), false);
+                v1xS.value = b1.vx; v1yS.value = b1.vy; v2xS.value = b2.vx; v2yS.value = b2.vy;
+            }
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        updatePhysics();
+        const b1 = balls[0], b2 = balls[1];
+        const p1 = { x: b1.vx * b1.mass, y: b1.vy * b1.mass }, p2 = { x: b2.vx * b2.mass, y: b2.vy * b2.mass }, pTot = { x: p1.x + p2.x, y: p1.y + p2.y };
+        
+        document.getElementById('val-eBall').innerText = parseFloat(eBallS.value).toFixed(2);
+        document.getElementById('val-eWall').innerText = parseFloat(eWallS.value).toFixed(2);
+        document.getElementById('val-v1x').innerText = parseFloat(v1xS.value).toFixed(1);
+        document.getElementById('val-v1y').innerText = parseFloat(v1yS.value).toFixed(1);
+        document.getElementById('val-v2x').innerText = parseFloat(v2xS.value).toFixed(1);
+        document.getElementById('val-v2y').innerText = parseFloat(v2yS.value).toFixed(1);
+        document.getElementById('val-mass').innerText = b2.mass.toFixed(1);
+        document.getElementById('mom-p1').innerText = `${p1.x.toFixed(1)}, ${p1.y.toFixed(1)}`;
+        document.getElementById('mom-p2').innerText = `${p2.x.toFixed(1)}, ${p2.y.toFixed(1)}`;
+        document.getElementById('mom-total').innerText = `${pTot.x.toFixed(1)}, ${pTot.y.toFixed(1)}`;
+
+        const comX = (b1.x * b1.mass + b2.x * b2.mass) / (b1.mass + b2.mass);
+        const comY = (b1.y * b1.mass + b2.y * b2.mass) / (b1.mass + b2.mass);
+
+        if (comEnabled) {
+            ctx.setLineDash([5, 5]); ctx.strokeStyle = "rgba(255,255,255,0.2)";
+            ctx.beginPath(); ctx.moveTo(b1.x, b1.y); ctx.lineTo(b2.x, b2.y); ctx.stroke(); ctx.setLineDash([]);
+            ctx.fillStyle = "#9b59b6"; ctx.beginPath(); ctx.arc(comX, comY, 7, 0, Math.PI*2); ctx.fill();
+            drawArrow(comX, comY, pTot.x * 10, pTot.y * 10, "white", 2);
+        }
+
+        balls.forEach(ball => {
+            if (traceEnabled && ball.path.length > 1) {
+                ctx.beginPath(); ctx.strokeStyle = ball.color; ctx.globalAlpha = 0.25;
+                ball.path.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+                ctx.stroke(); ctx.globalAlpha = 1;
+            }
+            ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2);
+            ctx.fillStyle = ball.color; ctx.shadowBlur = 12; ctx.shadowColor = ball.color; ctx.fill();
+            ctx.shadowBlur = 0; ctx.fillStyle = "black"; ctx.textAlign = "center"; ctx.font = "bold 12px monospace";
+            ctx.fillText(`m:${ball.mass.toFixed(1)}`, ball.x, ball.y + 5);
+            drawArrow(ball.x, ball.y, (ball.vx * ball.mass) * 10, (ball.vy * ball.mass) * 10, ball.color);
+        });
+        requestAnimationFrame(draw);
+    }
+    init(); draw();
+</script>
+</body>
+</html>
+
+
+
+
+							<script>
+                            	
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    let audioCtx, audioDest, mediaRecorder, recordedChunks = [];
+    let silenceOsc = null;
+
+    function initAudio() { 
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            audioDest = audioCtx.createMediaStreamDestination();
+            silenceOsc = audioCtx.createOscillator();
+            const silenceGain = audioCtx.createGain();
+            silenceGain.gain.value = 0;
+            silenceOsc.connect(silenceGain);
+            silenceGain.connect(audioDest);
+            silenceOsc.start();
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playSound(energyLost, isWall) {
+        if (!audioCtx || energyLost <= 0.005) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const now = audioCtx.currentTime;
+        const vol = Math.min(energyLost / 40, 0.8);
+        osc.type = isWall ? 'triangle' : 'sine';
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(vol, now + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        osc.frequency.setValueAtTime((isWall ? 100 : 250) + (vol * 200), now);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        gain.connect(audioDest);
+        osc.start(now);
+        osc.stop(now + 0.15);
+    }
+
+    const eBallS = document.getElementById('input-eBall'), eWallS = document.getElementById('input-eWall');
+    const mSlider = document.getElementById('input-mass'), v1xS = document.getElementById('input-v1x'), v1yS = document.getElementById('input-v1y'), v2xS = document.getElementById('input-v2x'), v2yS = document.getElementById('input-v2y');
+    const resetBtn = document.getElementById('btn-reset'), pauseBtn = document.getElementById('btn-pause'), traceBtn = document.getElementById('btn-trace'), comBtn = document.getElementById('btn-com'), recordBtn = document.getElementById('btn-record');
+
+    let balls = [], isPaused = false, traceEnabled = false, comEnabled = false, draggedBall = null, isRecording = false;
+
+    function init() {
+        canvas.width = window.innerWidth - 320; canvas.height = window.innerHeight;
+        const centerX = canvas.width / 2, centerY = canvas.height / 2;
+        balls = [
+            { id: 0, x: centerX - 120, y: centerY, vx: 5, vy: 0, radius: 35, mass: 1, color: '#e74c3c', path: [] },
+            { id: 1, x: centerX + 120, y: centerY, vx: -5, vy: -0, radius: 35, mass: 1, color: '#f1c40f', path: [] }
+        ];
+        v1xS.value = 5; v1yS.value = 0; v2xS.value = -5; v2yS.value = 0; mSlider.value = 1;
+    }
+
+    function drawArrow(x, y, vx, vy, color, width=3) {
+        if (Math.abs(vx) < 0.1 && Math.abs(vy) < 0.1) return;
+        const headlen = 12, angle = Math.atan2(vy, vx);
+        ctx.beginPath(); ctx.lineWidth = width; ctx.strokeStyle = color;
+        ctx.moveTo(x, y); ctx.lineTo(x + vx, y + vy);
+        ctx.lineTo(x + vx - headlen * Math.cos(angle - Math.PI/6), y + vy - headlen * Math.sin(angle - Math.PI/6));
+        ctx.moveTo(x + vx, y + vy);
+        ctx.lineTo(x + vx - headlen * Math.cos(angle + Math.PI/6), y + vy - headlen * Math.sin(angle + Math.PI/6));
+        ctx.stroke();
+    }
+
+    recordBtn.onclick = () => {
+        initAudio();
+        if (!isRecording) {
+            recordedChunks = [];
+            const canvasStream = canvas.captureStream(60);
+            const combinedStream = new MediaStream([...canvasStream.getVideoTracks(), ...audioDest.stream.getAudioTracks()]);
+            mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm;codecs=vp9,opus' });
+            mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob); a.download = 'momentum_experiment.webm'; a.click();
+            };
+            mediaRecorder.start(100);
+            recordBtn.innerText = "Stop & Save"; recordBtn.classList.add('recording');
+        } else {
+            mediaRecorder.stop();
+            recordBtn.innerText = "Start Recording"; recordBtn.classList.remove('recording');
+        }
+        isRecording = !isRecording;
+    };
+
+    canvas.addEventListener('mousedown', (e) => {
+        initAudio();
+        if (!isPaused) return;
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+        balls.forEach(b => { if (Math.sqrt((mx-b.x)**2 + (my-b.y)**2) < b.radius) draggedBall = b; });
+    });
+    window.addEventListener('mousemove', (e) => { if (draggedBall && isPaused) { const rect = canvas.getBoundingClientRect(); draggedBall.x = e.clientX - rect.left; draggedBall.y = e.clientY - rect.top; } });
+    window.addEventListener('mouseup', () => draggedBall = null);
+
+    pauseBtn.onclick = () => { isPaused = !isPaused; pauseBtn.style.backgroundColor = isPaused ? "#2ecc71" : "#f39c12"; };
+    traceBtn.onclick = () => { traceEnabled = !traceEnabled; traceBtn.innerText = `Toggle Trace: ${traceEnabled ? 'ON' : 'OFF'}`; if(!traceEnabled) balls.forEach(b=>b.path=[]); };
+    comBtn.onclick = () => { comEnabled = !comEnabled; comBtn.innerText = `Center of Mass: ${comEnabled ? 'ON' : 'OFF'}`; };
+    resetBtn.onclick = init;
+
+    function updatePhysics() {
+        const eBall = parseFloat(eBallS.value), eWall = parseFloat(eWallS.value);
+        balls[1].mass = parseFloat(mSlider.value);
+        if (isPaused) {
+            balls[0].vx = parseFloat(v1xS.value); balls[0].vy = parseFloat(v1yS.value);
+            balls[1].vx = parseFloat(v2xS.value); balls[1].vy = parseFloat(v2yS.value);
+            return;
+        }
+        balls.forEach(ball => {
+            const keBefore = 0.5 * ball.mass * (ball.vx**2 + ball.vy**2);
+            ball.x += ball.vx; ball.y += ball.vy;
+            let hitWall = false;
+            if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) { ball.vx *= -eWall; ball.x = (ball.x < ball.radius) ? ball.radius : canvas.width - ball.radius; hitWall = true; }
+            if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) { ball.vy *= -eWall; ball.y = (ball.y < ball.radius) ? ball.radius : canvas.height - ball.radius; hitWall = true; }
+            if (hitWall) { 
+                playSound(keBefore - (0.5 * ball.mass * (ball.vx**2 + ball.vy**2)), true); 
+                v1xS.value = balls[0].vx; v1yS.value = balls[0].vy; v2xS.value = balls[1].vx; v2yS.value = balls[1].vy; 
+            }
+            if (traceEnabled) { ball.path.push({x: ball.x, y: ball.y}); if (ball.path.length > 200) ball.path.shift(); }
+        });
+        const b1 = balls[0], b2 = balls[1], dx = b2.x - b1.x, dy = b2.y - b1.y, dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < b1.radius + b2.radius) {
+            const keB = (0.5 * b1.mass * (b1.vx**2 + b1.vy**2)) + (0.5 * b2.mass * (b2.vx**2 + b2.vy**2));
+            const nx = dx/dist, ny = dy/dist, overlap = (b1.radius + b2.radius) - dist;
+            b1.x -= nx * (overlap/2); b1.y -= ny * (overlap/2); b2.x += nx * (overlap/2); b2.y += ny * (overlap/2);
+            const vNorm = (b2.vx - b1.vx) * nx + (b2.vy - b1.vy) * ny;
+            if (vNorm < 0) {
+                let j = -(1 + eBall) * vNorm / (1/b1.mass + 1/b2.mass);
+                b1.vx -= (j * nx) / b1.mass; b1.vy -= (j * ny) / b1.mass; b2.vx += (j * nx) / b2.mass; b2.vy += (j * ny) / b2.mass;
+                playSound(keB - ((0.5 * b1.mass * (b1.vx**2 + b1.vy**2)) + (0.5 * b2.mass * (b2.vx**2 + b2.vy**2))), false);
+                v1xS.value = b1.vx; v1yS.value = b1.vy; v2xS.value = b2.vx; v2yS.value = b2.vy;
+            }
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        updatePhysics();
+        const b1 = balls[0], b2 = balls[1];
+        const p1 = { x: b1.vx * b1.mass, y: b1.vy * b1.mass }, p2 = { x: b2.vx * b2.mass, y: b2.vy * b2.mass }, pTot = { x: p1.x + p2.x, y: p1.y + p2.y };
+        
+        document.getElementById('val-eBall').innerText = parseFloat(eBallS.value).toFixed(2);
+        document.getElementById('val-eWall').innerText = parseFloat(eWallS.value).toFixed(2);
+        document.getElementById('val-v1x').innerText = parseFloat(v1xS.value).toFixed(1);
+        document.getElementById('val-v1y').innerText = parseFloat(v1yS.value).toFixed(1);
+        document.getElementById('val-v2x').innerText = parseFloat(v2xS.value).toFixed(1);
+        document.getElementById('val-v2y').innerText = parseFloat(v2yS.value).toFixed(1);
+        document.getElementById('val-mass').innerText = b2.mass.toFixed(1);
+        document.getElementById('mom-p1').innerText = `${p1.x.toFixed(1)}, ${p1.y.toFixed(1)}`;
+        document.getElementById('mom-p2').innerText = `${p2.x.toFixed(1)}, ${p2.y.toFixed(1)}`;
+        document.getElementById('mom-total').innerText = `${pTot.x.toFixed(1)}, ${pTot.y.toFixed(1)}`;
+
+        const comX = (b1.x * b1.mass + b2.x * b2.mass) / (b1.mass + b2.mass);
+        const comY = (b1.y * b1.mass + b2.y * b2.mass) / (b1.mass + b2.mass);
+
+        if (comEnabled) {
+            ctx.setLineDash([5, 5]); ctx.strokeStyle = "rgba(255,255,255,0.2)";
+            ctx.beginPath(); ctx.moveTo(b1.x, b1.y); ctx.lineTo(b2.x, b2.y); ctx.stroke(); ctx.setLineDash([]);
+            ctx.fillStyle = "#9b59b6"; ctx.beginPath(); ctx.arc(comX, comY, 7, 0, Math.PI*2); ctx.fill();
+            drawArrow(comX, comY, pTot.x * 10, pTot.y * 10, "white", 2);
+        }
+
+        balls.forEach(ball => {
+            if (traceEnabled && ball.path.length > 1) {
+                ctx.beginPath(); ctx.strokeStyle = ball.color; ctx.globalAlpha = 0.25;
+                ball.path.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+                ctx.stroke(); ctx.globalAlpha = 1;
+            }
+            ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2);
+            ctx.fillStyle = ball.color; ctx.shadowBlur = 12; ctx.shadowColor = ball.color; ctx.fill();
+            ctx.shadowBlur = 0; ctx.fillStyle = "black"; ctx.textAlign = "center"; ctx.font = "bold 12px monospace";
+            ctx.fillText(`m:${ball.mass.toFixed(1)}`, ball.x, ball.y + 5);
+            drawArrow(ball.x, ball.y, (ball.vx * ball.mass) * 10, (ball.vy * ball.mass) * 10, ball.color);
+        });
+        requestAnimationFrame(draw);
+    }
+    init(); draw();
+
+
+							</script>
+                        </body>
+                        </html>
+                    
