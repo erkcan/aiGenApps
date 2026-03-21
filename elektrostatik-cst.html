@@ -1,0 +1,2322 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elektrostatik Simülatör</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a; --panel: #111827; --border: #1e2d45;
+    --accent: #00d4ff; --accent2: #ff4d6d;
+    --pos: #ff6b6b; --neg: #4dabf7;
+    --text: #e2e8f0; --muted: #64748b;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; overflow-x:hidden; }
+  header { border-bottom:1px solid var(--border); padding:14px 28px; display:flex; align-items:center; background:rgba(10,14,26,0.97); position:sticky; top:0; z-index:100; }
+  .logo { font-family:'Space Mono',monospace; font-size:12px; color:var(--accent); letter-spacing:2px; text-transform:uppercase; }
+  .logo span { color:var(--muted); }
+  .tabs { display:flex; gap:4px; padding:16px 28px 0; border-bottom:1px solid var(--border); background:var(--bg); }
+  .tab { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:1px; text-transform:uppercase; padding:9px 16px; border:1px solid transparent; border-bottom:none; border-radius:5px 5px 0 0; cursor:pointer; color:var(--muted); background:transparent; transition:all 0.2s; white-space:nowrap; }
+  .tab:hover { color:var(--text); border-color:var(--border); }
+  .tab.active { color:var(--accent); border-color:var(--border); background:var(--panel); border-bottom-color:var(--panel); margin-bottom:-1px; }
+  .tab-num { display:inline-block; width:16px; height:16px; border-radius:3px; background:var(--border); text-align:center; line-height:16px; margin-right:6px; font-size:9px; }
+  .tab.active .tab-num { background:var(--accent); color:#000; }
+
+  .page { display:none; }
+  .page.active { display:block; }
+
+  .sim-layout { display:flex; flex-direction:row; height:calc(100vh - 106px); width:100%; }
+  .canvas-wrap { flex:1; min-width:0; position:relative; overflow:hidden; background:var(--bg); }
+  .canvas-wrap canvas { display:block; }
+  .field-label { position:absolute; top:14px; left:14px; font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:1px; pointer-events:none; }
+  .legend { position:absolute; bottom:14px; left:14px; display:flex; gap:14px; }
+  .leg { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--muted); }
+  .dot { width:9px; height:9px; border-radius:50%; }
+
+  .sidebar { width:270px; min-width:270px; background:var(--panel); border-left:1px solid var(--border); padding:20px; display:flex; flex-direction:column; gap:16px; overflow-y:auto; flex-shrink:0; }
+  .sec { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+  .ctrl { display:flex; flex-direction:column; gap:9px; }
+  .row { display:flex; justify-content:space-between; align-items:center; }
+  .lbl { font-size:13px; color:var(--text); font-weight:300; }
+  .val { font-family:'Space Mono',monospace; font-size:11px; color:var(--accent); min-width:40px; text-align:right; }
+  input[type=range] { -webkit-appearance:none; width:100%; height:3px; background:var(--border); border-radius:2px; outline:none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:13px; height:13px; border-radius:50%; background:var(--accent); cursor:pointer; }
+  .tog-row { display:flex; justify-content:space-between; align-items:center; }
+  .tog { width:34px; height:18px; background:var(--border); border-radius:9px; position:relative; cursor:pointer; transition:background 0.2s; flex-shrink:0; }
+  .tog.on { background:var(--accent); }
+  .tog::after { content:''; position:absolute; width:12px; height:12px; background:#fff; border-radius:50%; top:3px; left:3px; transition:left 0.2s; }
+  .tog.on::after { left:19px; }
+  .hr { height:1px; background:var(--border); }
+  .badge { display:inline-block; font-family:'Space Mono',monospace; font-size:9px; padding:2px 7px; border-radius:3px; margin-bottom:6px; }
+  .demo { background:rgba(0,212,255,0.08); color:var(--accent); border:1px solid rgba(0,212,255,0.25); }
+  .lab  { background:rgba(124,58,237,0.08); color:#c4b5fd; border:1px solid rgba(124,58,237,0.25); }
+  .obs { list-style:none; display:flex; flex-direction:column; gap:7px; }
+  .obs li { font-size:12px; color:#94a3b8; padding-left:13px; position:relative; line-height:1.55; }
+  .obs li::before { content:'→'; position:absolute; left:0; color:var(--accent); }
+  .obs li strong { color:var(--accent); }
+  .box { background:rgba(0,212,255,0.04); border:1px solid rgba(0,212,255,0.12); border-radius:7px; padding:12px; }
+  .box p { font-size:12px; line-height:1.65; color:#94a3b8; }
+  .box strong { color:var(--accent); }
+  .formula { font-family:'Space Mono',monospace; font-size:12px; color:#c4b5fd; text-align:center; padding:8px; background:rgba(124,58,237,0.08); border-radius:5px; margin-top:7px; }
+
+  /* CST Guide Button */
+  .cst-btn {
+    display:flex; align-items:center; gap:8px;
+    width:100%; padding:9px 14px;
+    background:rgba(0,212,255,0.07);
+    border:1px solid rgba(0,212,255,0.3);
+    border-radius:7px; cursor:pointer;
+    color:var(--accent); font-family:'Space Mono',monospace;
+    font-size:10px; letter-spacing:1px; text-transform:uppercase;
+    transition:all 0.2s;
+  }
+  .cst-btn:hover { background:rgba(0,212,255,0.14); border-color:var(--accent); }
+  .cst-btn svg { flex-shrink:0; }
+
+  /* Modal overlay */
+  .modal-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(5,8,20,0.82); backdrop-filter:blur(6px);
+    z-index:500; align-items:center; justify-content:center;
+  }
+  .modal-overlay.open { display:flex; }
+
+  /* Modal box */
+  .modal {
+    background:#0f1829;
+    border:1px solid var(--border);
+    border-radius:12px;
+    width:520px; max-width:95vw; max-height:88vh;
+    display:flex; flex-direction:column;
+    box-shadow:0 24px 80px rgba(0,0,0,0.6);
+    overflow:hidden;
+  }
+  .modal-head {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 22px; border-bottom:1px solid var(--border);
+    flex-shrink:0;
+  }
+  .modal-title {
+    font-family:'Space Mono',monospace; font-size:11px;
+    letter-spacing:2px; text-transform:uppercase; color:var(--accent);
+  }
+  .modal-close {
+    width:28px; height:28px; border-radius:6px; border:1px solid var(--border);
+    background:transparent; color:var(--muted); cursor:pointer; font-size:16px;
+    display:flex; align-items:center; justify-content:center; transition:all 0.15s;
+  }
+  .modal-close:hover { color:var(--text); border-color:var(--muted); }
+
+  /* Steps area */
+  .modal-body { flex:1; overflow-y:auto; padding:22px; display:flex; flex-direction:column; gap:0; }
+
+  /* Progress bar */
+  .progress-wrap { display:flex; align-items:center; gap:10px; margin-bottom:22px; flex-shrink:0; }
+  .progress-bar { flex:1; height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
+  .progress-fill { height:100%; background:var(--accent); border-radius:2px; transition:width 0.35s ease; }
+  .progress-txt { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); white-space:nowrap; }
+
+  /* Step card */
+  .step-card { display:none; flex-direction:column; gap:14px; animation:fadeSlide 0.25s ease; }
+  .step-card.visible { display:flex; }
+  @keyframes fadeSlide { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+  .step-num {
+    font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px;
+    text-transform:uppercase; color:var(--muted);
+  }
+  .step-num span { color:var(--accent); font-size:13px; font-weight:700; }
+  .step-title { font-size:16px; font-weight:500; color:var(--text); line-height:1.3; }
+  .step-desc { font-size:13px; color:#94a3b8; line-height:1.75; }
+  .step-desc strong { color:var(--text); font-weight:500; }
+  .step-desc code {
+    font-family:'Space Mono',monospace; font-size:11px;
+    background:rgba(0,212,255,0.08); color:var(--accent);
+    padding:2px 6px; border-radius:4px;
+  }
+
+  /* Where-to-click hint */
+  .hint {
+    background:rgba(124,58,237,0.08); border:1px solid rgba(124,58,237,0.2);
+    border-radius:7px; padding:11px 14px;
+    font-size:12px; color:#c4b5fd; line-height:1.6;
+    display:flex; gap:10px; align-items:flex-start;
+  }
+  .hint-icon { font-size:15px; flex-shrink:0; margin-top:1px; }
+
+  /* Screenshot placeholder */
+  .screen-mock {
+    border:1px solid var(--border); border-radius:8px;
+    background:#080d18; padding:14px 16px;
+    font-family:'Space Mono',monospace; font-size:11px; color:#4a5568;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .screen-mock .menu-bar { display:flex; gap:16px; color:var(--muted); font-size:10px; }
+  .screen-mock .menu-bar span.hl { color:var(--accent); }
+  .screen-mock .path { color:rgba(0,212,255,0.4); font-size:10px; }
+  .screen-mock .field-row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .screen-mock .field-lbl { color:#64748b; font-size:10px; }
+  .screen-mock .field-val { color:#e2e8f0; font-size:10px; background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:3px; border:1px solid var(--border); }
+  .screen-mock .field-val.hl { border-color:rgba(0,212,255,0.4); color:var(--accent); }
+
+  /* Nav buttons */
+  .modal-nav {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 22px; border-top:1px solid var(--border); flex-shrink:0;
+  }
+  .nav-btn {
+    display:flex; align-items:center; gap:6px;
+    padding:8px 18px; border-radius:7px; cursor:pointer;
+    font-family:'Space Mono',monospace; font-size:10px;
+    letter-spacing:1px; text-transform:uppercase; transition:all 0.2s; border:1px solid;
+  }
+  .nav-prev { background:transparent; border-color:var(--border); color:var(--muted); }
+  .nav-prev:hover { border-color:var(--muted); color:var(--text); }
+  .nav-prev:disabled { opacity:0.3; cursor:default; }
+  .nav-next { background:var(--accent); border-color:var(--accent); color:#000; font-weight:700; }
+  .nav-next:hover { background:#00bde8; }
+  .nav-next:disabled { opacity:0.5; cursor:default; }
+  .step-dots { display:flex; gap:6px; }
+  .dot2 { width:6px; height:6px; border-radius:50%; background:var(--border); cursor:pointer; transition:background 0.2s; }
+  .dot2.on { background:var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Elektrostatik <span>// İnteraktif Simülatör // veö</span></div>
+</header>
+
+<div class="tabs">
+  <button class="tab active"  onclick="go(0)"><span class="tab-num">1</span>Tek Yük</button>
+  <button class="tab"         onclick="go(1)"><span class="tab-num">2</span>Dipol</button>
+  <button class="tab"         onclick="go(2)"><span class="tab-num">3</span>Eş Yükler</button>
+  <button class="tab"         onclick="go(3)"><span class="tab-num">4</span>İletken Küre</button>
+</div>
+
+<!-- ══════════════ TAB 0 ══════════════ -->
+<div class="page active" id="p0">
+  <div class="sim-layout">
+    <div class="canvas-wrap" id="w0">
+      <canvas id="c0"></canvas>
+      <div class="field-label">E — Alan Vektörleri &amp; Çizgileri</div>
+      <div class="legend">
+        <div class="leg"><div class="dot" style="background:#ff6b6b"></div>+ Yük</div>
+      </div>
+    </div>
+    <div class="sidebar">
+      <div>
+        <div class="sec">Kontroller</div>
+        <div class="ctrl">
+          <div class="row"><span class="lbl">Yük (q)</span><span class="val" id="l0q">+1</span></div>
+          <input type="range" id="r0q" min="-3" max="3" step="0.5" value="1" oninput="redraw(0)">
+          <div class="row"><span class="lbl">Grid yoğunluğu</span><span class="val" id="l0g">12</span></div>
+          <input type="range" id="r0g" min="6" max="20" step="1" value="12" oninput="redraw(0)">
+          <div class="tog-row"><span class="lbl">Alan çizgileri</span><div class="tog on" id="t0fl" onclick="tog('t0fl','o0fl')"></div></div>
+          <div class="tog-row"><span class="lbl">Eş-potansiyel</span><div class="tog" id="t0ep" onclick="tog('t0ep','o0ep')"></div></div>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <div><span class="badge demo">GÖZLEM</span>
+        <ul class="obs">
+          <li>Alan çizgileri yükten <strong>radyal</strong> uzaklaşıyor</li>
+          <li>Yükten uzaklaştıkça vektörler küçülüyor (1/r²)</li>
+          <li>Eş-potansiyeller alana <strong>dik</strong> — konsantrik çemberler</li>
+          <li>q'yu negatife al → ok yönleri tersine döner</li>
+        </ul>
+      </div>
+      <div class="hr"></div>
+      <div><span class="badge lab">FİZİK</span>
+        <div class="box">
+          <p>Coulomb: alan şiddeti mesafenin <strong>karesiyle ters orantılı</strong>.</p>
+          <div class="formula">E = kq / r²</div>
+          <p style="margin-top:8px">Gauss: kapalı yüzeyden geçen akı içindeki yükle orantılı.</p>
+          <div class="formula">∮ E·dA = q / ε₀</div>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <button class="cst-btn" onclick="openGuide()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+        </svg>
+        CST'de Nasıl Yapılır?
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ CST GUIDE MODAL ══════════════ -->
+<div class="modal-overlay" id="guideOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">CST Studio Suite — Tek Yük Simülasyonu</div>
+      <button class="modal-close" onclick="closeGuide()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody">
+      <div class="progress-wrap">
+        <div class="progress-bar"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+        <div class="progress-txt" id="progTxt">1 / 8</div>
+      </div>
+      <!-- Steps injected by JS -->
+    </div>
+    <div class="modal-nav">
+      <button class="nav-btn nav-prev" id="btnPrev" onclick="stepNav(-1)" disabled>← Geri</button>
+      <div class="step-dots" id="stepDots"></div>
+      <button class="nav-btn nav-next" id="btnNext" onclick="stepNav(1)">İleri →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TAB 1 ══════════════ -->
+<div class="page" id="p1">
+  <div class="sim-layout">
+    <div class="canvas-wrap" id="w1">
+      <canvas id="c1"></canvas>
+      <div class="field-label">E — Dipol Alan Çizgileri</div>
+      <div class="legend">
+        <div class="leg"><div class="dot" style="background:#ff6b6b"></div>+q</div>
+        <div class="leg"><div class="dot" style="background:#4dabf7"></div>−q</div>
+      </div>
+    </div>
+    <div class="sidebar">
+      <div>
+        <div class="sec">Kontroller</div>
+        <div class="ctrl">
+          <div class="row"><span class="lbl">Yük ayrımı (d)</span><span class="val" id="l1d">1.0</span></div>
+          <input type="range" id="r1d" min="0.3" max="2.5" step="0.1" value="1" oninput="redraw(1)">
+          <div class="row"><span class="lbl">+q büyüklüğü</span><span class="val" id="l1q">1.0</span></div>
+          <input type="range" id="r1q" min="0.5" max="3" step="0.5" value="1" oninput="redraw(1)">
+          <div class="tog-row"><span class="lbl">Alan çizgileri</span><div class="tog on" id="t1fl" onclick="tog('t1fl','o1fl')"></div></div>
+          <div class="tog-row"><span class="lbl">Sıfır-pot. düzlemi</span><div class="tog on" id="t1zp" onclick="tog('t1zp','o1zp')"></div></div>
+          <div class="tog-row"><span class="lbl">Eş-potansiyel</span><div class="tog" id="t1ep" onclick="tog('t1ep','o1ep')"></div></div>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <div><span class="badge demo">GÖZLEM</span>
+        <ul class="obs">
+          <li>Çizgiler <strong>+q'dan çıkar</strong>, −q'ya girer</li>
+          <li>Yükler arasında alan güçlü — çizgiler sıkışır</li>
+          <li>Sıfır potansiyel düzlemi tam ortada</li>
+          <li>d'yi artır → uzak alandaki yapı nasıl değişiyor?</li>
+        </ul>
+      </div>
+      <div class="hr"></div>
+      <div><span class="badge lab">FİZİK</span>
+        <div class="box">
+          <p><strong>Süperpozisyon:</strong> her noktada alan iki kaynağın vektörel toplamı.</p>
+          <div class="formula">E = E₊ + E₋</div>
+          <p style="margin-top:8px">Uzak alanda dipol momenti <strong>p = qd</strong> belirleyicidir.</p>
+          <div class="formula">E_uzak ∝ p / r³</div>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <button class="cst-btn" onclick="openGuide2()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+        </svg>
+        CST'de Nasıl Yapılır?
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ CST GUIDE MODAL 2 ══════════════ -->
+<div class="modal-overlay" id="guideOverlay2" onclick="handleOverlayClick2(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">CST Studio Suite — Dipol Simülasyonu</div>
+      <button class="modal-close" onclick="closeGuide2()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody2">
+      <div class="progress-wrap">
+        <div class="progress-bar"><div class="progress-fill" id="progFill2" style="width:0%"></div></div>
+        <div class="progress-txt" id="progTxt2">1 / 9</div>
+      </div>
+    </div>
+    <div class="modal-nav">
+      <button class="nav-btn nav-prev" id="btnPrev2" onclick="stepNav2(-1)" disabled>← Geri</button>
+      <div class="step-dots" id="stepDots2"></div>
+      <button class="nav-btn nav-next" id="btnNext2" onclick="stepNav2(1)">İleri →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TAB 2 ══════════════ -->
+<div class="page" id="p2">
+  <div class="sim-layout">
+    <div class="canvas-wrap" id="w2">
+      <canvas id="c2"></canvas>
+      <div class="field-label">E — Eş Yükler: İtme ve Denge</div>
+      <div class="legend">
+        <div class="leg"><div class="dot" style="background:#ff6b6b"></div>+q₁</div>
+        <div class="leg"><div class="dot" style="background:#ff6b6b"></div>+q₂</div>
+        <div class="leg"><div class="dot" style="background:#ffd43b"></div>E=0 noktası</div>
+      </div>
+    </div>
+    <div class="sidebar">
+      <div>
+        <div class="sec">Kontroller</div>
+        <div class="ctrl">
+          <div class="row"><span class="lbl">Yük ayrımı (d)</span><span class="val" id="l2d">1.0</span></div>
+          <input type="range" id="r2d" min="0.3" max="2.5" step="0.1" value="1" oninput="redraw(2)">
+          <div class="row"><span class="lbl">Sol yük (q₁)</span><span class="val" id="l2q1">1.0</span></div>
+          <input type="range" id="r2q1" min="0.5" max="3" step="0.5" value="1" oninput="redraw(2)">
+          <div class="row"><span class="lbl">Sağ yük (q₂)</span><span class="val" id="l2q2">1.0</span></div>
+          <input type="range" id="r2q2" min="0.5" max="3" step="0.5" value="1" oninput="redraw(2)">
+          <div class="tog-row"><span class="lbl">Alan çizgileri</span><div class="tog on" id="t2fl" onclick="tog('t2fl','o2fl')"></div></div>
+          <div class="tog-row"><span class="lbl">Eş-potansiyel</span><div class="tog" id="t2ep" onclick="tog('t2ep','o2ep')"></div></div>
+          <div class="tog-row"><span class="lbl">Denge noktası</span><div class="tog on" id="t2dp" onclick="tog('t2dp','o2dp')"></div></div>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <div><span class="badge demo">GÖZLEM</span>
+        <ul class="obs">
+          <li>Her yükten <strong>dışa doğru</strong> alan çizgileri çıkar</li>
+          <li>Yükler arasında bir <strong>sıfır nokta</strong> var</li>
+          <li>q₁ ≠ q₂ yap → sıfır nokta kayıyor, nereye?</li>
+          <li>Orta noktadaki test yükü kararsız dengede</li>
+        </ul>
+      </div>
+      <div class="hr"></div>
+      <div><span class="badge lab">FİZİK</span>
+        <div class="box">
+          <p>Denge noktası yüklerin <strong>karekök oranına</strong> bağlıdır:</p>
+          <div class="formula">x₀/x₁ = √(q₁/q₂)</div>
+          <p style="margin-top:8px">Bu <strong>kararsız denge</strong>dir — küçük saptırma yükü iter.</p>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <button class="cst-btn" onclick="openVBA()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+        </svg>
+        CST'ye Bu Geometriyi Aktar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ VBA EXPORT MODAL ══════════════ -->
+<div class="modal-overlay" id="vbaOverlay" onclick="handleVBAClick(event)">
+  <div class="modal" style="width:580px">
+    <div class="modal-head">
+      <div class="modal-title">CST VBA Macro — Eş Yükler Geometrisi</div>
+      <button class="modal-close" onclick="closeVBA()">✕</button>
+    </div>
+    <div class="modal-body" style="gap:12px">
+      <div class="info-box" style="background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.12);border-radius:7px;padding:12px;">
+        <p style="font-size:12px;color:#94a3b8;line-height:1.7">
+          <strong style="color:var(--accent)">1.</strong> CST'de yeni proje açın: <strong style="color:var(--accent)">New Template → Statics / Low Frequency → High Voltage / Heavy Current → Insulators → E-Static</strong><br><br>
+          <strong style="color:var(--accent)">2.</strong> Üst menüden <strong style="color:var(--accent)">Home → VBA Macros → Open VBA Macro Editor</strong>'ı açın.<br><br>
+          <strong style="color:var(--accent)">3.</strong> Aşağıdaki kodu editöre yapıştırın ve <strong style="color:var(--accent)">Run</strong> tuşuna basın.<br><br>
+          Slider değerleri otomatik olarak koda yansıtılmıştır.
+        </p>
+      </div>
+      <div style="position:relative">
+        <pre id="vbaCode" style="
+          background:#060c18;border:1px solid var(--border);border-radius:7px;
+          padding:16px;font-family:'Space Mono',monospace;font-size:11px;
+          color:#a5b4c8;line-height:1.8;overflow-x:auto;white-space:pre;
+          max-height:420px;overflow-y:auto;margin:0;
+        "></pre>
+        <button onclick="copyVBA()" id="copyBtn" style="
+          position:absolute;top:10px;right:10px;
+          background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);
+          border-radius:5px;padding:5px 12px;color:var(--accent);
+          font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;
+          letter-spacing:1px;transition:all 0.2s;
+        ">KOPYALA</button>
+      </div>
+    </div>
+    <div class="modal-nav" style="justify-content:flex-end">
+      <button class="nav-btn nav-prev" onclick="closeVBA()">Kapat</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ GÖRÜNTÜ YÜKÜ POPUP ══════════════ -->
+<div id="imPopup" style="
+  display:none; position:fixed; z-index:600;
+  background:#0f1829; border:1px solid var(--border);
+  border-radius:10px; width:300px;
+  box-shadow:0 16px 48px rgba(0,0,0,0.6);
+  font-size:12px; color:#94a3b8; line-height:1.75;
+  max-height:90vh; display:none; flex-direction:column;
+">
+  <div id="imPopupHead" style="
+    display:flex;justify-content:space-between;align-items:center;
+    padding:14px 18px; border-bottom:1px solid var(--border);
+    cursor:grab; user-select:none; flex-shrink:0;
+  ">
+    <span style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--accent);text-transform:uppercase">Görüntü Yükü Yöntemi</span>
+    <span onclick="document.getElementById('imPopup').style.display='none'" style="cursor:pointer;color:var(--muted);font-size:16px;line-height:1">✕</span>
+  </div>
+  <div style="padding:16px 18px;overflow-y:auto;">
+    <p>İletken bir küre yakınına +q yükü konulduğunda, küreyi kaldırıp yerine hayali yükler koyarak dış uzaydaki alan dağılımı hesaplanabilir. Kaç görüntü yükü gerektiği kürenin topraklı olup olmadığına bağlıdır.</p>
+
+    <p style="margin-top:10px;color:#c4b5fd;font-size:11px;font-family:'Space Mono',monospace">TOPRAKLI KÜRE — TEK GÖRÜNTÜ YÜKÜ</p>
+    <p style="margin-top:4px">Küre topraklıysa V = 0 koşulu yeterlidir. Küre yüzeyinin her noktasında V = 0 sağlanacak şekilde tek bir hayali yük belirlenir:</p>
+    <div style="background:rgba(124,58,237,0.08);border-radius:5px;padding:8px;margin:8px 0;font-family:'Space Mono',monospace;font-size:11px;color:#c4b5fd;text-align:center">
+      q'₁ = −q · R / d<br>
+      <span style="font-size:10px;color:var(--muted)">konum: r' = R² / d</span>
+    </div>
+    <p>Topraktan küreye net yük akar — kürenin toplam yükü q'₁ ≠ 0.</p>
+
+    <p style="margin-top:10px;color:#c4b5fd;font-size:11px;font-family:'Space Mono',monospace">YÜZEN KÜRE — İKİ GÖRÜNTÜ YÜKÜ</p>
+    <p style="margin-top:4px">Küre izoleyse toplam yükü sıfır kalmalıdır. Tek görüntü yükü yüzeyi eş-potansiyel yapar ama Gauss yasası ihlal edilir — q'₁ ≠ 0 çünkü. Bunu düzeltmek için küre merkezine ikinci bir görüntü yükü eklenir:</p>
+    <div style="background:rgba(124,58,237,0.08);border-radius:5px;padding:8px;margin:8px 0;font-family:'Space Mono',monospace;font-size:11px;color:#c4b5fd;text-align:center">
+      q'₂ = +q · R / d &nbsp;(merkez)<br>
+      <span style="font-size:10px;color:var(--muted)">q'₁ + q'₂ = 0 → Q_küre = 0 ✓</span>
+    </div>
+    <p>q'₂ aynı zamanda kürenin potansiyelini belirler: V_küre = k·q'₂/R = k·q/d.</p>
+
+    <p style="margin-top:8px">Her iki durumda da yük çiftlerinin oluşturduğu alan, kürenin <em>dış uzayındaki</em> gerçek alanla birebir örtüşür.</p>
+    <p style="margin-top:8px;color:#64748b;font-size:11px">Toggle'ı açınca görüntü yüklerini ve alan çizgilerinin küre içindeki uzantısını görebilirsiniz.</p>
+  </div>
+</div>
+
+<!-- ══════════════ TAB 3 ══════════════ -->
+<div class="page" id="p3">
+  <div class="sim-layout">
+    <div class="canvas-wrap" id="w3">
+      <canvas id="c3"></canvas>
+      <canvas id="c3debug" style="position:absolute;top:0;left:0;display:none;opacity:0.9;pointer-events:none"></canvas>
+      <div class="field-label">E — İletken Küre: Elektrostatik İndüksiyon</div>
+      <div class="legend">
+        <div class="leg"><div class="dot" style="background:#ff6b6b"></div>Dış yük +q</div>
+        <div class="leg"><div class="dot" style="background:#51cf66"></div>İletken küre</div>
+        <div class="leg" id="l3vq" style="display:none;flex-direction:column;align-items:flex-start;gap:3px">
+          <span id="l3v" style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(81,207,102,0.85)"></span>
+          <span id="l3qval" style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(81,207,102,0.85)"></span>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar">
+      <div>
+        <div class="sec">Kontroller</div>
+        <div class="ctrl">
+          <div class="row"><span class="lbl">Dış yük (q)</span><span class="val" id="l3q">1.0</span></div>
+          <input type="range" id="r3q" min="0.5" max="3" step="0.5" value="1" oninput="redraw(3)">
+          <div class="row"><span class="lbl">Yük–küre mesafesi</span><span class="val" id="l3di">2.0</span></div>
+          <input type="range" id="r3di" min="1.3" max="3.5" step="0.1" value="2" oninput="redraw(3)">
+          <div class="row"><span class="lbl">Küre yarıçapı (R)</span><span class="val" id="l3r">0.8</span></div>
+          <input type="range" id="r3r" min="0.3" max="1.1" step="0.1" value="0.8" oninput="redraw(3)">
+          <div class="tog-row"><span class="lbl">Alan çizgileri</span><div class="tog on" id="t3fl" onclick="tog('t3fl','o3fl')"></div></div>
+          <div class="tog-row"><span class="lbl">Eş-potansiyel</span><div class="tog" id="t3ep" onclick="tog('t3ep','o3ep')"></div></div>
+          <div class="tog-row"><span class="lbl">Küre topraklı</span><div class="tog" id="t3gnd" onclick="togGnd()"></div></div>
+          <div class="tog-row">
+            <span class="lbl" style="display:flex;align-items:center;gap:6px">
+              <span style="border-bottom:1.5px dotted var(--accent);cursor:pointer;padding-bottom:1px" onclick="toggleImPopup(event)">Görüntü yükü</span>
+              <span style="font-size:10px;color:var(--muted);cursor:pointer" onclick="toggleImPopup(event)">?</span>
+            </span>
+            <div class="tog" id="t3im" onclick="tog('t3im','o3im')"></div>
+          </div>
+          <div class="tog-row"><span class="lbl">E=0 iç bölge</span><div class="tog on" id="t3in" onclick="tog('t3in','o3in')"></div></div>
+          <div class="tog-row"><span class="lbl">Yüzey yük dağılımı</span><div class="tog on" id="t3sc" onclick="tog('t3sc','o3sc')"></div></div>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <div>
+        <div class="sec">CST Dışa Aktarım Seçenekleri</div>
+        <div class="ctrl">
+          <div class="tog-row">
+            <span class="lbl">Kabuk (içi boş)</span>
+            <div class="tog" id="t3shell" onclick="togVBA('t3shell','v3shell')"></div>
+          </div>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <div><span class="badge demo">GÖZLEM</span>
+        <ul class="obs">
+          <li>Küre içinde alan <strong>sıfırdır</strong> — iletken denge koşulu</li>
+          <li><strong>Yüzen küre:</strong> yüke bakan yüzeyde <strong>negatif</strong>, karşı yüzeyde <strong>pozitif</strong> yük — net toplam sıfır</li>
+          <li><strong>Topraklı küre:</strong> tüm yüzey <strong>negatif</strong> — yüke yakın tarafta daha yoğun; net yük = q' ≠ 0</li>
+          <li>Alan çizgileri yüzeye <strong>dik</strong> çarpar — teğet bileşen sıfır</li>
+          <li>Görüntü yükünü aç → küre içindeki hayali yük(ler)i gör</li>
+        </ul>
+      </div>
+      <div class="hr"></div>
+      <div><span class="badge lab">FİZİK</span>
+        <div class="box">
+          <p>İletken içinde <strong>E = 0</strong>. Aksi halde serbest elektronlar kuvvet görür ve denge kurulana dek hareket eder.</p>
+          <div class="formula">E_iç = 0</div>
+          <p style="margin-top:8px">Yüzey koşulu: <strong>E ⊥ yüzey</strong>. Teğet bileşen varsa yüzey üzerindeki yükler kayar — denge bozulur.</p>
+          <div class="formula">E_tan = 0</div>
+          <p style="margin-top:8px">Dış alan dağılımı <strong>görüntü yükü yöntemi</strong> ile hesaplanır — küre yüzeyi eş-potansiyel kalma koşulundan.</p>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <button class="cst-btn" onclick="openVBA3()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+        </svg>
+        CST'ye Bu Geometriyi Aktar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ VBA EXPORT MODAL 3 ══════════════ -->
+<div class="modal-overlay" id="vbaOverlay3" onclick="handleVBA3Click(event)">
+  <div class="modal" style="width:600px">
+    <div class="modal-head">
+      <div class="modal-title">CST — İletken Küre Geometrisi</div>
+      <button class="modal-close" onclick="closeVBA3()">✕</button>
+    </div>
+    <div class="modal-body" id="vba3Body" style="gap:0">
+      <div class="progress-wrap">
+        <div class="progress-bar"><div class="progress-fill" id="vba3Fill" style="width:0%"></div></div>
+        <div class="progress-txt" id="vba3Txt">1 / 5</div>
+      </div>
+      <!-- adımlar JS ile inject edilecek -->
+    </div>
+    <div class="modal-nav">
+      <button class="nav-btn nav-prev" id="vba3Prev" onclick="vba3Nav(-1)" disabled>← Geri</button>
+      <div class="step-dots" id="vba3Dots"></div>
+      <button class="nav-btn nav-next" id="vba3Next" onclick="vba3Nav(1)">İleri →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Toggles ──────────────────────────────────────────────────────────────────
+const O = { o0fl:true, o0ep:false, o1fl:true, o1zp:true, o1ep:false, o2fl:true, o2ep:false, o2dp:true, o3fl:true, o3ep:false, o3im:false, o3in:true, o3sc:true };
+function tog(tid, key){ O[key]=!O[key]; document.getElementById(tid).classList.toggle('on'); redraw(activeTab); }
+
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+let activeTab=0;
+function go(i){
+  document.querySelectorAll('.page').forEach((p,j)=>p.classList.toggle('active',i===j));
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
+  activeTab=i;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ fitCanvas(i); redraw(i); }));
+}
+
+// ── Canvas sizing ─────────────────────────────────────────────────────────────
+function fitCanvas(i){
+  const w=document.getElementById('w'+i);
+  const c=document.getElementById('c'+i);
+  const rect=w.getBoundingClientRect();
+  c.width=Math.floor(rect.width)||800;
+  c.height=Math.floor(rect.height)||600;
+}
+function fitAll(){ [0,1,2,3].forEach(fitCanvas); }
+
+window.addEventListener('resize',()=>{ fitAll(); redrawAll(); });
+
+// ── Physics ───────────────────────────────────────────────────────────────────
+function eAt(charges,wx,wy){
+  let ex=0,ey=0;
+  for(const c of charges){
+    const dx=wx-c.x, dy=wy-c.y, r2=dx*dx+dy*dy;
+    if(r2<1e-5) continue;
+    const r=Math.sqrt(r2), m=c.q/r2;
+    ex+=m*dx/r; ey+=m*dy/r;
+  }
+  return {ex,ey};
+}
+function pot(charges,wx,wy){
+  let v=0;
+  for(const c of charges){
+    const r=Math.sqrt((wx-c.x)**2+(wy-c.y)**2);
+    if(r<1e-4) continue;
+    v+=c.q/r;
+  }
+  return v;
+}
+
+// ── Common draw helpers ───────────────────────────────────────────────────────
+// ── fieldLines3: üç yük için temiz alan çizgisi çizici ───────────────────────
+function bgGrid(ctx,W,H){
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='rgba(30,45,69,0.5)'; ctx.lineWidth=0.5;
+  for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+}
+
+function vecField(ctx,charges,W,H,sc,nx,ny,skip){
+  const dx=W/nx, dy=H/ny;
+  for(let i=0;i<nx;i++) for(let j=0;j<ny;j++){
+    const px=(i+.5)*dx, py=(j+.5)*dy;
+    const wx=(px-W/2)/sc, wy=(py-H/2)/sc;
+    if(skip&&skip(wx,wy)) continue;
+    const {ex,ey}=eAt(charges,wx,wy);
+    const mag=Math.sqrt(ex*ex+ey*ey);
+    if(mag<1e-7) continue;
+    const len=Math.min(Math.log(1+mag*2)*7, dx*.42);
+    const nx2=ex/mag, ny2=ey/mag;
+    const a=Math.min(.9,.3+mag*.25);
+    const t=Math.min(1,mag/3);
+    const R=Math.round(t*255), G=Math.round(212-t*100), B=Math.round(255-t*200);
+    const col=`rgba(${R},${G},${B},${a})`;
+    const ax=px+nx2*len*.5, ay=py+ny2*len*.5;
+    ctx.strokeStyle=col; ctx.lineWidth=1.3;
+    ctx.beginPath(); ctx.moveTo(px-nx2*len*.5,py-ny2*len*.5); ctx.lineTo(ax,ay); ctx.stroke();
+    const aw=3.5;
+    ctx.fillStyle=col; ctx.beginPath();
+    ctx.moveTo(ax,ay);
+    ctx.lineTo(ax-nx2*aw-ny2*aw*.5, ay-ny2*aw+nx2*aw*.5);
+    ctx.lineTo(ax-nx2*aw+ny2*aw*.5, ay-ny2*aw-nx2*aw*.5);
+    ctx.closePath(); ctx.fill();
+  }
+}
+
+function fieldLines(ctx,charges,W,H,sc,nL,skip,steps=1000){
+  const posCharges = charges.filter(c=>c.q>0);
+  const negCharges = charges.filter(c=>c.q<0);
+
+  // Offscreen canvas 3× çözünürlükte — piksel kontrolü daha hassas
+  const SCALE = 3;
+  const offscreen = document.createElement('canvas');
+  offscreen.width=W*SCALE; offscreen.height=H*SCALE;
+  const octx = offscreen.getContext('2d');
+  octx.scale(SCALE, SCALE);
+
+  // +q → ileri: hem offscreen'e (tam iz) hem ana canvas'a çiz
+  for(const c of posCharges){
+    for(let a=0;a<nL;a++){
+      const ang=2*Math.PI*a/nL;
+      const sx0=c.x+.14*Math.cos(ang), sy0=c.y+.14*Math.sin(ang);
+      _traceLineOffscreen(octx,charges,sc,W,H,sx0,sy0,1,steps,skip);
+      _traceLine(ctx,charges,sc,W,H,sx0,sy0,1,steps,skip);
+    }
+  }
+
+  // piksel haritası — yüksek çözünürlükte
+  const imgData = octx.getImageData(0,0,W*SCALE,H*SCALE).data;
+  function isPainted(px,py){
+    // px,py ana canvas koordinatları → offscreen koordinatlarına çevir
+    const xi=Math.round(px*SCALE), yi=Math.round(py*SCALE);
+    if(xi<0||xi>=W*SCALE||yi<0||yi>=H*SCALE) return false;
+    return imgData[(yi*W*SCALE+xi)*4+3] > 20;
+  }
+
+  // −q → geri iz: başlangıç noktası boyalı değilse çiz
+  for(const c of negCharges){
+    for(let a=0;a<nL;a++){
+      const ang=2*Math.PI*a/nL;
+      const startSx=(c.x+.14*Math.cos(ang))*sc+W/2;
+      const startSy=(c.y+.14*Math.sin(ang))*sc+H/2;
+      // 2×2 komşuluk — offscreen yüksek çözünürlükte olduğu için dar tutabiliriz
+      let painted=false;
+      for(let dx=-1;dx<=1&&!painted;dx++)
+        for(let dy=-1;dy<=1&&!painted;dy++)
+          if(isPainted(startSx+dx, startSy+dy)) painted=true;
+      if(painted) continue;
+      _traceLine(ctx,charges,sc,W,H,c.x+.14*Math.cos(ang),c.y+.14*Math.sin(ang),-1,steps,skip);
+    }
+  }
+}
+
+function _traceLineOffscreen(ctx,charges,sc,W,H,startX,startY,dir,steps,skip){
+  // Offscreen: ekran sınırı olmadan tüm noktaları çiz
+  let wx=startX, wy=startY;
+  ctx.beginPath(); let first=true;
+  for(let s=0;s<steps;s++){
+    const sx=wx*sc+W/2, sy=wy*sc+H/2;
+    if(first){ctx.moveTo(sx,sy);first=false;}else ctx.lineTo(sx,sy);
+    if(skip&&skip(wx,wy)) break;
+    let hit=false;
+    for(const c2 of charges){
+      if(dir===1  && c2.q<0 && (wx-c2.x)**2+(wy-c2.y)**2<.02){hit=true;break;}
+      if(dir===-1 && c2.q>0 && (wx-c2.x)**2+(wy-c2.y)**2<.02){hit=true;break;}
+    }
+    if(hit) break;
+    const {ex,ey}=eAt(charges,wx,wy);
+    const m=Math.sqrt(ex*ex+ey*ey); if(m<1e-9) break;
+    wx+=dir*.035*ex/m; wy+=dir*.035*ey/m;
+  }
+  ctx.strokeStyle='rgba(0,212,255,1)'; ctx.lineWidth=1.5; ctx.stroke();
+}
+
+function _traceLine(ctx,charges,sc,W,H,startX,startY,dir,steps,skip){
+  let wx=startX, wy=startY;
+  ctx.beginPath(); let first=true;
+  for(let s=0;s<steps;s++){
+    const sx=wx*sc+W/2, sy=wy*sc+H/2;
+    const onScreen=sx>=-10&&sx<=W+10&&sy>=-10&&sy<=H+10;
+    if(onScreen){
+      if(first){ctx.moveTo(sx,sy);first=false;}else ctx.lineTo(sx,sy);
+    } else {
+      if(!first){ctx.strokeStyle='rgba(0,212,255,0.45)';ctx.lineWidth=1;ctx.stroke();ctx.beginPath();first=true;}
+    }
+    if(skip&&skip(wx,wy)) break;
+    let hit=false;
+    for(const c2 of charges){
+      if(dir===1  && c2.q<0 && (wx-c2.x)**2+(wy-c2.y)**2<.02){hit=true;break;}
+      if(dir===-1 && c2.q>0 && (wx-c2.x)**2+(wy-c2.y)**2<.02){hit=true;break;}
+    }
+    if(hit) break;
+    const {ex,ey}=eAt(charges,wx,wy);
+    const m=Math.sqrt(ex*ex+ey*ey); if(m<1e-9) break;
+    wx+=dir*.035*ex/m; wy+=dir*.035*ey/m;
+  }
+  ctx.strokeStyle='rgba(0,212,255,0.45)'; ctx.lineWidth=1; ctx.stroke();
+}
+
+function equipotentials(ctx,charges,W,H,sc,levels){
+  const res=3, cols=Math.ceil(W/res)+1, rows=Math.ceil(H/res)+1;
+  const V=[];
+  for(let j=0;j<rows;j++){ V.push([]);
+    for(let i=0;i<cols;i++) V[j].push(pot(charges,(i*res-W/2)/sc,(j*res-H/2)/sc));
+  }
+
+  // pozitif ve negatif tarafların ayrı ayrı en dıştaki iki seviyesi
+  const posLevels = [...levels].filter(v=>v>0).sort((a,b)=>a-b);
+  const negLevels = [...levels].filter(v=>v<0).sort((a,b)=>b-a); // |en küçük| önce
+  const labelLvs = new Set([
+    posLevels[0], posLevels[1],
+    negLevels[0], negLevels[1]
+  ].filter(v=>v!==undefined));
+
+  for(const lv of levels){
+    const col = lv>0 ? 'rgba(255,160,50,0.7)' : 'rgba(80,180,255,0.7)';
+    ctx.strokeStyle=col; ctx.lineWidth=1;
+
+    // etiket için bu seviyedeki en sağ-üst noktayı bul
+    let labelPt = null; // {x, y} piksel
+
+    for(let j=0;j<rows-1;j++) for(let i=0;i<cols-1;i++){
+      const v00=V[j][i]-lv,v10=V[j][i+1]-lv,v01=V[j+1][i]-lv,v11=V[j+1][i+1]-lv;
+      const pts=[];
+      if(v00*v10<0) pts.push([i*res+res*v00/(v00-v10),j*res]);
+      if(v10*v11<0) pts.push([(i+1)*res,j*res+res*v10/(v10-v11)]);
+      if(v01*v11<0) pts.push([i*res+res*v01/(v01-v11),(j+1)*res]);
+      if(v00*v01<0) pts.push([i*res,j*res+res*v00/(v00-v01)]);
+      if(pts.length>=2){
+        ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);ctx.lineTo(pts[1][0],pts[1][1]);ctx.stroke();
+        // en sağdaki ve en üstteki (y küçük = ekranda üst) noktayı kaydet
+        for(const p of pts){
+          if(!labelPt || p[0]+( H-p[1]) > labelPt[0]+(H-labelPt[1])) labelPt=p;
+        }
+      }
+    }
+
+    // en dıştaki iki seviyeye etiket yaz
+    if(labelLvs.has(lv) && labelPt){
+      const txt = (lv>0?'+':'')+lv.toFixed(1)+' V';
+      ctx.save();
+      ctx.font='bold 11px Space Mono,monospace';
+      ctx.fillStyle = lv>0 ? 'rgba(255,180,80,0.95)' : 'rgba(100,200,255,0.95)';
+      ctx.textAlign='left'; ctx.textBaseline='bottom';
+      // ekran sınırlarına çek
+      const margin=4;
+      const tw=ctx.measureText(txt).width;
+      const th=13; // yaklaşık font yüksekliği
+      const lx=Math.min(Math.max(labelPt[0]+margin, margin), W-tw-margin);
+      const ly=Math.min(Math.max(labelPt[1]-margin, th+margin), H-margin);
+      ctx.fillText(txt, lx, ly);
+      ctx.restore();
+    }
+  }
+}
+
+function equipotentialsWithMask(ctx,charges,W,H,sc,levels,maskFn){
+  // maskFn(wx,wy) → true ise o nokta maskelenir (çizgi çizilmez)
+  const res=3, cols=Math.ceil(W/res)+1, rows=Math.ceil(H/res)+1;
+  const V=[];
+  for(let j=0;j<rows;j++){ V.push([]);
+    for(let i=0;i<cols;i++){
+      const wx=(i*res-W/2)/sc, wy=(j*res-H/2)/sc;
+      // maskeli noktaya Infinity ata — hiçbir kontur geçemez
+      V[j].push(maskFn(wx,wy) ? Infinity : pot(charges,wx,wy));
+    }
+  }
+  const posLevels=[...levels].filter(v=>v>0).sort((a,b)=>a-b);
+  const negLevels=[...levels].filter(v=>v<0).sort((a,b)=>b-a);
+  const labelLvs=new Set([posLevels[0],posLevels[1],negLevels[0],negLevels[1]].filter(v=>v!==undefined));
+
+  for(const lv of levels){
+    const col=lv>0?'rgba(255,160,50,0.7)':'rgba(80,180,255,0.7)';
+    ctx.strokeStyle=col; ctx.lineWidth=1;
+    let labelPt=null;
+    for(let j=0;j<rows-1;j++) for(let i=0;i<cols-1;i++){
+      const v00=V[j][i]-lv, v10=V[j][i+1]-lv, v01=V[j+1][i]-lv, v11=V[j+1][i+1]-lv;
+      // herhangi biri Infinity ise bu hücreyi atla
+      if(!isFinite(v00)||!isFinite(v10)||!isFinite(v01)||!isFinite(v11)) continue;
+      const pts=[];
+      if(v00*v10<0) pts.push([i*res+res*v00/(v00-v10),j*res]);
+      if(v10*v11<0) pts.push([(i+1)*res,j*res+res*v10/(v10-v11)]);
+      if(v01*v11<0) pts.push([i*res+res*v01/(v01-v11),(j+1)*res]);
+      if(v00*v01<0) pts.push([i*res,j*res+res*v00/(v00-v01)]);
+      if(pts.length>=2){
+        ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);ctx.lineTo(pts[1][0],pts[1][1]);ctx.stroke();
+        for(const p of pts){
+          if(!labelPt||p[0]+(H-p[1])>labelPt[0]+(H-labelPt[1])) labelPt=p;
+        }
+      }
+    }
+    if(labelLvs.has(lv)&&labelPt){
+      const txt=(lv>0?'+':'')+lv.toFixed(1)+' V';
+      ctx.save();
+      ctx.font='bold 11px Space Mono,monospace';
+      ctx.fillStyle=lv>0?'rgba(255,180,80,0.95)':'rgba(100,200,255,0.95)';
+      ctx.textAlign='left'; ctx.textBaseline='bottom';
+      const margin=4, tw=ctx.measureText(txt).width, th=13;
+      const lx=Math.min(Math.max(labelPt[0]+margin,margin),W-tw-margin);
+      const ly=Math.min(Math.max(labelPt[1]-margin,th+margin),H-margin);
+      ctx.fillText(txt,lx,ly);
+      ctx.restore();
+    }
+  }
+}
+
+function drawCharge(ctx,sx,sy,q,r=12){
+  const col=q>0?'#ff6b6b':'#4dabf7';
+  ctx.beginPath(); ctx.arc(sx,sy,r,0,Math.PI*2);
+  ctx.fillStyle=col; ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.fillStyle='#fff'; ctx.font=`bold 14px monospace`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(q>0?'+':'−',sx,sy);
+}
+
+// ── Draw functions ────────────────────────────────────────────────────────────
+function draw0(){
+  const c=document.getElementById('c0');
+  const ctx=c.getContext('2d'), W=c.width, H=c.height;
+  if(!W||!H) return;
+  const q=+document.getElementById('r0q').value;
+  const nd=+document.getElementById('r0g').value;
+  document.getElementById('l0q').textContent=(q>0?'+':'')+q;
+  document.getElementById('l0g').textContent=nd;
+  const sc=Math.min(W,H)/5.5;
+  const ch=[{x:0,y:0,q}];
+  bgGrid(ctx,W,H);
+  if(O.o0ep){
+    // V seviyeleri sabit adımlarla — marching squares ekran dışını zaten görmez
+    // Üst sınır: yükün çok yakınında sayısal gürültü çıkmasın diye r_min=0.15 sınırı
+    const Vstep = 0.8;
+    const Vmax_clip = Math.abs(q) / 0.15; // bu r'den küçüğe girme
+    const lvs = [];
+    for(let v = Vstep; v < Vmax_clip; v += Vstep){
+      if(q >= 0) lvs.push(v); else lvs.push(-v);
+    }
+    equipotentials(ctx,ch,W,H,sc, lvs);
+  }
+  vecField(ctx,ch,W,H,sc,nd,nd);
+  if(O.o0fl){
+    const nL = Math.round(8 * Math.abs(q));
+    if(q>0){
+      fieldLines(ctx,ch,W,H,sc,nL);
+    } else {
+      const chRev=[{x:0,y:0,q:-q}];
+      for(let a=0;a<nL;a++){
+        const ang=2*Math.PI*a/nL;
+        let wx=0+.14*Math.cos(ang), wy=0+.14*Math.sin(ang);
+        ctx.beginPath(); let first=true;
+        for(let s=0;s<700;s++){
+          const sx2=wx*sc+W/2, sy2=wy*sc+H/2;
+          if(sx2<-10||sx2>W+10||sy2<-10||sy2>H+10) break;
+          if(first){ctx.moveTo(sx2,sy2);first=false;}else ctx.lineTo(sx2,sy2);
+          const {ex,ey}=eAt(chRev,wx,wy);
+          const m=Math.sqrt(ex*ex+ey*ey); if(m<1e-9) break;
+          wx+=.035*ex/m; wy+=.035*ey/m;
+        }
+        ctx.strokeStyle='rgba(77,171,247,0.5)'; ctx.lineWidth=1; ctx.stroke();
+      }
+    }
+  }
+  drawCharge(ctx,W/2,H/2,q);
+}
+
+function draw1(){
+  const c=document.getElementById('c1');
+  const ctx=c.getContext('2d'), W=c.width, H=c.height;
+  if(!W||!H) return;
+  const d=+document.getElementById('r1d').value;
+  const qp=+document.getElementById('r1q').value;
+  document.getElementById('l1d').textContent=d.toFixed(1);
+  document.getElementById('l1q').textContent=qp.toFixed(1);
+  const sc=Math.min(W,H)/6.5;
+  const ch=[{x:-d/2,y:0,q:qp},{x:d/2,y:0,q:-qp}];
+  bgGrid(ctx,W,H);
+  if(O.o1ep){
+    const Vstep = 0.8;
+    const Vmax_clip = Math.abs(qp) / 0.15;
+    const lvs = [];
+    for(let v=Vstep; v<Vmax_clip; v+=Vstep){
+      lvs.push(v);   // pozitif seviyeler (+q tarafı)
+      lvs.push(-v);  // negatif seviyeler (−q tarafı)
+    }
+    equipotentials(ctx,ch,W,H,sc,lvs);
+  }
+  if(O.o1zp){
+    ctx.strokeStyle='rgba(255,212,59,0.5)'; ctx.setLineDash([6,4]); ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(W/2,0); ctx.lineTo(W/2,H); ctx.stroke(); ctx.setLineDash([]);
+  }
+  vecField(ctx,ch,W,H,sc,13,13);
+  if(O.o1fl) fieldLines(ctx,ch,W,H,sc, Math.round(8*qp));
+  drawCharge(ctx,W/2-d/2*sc,H/2,qp);
+  drawCharge(ctx,W/2+d/2*sc,H/2,-qp);
+}
+
+function draw2(){
+  const c=document.getElementById('c2');
+  const ctx=c.getContext('2d'), W=c.width, H=c.height;
+  if(!W||!H) return;
+  const d=+document.getElementById('r2d').value;
+  const q1=+document.getElementById('r2q1').value;
+  const q2=+document.getElementById('r2q2').value;
+  document.getElementById('l2d').textContent=d.toFixed(1);
+  document.getElementById('l2q1').textContent=q1.toFixed(1);
+  document.getElementById('l2q2').textContent=q2.toFixed(1);
+  const sc=Math.min(W,H)/6.5;
+  const ch=[{x:-d/2,y:0,q:q1},{x:d/2,y:0,q:q2}];
+  bgGrid(ctx,W,H);
+
+  if(O.o2ep){
+    // İki pozitif yük: toplam potansiyel her yerde pozitif
+    // V_step sabit, seviyeleri q ile ölçekle
+    const Vstep = 0.8;
+    const avgQ = (q1+q2)/2;
+    const Vmax_clip = avgQ / 0.15;
+    const lvs = [];
+    for(let v=Vstep; v<Vmax_clip; v+=Vstep) lvs.push(v);
+    equipotentials(ctx,ch,W,H,sc,lvs);
+  }
+
+  vecField(ctx,ch,W,H,sc,13,13);
+  if(O.o2fl){
+    // her yükten q ile orantılı sayıda çizgi
+    for(const charge of ch){
+      const nL = Math.round(8 * charge.q);
+      for(let a=0;a<nL;a++){
+        const ang=2*Math.PI*a/nL;
+        let wx=charge.x+.14*Math.cos(ang), wy=charge.y+.14*Math.sin(ang);
+        ctx.beginPath(); let first=true;
+        for(let s=0;s<600;s++){
+          const sx=wx*sc+W/2, sy=wy*sc+H/2;
+          if(sx<-20||sx>W+20||sy<-20||sy>H+20) break;
+          if(first){ctx.moveTo(sx,sy);first=false;}else ctx.lineTo(sx,sy);
+          const {ex,ey}=eAt(ch,wx,wy);
+          const m=Math.sqrt(ex*ex+ey*ey); if(m<1e-9) break;
+          wx+=.035*ex/m; wy+=.035*ey/m;
+        }
+        ctx.strokeStyle='rgba(0,212,255,0.4)'; ctx.lineWidth=1; ctx.stroke();
+      }
+    }
+    // denge noktasından yukarı ve aşağı uzanan çizgiler
+    const x0=-d/2+d*Math.sqrt(q1)/(Math.sqrt(q1)+Math.sqrt(q2));
+    for(const ydir of [1,-1]){
+      let wx=x0, wy=ydir*0.01;
+      ctx.beginPath(); let first=true;
+      for(let s=0;s<800;s++){
+        const sx=wx*sc+W/2, sy=wy*sc+H/2;
+        if(sx<-20||sx>W+20||sy<-20||sy>H+20) break;
+        if(first){ctx.moveTo(sx,sy);first=false;}else ctx.lineTo(sx,sy);
+        const {ex,ey}=eAt(ch,wx,wy);
+        const m=Math.sqrt(ex*ex+ey*ey); if(m<1e-9) break;
+        wx+=.035*ex/m; wy+=.035*ey/m;
+      }
+      ctx.strokeStyle='rgba(0,212,255,0.4)'; ctx.lineWidth=1; ctx.stroke();
+    }
+  }
+  if(O.o2dp){
+    const x0=-d/2+d*Math.sqrt(q1)/(Math.sqrt(q1)+Math.sqrt(q2));
+    const sx=x0*sc+W/2, sy=H/2;
+    ctx.beginPath(); ctx.arc(sx,sy,9,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,212,59,0.15)'; ctx.fill();
+    ctx.strokeStyle='#ffd43b'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='#ffd43b'; ctx.font='10px Space Mono,monospace'; ctx.textAlign='center';
+    ctx.fillText('E=0',sx,sy-16);
+  }
+  drawCharge(ctx,W/2-d/2*sc,H/2,q1);
+  drawCharge(ctx,W/2+d/2*sc,H/2,q2);
+}
+
+function draw3(){
+  const c=document.getElementById('c3');
+  const ctx=c.getContext('2d'), W=c.width, H=c.height;
+  if(!W||!H) return;
+  const q=+document.getElementById('r3q').value;
+  const dist=+document.getElementById('r3di').value;
+  const R=+document.getElementById('r3r').value;
+  document.getElementById('l3q').textContent=q.toFixed(1);
+  document.getElementById('l3di').textContent=dist.toFixed(1);
+  document.getElementById('l3r').textContent=R.toFixed(1);
+  const sc=Math.min(W,H)/8;
+  // Görüntü yükü hesabı
+  const qi=-q*R/dist, xi=R*R/dist;
+  // Topraklı: tek görüntü yükü q' = -qR/d → Q_küre = q'
+  // Yüzen:    iki görüntü yükü: q'₁ = -qR/d (r'=R²/d) + q'₂ = +qR/d (merkez) → Q_küre = 0
+  const ch = V3.v3gnd
+    ? [{x:dist,y:0,q}, {x:xi,y:0,q:qi}]
+    : [{x:dist,y:0,q}, {x:xi,y:0,q:qi}, {x:0,y:0,q:-qi}];
+  const inside=(wx,wy)=>wx*wx+wy*wy<R*R*.88;
+  bgGrid(ctx,W,H);
+
+  if(O.o3ep){
+    const V_sphere = V3.v3gnd ? 0 : pot(ch, 0, 0);
+    const Vstep=0.8;
+    const Vmax_clip=q/0.15;
+    const lvs=[];
+    for(let v=Vstep; v<Vmax_clip; v+=Vstep){
+      lvs.push(V_sphere + v);
+      if(Math.abs(v) > 0.01) lvs.push(V_sphere - v);
+    }
+    equipotentialsWithMask(ctx,ch,W,H,sc,lvs,(wx,wy)=>wx*wx+wy*wy<R*R);
+  }
+
+  // Legend: V_küre ve Q_küre
+  {
+    const V_sphere = V3.v3gnd ? 0 : pot(ch, 0, 0);
+    // Topraklı: Q_küre = qi (görüntü yükü kadar yük topraktan geldi)
+    // Yüzen:    Q_küre = 0 (izole, başlangıç yükü sıfır)
+    const Q_sphere = V3.v3gnd ? qi : 0;
+    const vLabel = V3.v3gnd ? 'V_küre = 0  (topraklı)' : 'V_küre = '+(V_sphere>=0?'+':'')+V_sphere.toFixed(2);
+    const qLabel = 'Q_küre = '+(Q_sphere>=0?'+':'')+Q_sphere.toFixed(2);
+    document.getElementById('l3vq').style.display='flex';
+    document.getElementById('l3v').textContent=vLabel;
+    document.getElementById('l3qval').textContent=qLabel;
+  }
+
+  // surface charge dots
+  if(O.o3sc){
+    const nA=120;
+    for(let i=0;i<nA;i++){
+      const ang=2*Math.PI*i/nA;
+      const sx2=R*Math.cos(ang), sy2=R*Math.sin(ang);
+
+      let sigma;
+      if(V3.v3gnd){
+        // Topraklı: tek görüntü yükü — sigma = -(d²-R²) / (4π R r³) normalize
+        const dx2=sx2-dist, dy2=sy2;
+        const r3=Math.pow(dx2*dx2+dy2*dy2,1.5);
+        sigma=-(dist*dist-R*R)/r3;
+      } else {
+        // Yüzen: iki görüntü yükünün katkısı toplanır
+        // q'₁ = qi (konum xi,0), q'₂ = -qi (konum 0,0)
+        const dx1=sx2-xi, dy1=sy2;
+        const r1_3=Math.pow(dx1*dx1+dy1*dy1,1.5);
+        const sigma1 = qi / r1_3;   // q'₁ katkısı (negatif yük, yüke yakın taraf)
+        const dx2b=sx2, dy2b=sy2;
+        const r2_3=Math.pow(dx2b*dx2b+dy2b*dy2b,1.5);
+        const sigma2 = (-qi) / r2_3; // q'₂ katkısı (pozitif yük, merkez)
+        sigma = sigma1 + sigma2;
+      }
+
+      const col=sigma<0
+        ?`rgba(77,171,247,${Math.min(.9,Math.abs(sigma)*1.8)})`
+        :`rgba(255,107,107,${Math.min(.9,Math.abs(sigma)*1.8)})`;
+      const px2=sx2*sc+W/2, py2=sy2*sc+H/2;
+      ctx.beginPath(); ctx.arc(px2,py2,3.5,0,Math.PI*2);
+      ctx.fillStyle=col; ctx.fill();
+    }
+  }
+
+  // vector field (skip inside sphere)
+  const nd=13;
+  const dxg=W/nd, dyg=H/nd;
+  for(let i=0;i<nd;i++) for(let j=0;j<nd;j++){
+    const px=(i+.5)*dxg, py=(j+.5)*dyg;
+    const wx=(px-W/2)/sc, wy=(py-H/2)/sc;
+    if(wx*wx+wy*wy<R*R*1.15) continue;
+    const {ex,ey}=eAt(ch,wx,wy);
+    const mag=Math.sqrt(ex*ex+ey*ey); if(mag<1e-7) continue;
+    const len=Math.min(Math.log(1+mag*2)*7,dxg*.42);
+    const nx2=ex/mag, ny2=ey/mag;
+    const a=Math.min(.85,.3+mag*.2);
+    const t=Math.min(1,mag/3);
+    const R2=Math.round(t*255), G2=Math.round(212-t*100), B2=Math.round(255-t*200);
+    const col=`rgba(${R2},${G2},${B2},${a})`;
+    const ax=px+nx2*len*.5, ay=py+ny2*len*.5;
+    ctx.strokeStyle=col; ctx.lineWidth=1.3;
+    ctx.beginPath(); ctx.moveTo(px-nx2*len*.5,py-ny2*len*.5); ctx.lineTo(ax,ay); ctx.stroke();
+    const aw=3.5;
+    ctx.fillStyle=col; ctx.beginPath();
+    ctx.moveTo(ax,ay);
+    ctx.lineTo(ax-nx2*aw-ny2*aw*.5,ay-ny2*aw+nx2*aw*.5);
+    ctx.lineTo(ax-nx2*aw+ny2*aw*.5,ay-ny2*aw-nx2*aw*.5);
+    ctx.closePath(); ctx.fill();
+  }
+
+  // alan çizgileri
+  if(O.o3fl){
+    const nL = Math.round(8 * q);
+    const skip3 = (wx,wy)=>wx*wx+wy*wy<R*R*1.02;
+    // q'₁ hariç yük listesi — q'₂'den çizgi sürerken q'₁'e anında hit olmayı önler
+    const chNoQ1 = ch.filter(c=>!(Math.abs(c.x-xi)<0.001 && Math.abs(c.q-qi)<0.001));
+
+    if(V3.v3gnd){
+      // ── TOPRAKLI ──────────────────────────────────────────
+      if(O.o3im){
+        // Görüntü yükü açık: dış yükten, küre içine gir
+        for(let a=0;a<nL;a++){
+          const ang=2*Math.PI*a/nL;
+          _traceLine(ctx,ch,sc,W,H, dist+.14*Math.cos(ang), .14*Math.sin(ang), 1, 2000, null);
+        }
+        const startX=(0-W/2)/sc-0.1;
+        _traceLine(ctx,ch,sc,W,H, startX, 0, 1, 2000, null);
+      } else {
+        // Görüntü yükü kapalı: dış yükten, kürede dur
+        for(let a=0;a<nL;a++){
+          const ang=2*Math.PI*a/nL;
+          _traceLine(ctx,ch,sc,W,H, dist+.14*Math.cos(ang), .14*Math.sin(ang), 1, 1200, skip3);
+        }
+      }
+    } else {
+      // ── YÜZEN ─────────────────────────────────────────────
+      const nL2 = Math.round(8*Math.abs(qi));
+      const qExt = {x:dist, y:0, q:q};
+      const qNeg = {x:xi,   y:0, q:qi};
+      const qPos = {x:0,    y:0, q:-qi};
+
+      // Gizli canvas'a çiz
+      const dbgCanvas = document.getElementById('c3debug');
+      dbgCanvas.width=W; dbgCanvas.height=H;
+      const octxFL = dbgCanvas.getContext('2d');
+      octxFL.clearRect(0,0,W,H);
+      drawThreeChargeLines(octxFL, ch, qExt, qNeg, qPos, nL, nL2, sc, W, H);
+
+      // Ana canvas'a aktar — görüntü yükü kapalıysa küre içini kırp
+      if(!O.o3im){
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0,0,W,H);
+        ctx.arc(W/2, H/2, R*sc*0.98, 0, Math.PI*2, true);
+        ctx.clip();
+      }
+      ctx.drawImage(dbgCanvas, 0, 0);
+      if(!O.o3im) ctx.restore();
+    }
+  }
+
+  // görüntü yükünü göster
+  if(O.o3im){
+    // Her zaman: birinci görüntü yükü (r' = R²/d)
+    drawCharge(ctx, W/2+xi*sc, H/2, qi);
+    ctx.save();
+    ctx.font='10px Space Mono,monospace';
+    ctx.fillStyle='rgba(255,212,59,0.8)';
+    ctx.textAlign='center';
+    ctx.fillText("q'₁ = "+qi.toFixed(2), W/2+xi*sc, H/2-18);
+    ctx.restore();
+    // Yüzen durumda: ikinci görüntü yükü (merkez, +qR/d)
+    if(!V3.v3gnd){
+      drawCharge(ctx, W/2, H/2, -qi);
+      ctx.save();
+      ctx.font='10px Space Mono,monospace';
+      ctx.fillStyle='rgba(255,212,59,0.8)';
+      ctx.textAlign='center';
+      ctx.fillText("q'₂ = "+(-qi).toFixed(2), W/2, H/2+24);
+      ctx.restore();
+    }
+  }
+
+  // sphere
+  const cxS=W/2, cyS=H/2, rS=R*sc;
+  if(O.o3in){
+    ctx.beginPath(); ctx.arc(cxS,cyS,rS,0,Math.PI*2);
+    ctx.fillStyle='rgba(81,207,102,0.07)'; ctx.fill();
+    ctx.strokeStyle='rgba(81,207,102,0.6)'; ctx.lineWidth=2;
+    ctx.setLineDash([5,4]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='rgba(81,207,102,0.75)'; ctx.font='bold 12px Space Mono,monospace';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('E = 0',cxS,cyS);
+  } else {
+    ctx.strokeStyle='rgba(81,207,102,0.6)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(cxS,cyS,rS,0,Math.PI*2); ctx.stroke();
+  }
+
+  drawCharge(ctx,W/2+dist*sc,H/2,q);
+
+  // Toprak sembolü — kürenin en sol noktasına
+  if(V3.v3gnd){
+    const gx = W/2 - rS;      // kürenin en sol noktası (piksel)
+    const gy = H/2;
+    const gl = 14;             // bağlantı çizgisi uzunluğu
+    ctx.save();
+    ctx.strokeStyle='rgba(81,207,102,0.85)';
+    ctx.lineWidth=1.5;
+    // bağlantı çizgisi: küreden sola
+    ctx.beginPath(); ctx.moveTo(gx,gy); ctx.lineTo(gx-gl,gy); ctx.stroke();
+    // toprak çizgileri (3 adet, küçülen)
+    const widths=[10,7,4];
+    for(let i=0;i<3;i++){
+      const tx=gx-gl-(i*5);
+      const hw=widths[i];
+      ctx.beginPath();
+      ctx.moveTo(tx, gy-hw); ctx.lineTo(tx, gy+hw);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+function redraw(i){ [draw0,draw1,draw2,draw3][i](); }
+function redrawAll(){ draw0();draw1();draw2();draw3(); }
+
+// ── CST Guide ─────────────────────────────────────────────────────────────────
+const STEPS = [
+  {
+    title: "Yeni Proje Oluştur",
+    desc: `CST Studio Suite 2025'i açın. <strong>New Project from Template</strong>'e tıklayın.<br><br>
+           <strong>İlk kez:</strong> <strong>New Template</strong>'e tıklayın → sol sütunda <strong>Statics / Low Frequency → High Voltage / Heavy Current</strong> → workflow olarak <strong>Insulators</strong> → solver olarak <strong>E-Static</strong> seçin. Birim ayarlarını bu ekranda yapın: uzunluk <code>mm</code>, gerilim <code>V</code>. <code>Finish</code> ile tamamlayın.<br><br>
+           <strong>Sonraki projelerde:</strong> bu template artık listede görünür — tekrar <em>New Template</em>'e tıklamaya gerek yok, direkt seçip kullanabilirsiniz.`,
+    hint: "'Insulators' workflow'unun adı yanıltıcı — bu genel elektrostatik problemler için de kullanılır. E-Static solver Coulomb/Gauss denklemlerini çözer, tam aradığımız bu.",
+    screen: {
+      menuBar: ["File", "Simulation", "Solve", "Post Processing", "Help"],
+      hlMenu: "File",
+      path: "New Project from Template → [E-Static template]  ← sonraki seferden direkt",
+      fields: [
+        {lbl:"İlk kurulum", val:"New Template → Insulators → E-Static", hl:false},
+        {lbl:"Birimler (template'de)", val:"mm / V  ← burada ayarlanır", hl:true},
+        {lbl:"Sonraki projeler", val:"Template listesinden direkt seç", hl:false},
+      ]
+    }
+  },
+  {
+    title: "Arka Plan Ayarları",
+    desc: `<strong>Simulation → Background</strong>'a gidin. Açılan pencerede:<br><br>
+           <strong>Material</strong> olarak <code>Normal</code> seçili olmalı — bu boş uzayı (ε = 1) temsil eder.<br><br>
+           Kutu boyutu için <strong>Surrounding Space → Distance</strong> değerini <code>5 mm</code> yapın. Hızlı sonuç için başlangıçta bu yeterli — sonuçları doğruladıktan sonra büyütüp karşılaştırabilirsiniz.`,
+    hint: "Kutu çok küçükse sınır koşulları alanı bozar — özellikle eş-potansiyel çizgilerinde bozulma görürsünüz. Emin değilseniz Distance'ı büyütün ve sonucun değişip değişmediğine bakın.",
+    screen: {
+      menuBar: ["Simulation", "Modeling", "Solve", "Post Processing", "Help"],
+      hlMenu: "Simulation",
+      path: "Simulation → Background",
+      fields: [
+        {lbl:"Material", val:"Normal (ε = 1)", hl:true},
+        {lbl:"Surrounding Space → Distance", val:"5 mm", hl:true},
+      ]
+    }
+  },
+  {
+    title: "Küre Geometrisi Çiz",
+    desc: `Üstteki <strong>Modeling</strong> sekmesine geçin. Şekil ikonları arasından <strong>küre</strong> ikonuna tıklayın.<br><br>
+           <strong>Fare ile:</strong> 3B görünümde küre merkezine gelin — alt çubukta koordinatlar anlık görünür. Merkezi belirlemek için <strong>çift tıklayın</strong>, ardından yarıçapı ayarlayıp tekrar <strong>çift tıklayın</strong>.<br><br>
+           <strong>Elle girmek için:</strong> küre ikonuna tıkladıktan sonra <code>ESC</code>'ye basın — çıkan kutuya merkez ve yarıçapı doğrudan yazabilirsiniz: merkez <code>(0, 0, 0)</code>, yarıçap <code>1 mm</code>.<br><br>
+           Kürenin adını <code>charged_sphere</code> yapın.`,
+    hint: "Koordinatları elle girmek (ESC yolu) genellikle daha hızlı ve hatasız. Fare yöntemi özellikle varolan geometriye snap yapmak gerektiğinde kullanışlı.",
+    screen: {
+      menuBar: ["Modeling", "Simulation", "Post Processing", "Results"],
+      hlMenu: "Modeling",
+      path: "Modeling (üst sekme) → küre ikonu → ESC → koordinat girişi",
+      fields: [
+        {lbl:"Center X / Y / Z", val:"0 / 0 / 0", hl:false},
+        {lbl:"Radius", val:"1 mm", hl:true},
+        {lbl:"Name", val:"charged_sphere", hl:false},
+      ]
+    }
+  },
+  {
+    title: "Yük Tanımla (Charge Distribution)",
+    desc: `Navigation Tree'de <strong>Charges</strong> başlığına sağ tıklayın → <strong>New Charge Distribution</strong>.<br><br>
+           Açılan <em>Define Charge Distribution</em> penceresinde küremizin üzerine <strong>çift tıklayın</strong> — nesne seçilmiş olur.<br><br>
+           Seçenekler:<br>
+           • <strong>Surface / Volume:</strong> Volume seçin — küre içine dağılmış yük.<br>
+           • <strong>Total (C) / Density (C/m³):</strong> Density ile <code>1e-9</code> girebilir ya da Total ile doğrudan <code>1e-12</code> C (1 pC) gibi somut bir değer verebilirsiniz.<br><br>
+           Ad olarak <code>charge1</code> bırakabilirsiniz.`,
+    hint: "'New Charge' değil, 'New Charge Distribution' seçin — New Charge PEC (iletken) yüzeylere yük koymak içindir, bizim küremiz iletken değil. Density sabitlenirse yarıçap değiştiğinde toplam yük de değişir (Q = ρ × V). Yarıçaptan bağımsız sabit bir toplam yük istiyorsanız Total (C) seçeneğini kullanın.",
+    screen: {
+      menuBar: ["Simulation", "Modeling", "Solve", "Post Processing"],
+      hlMenu: "Simulation",
+      path: "Navigation Tree → Charges → sağ tık → New Charge Distribution",
+      fields: [
+        {lbl:"Name", val:"charge1", hl:false},
+        {lbl:"Type", val:"Volume  ← seçin", hl:true},
+        {lbl:"Density", val:"1e-9 C/m³", hl:true},
+      ]
+    }
+  },
+  {
+    title: "Sınır Koşulları",
+    desc: `<strong>Simulation → Boundaries</strong>'e tıklayın. <strong>"Apply in all directions"</strong> kutusunu işaretleyin.<br><br>
+           Type olarak <strong>open (add space lf)</strong> seçin.<br><br>
+           <strong>Alternatifler ve neden open?</strong><br>
+           • <code>Electric (Et = 0)</code> — sınırda E alanı duvara dik olmak zorunda. Sanki kutunun etrafı metal levhayla çevrili. Alan çizgileri yansır, fizik bozulur.<br>
+           • <code>Magnetic (Ht = 0)</code> — sınırda E alanı duvara paralel olmak zorunda. Bu da yapay bir kısıtlama — yanlış.<br>
+           • <code>open</code> — geometriyi sanal olarak sonsuza uzatır. Bizim problemimiz için doğru seçim: yükün alanı her yöne serbestçe uzanır.<br>
+           • <code>open (add space lf)</code> — open ile aynı fizik, ek olarak CST araya otomatik boş uzay katmanı ekler. En güvenli seçim.`,
+    hint: "Küresel simetrili bir yükü dikdörtgen kutuya koyduk — alan çizgileri köşelere çapraz gidiyor, ne tam normal ne tam teğet. Electric veya Magnetic seçmek bu çizgileri yapay olarak zorlar. Open, sınırın 'orada olmadığını' varsayar — fiziksel olarak doğru olan bu.",
+    screen: {
+      menuBar: ["Simulation", "Modeling", "Solve", "Post Processing"],
+      hlMenu: "Simulation",
+      path: "Simulation → Boundaries",
+      fields: [
+        {lbl:"Apply in all directions", val:"✓ işaretleyin", hl:true},
+        {lbl:"Type", val:"open (add space lf)", hl:true},
+      ]
+    }
+  },
+  {
+    title: "Mesh Ayarları",
+    desc: `<strong>Simulation → Mesh View → Global Properties</strong> ile global mesh penceresini açın (Tetrahedral).<br><br>
+           <strong>Cells per max model box edge</strong> — Model için default <code>10</code>, Background için <code>5</code>. Model değerini <code>20</code>'ye çıkarın.<br><br>
+           <strong>Yerel yoğunlaştırma:</strong> küreye sağ tıklayın → <strong>Local Mesh Properties</strong>.<br><br>
+           • <strong>Max. step width</strong>: küre yüzeyindeki maksimum eleman boyutunu sınırlar. Küre yarıçapı 1 mm ise <code>0.05</code> mm iyi bir başlangıç — sıfır bırakırsanız global ayar geçerli olur.<br><br>
+           • <strong>Consider for auto edge refinement</strong>: sadece Z yönündeki düzlemsel yüzeyler için çalışır — küremize uygulanmaz, işaretlemeyin.`,
+    hint: `Mesh üretimi benzetimin doğruluğu için kritiktir. Bu konuya ayrılacak zaman boşa gitmez — CST yardım ekranında <strong>3D Simulation → Mesh Generation → Tetrahedral and Surface Mesh</strong> bölümünü okumak iyi bir yatırım.`,
+    screen: {
+      menuBar: ["Simulation", "Modeling", "Solve", "Post Processing"],
+      hlMenu: "Simulation",
+      path: "Simulation → Mesh View → Global Properties  (Tetrahedral)",
+      fields: [
+        {lbl:"Cells / edge (Model)", val:"20  ← artırın", hl:true},
+        {lbl:"Cells / edge (Background)", val:"5  (default)", hl:false},
+        {lbl:"Local: Max. step width", val:"0.05 mm", hl:true},
+      ]
+    }
+  },
+  {
+    title: "Solver Çalıştır",
+    desc: `<strong>Simulation → Setup Solver</strong>'a tıklayın. Açılan <em>Electrostatic Solver Parameters</em> penceresinde:<br><br>
+           • Mesh type: <code>Tetrahedral</code><br>
+           • Accuracy: <code>1e-6</code><br>
+           • <strong>Adaptive mesh refinement</strong> kutusunu işaretli bırakın — solver mesh'i otomatik iyileştirir.<br><br>
+           <strong>Start</strong>'a tıklayın. İlerleme çubuğu tamamlanınca sonuçlar Navigation Tree'de belirir.`,
+    hint: "Hata: 'The mesher has aborted due to a critical error' → büyük olasılıkla geometride sorun var: çok küçük bir eleman, çakışan yüzeyler veya dejenere bir şekil. Mesh View'i açıp kırmızı/sarı bölgeleri arayın. Küre yarıçapını biraz büyütmek (1 mm → 2 mm) veya Background Distance'ı küçük bir değere sıfırlamak çoğu zaman çözüm verir.",
+    screen: {
+      menuBar: ["Simulation", "Modeling", "Post Processing", "View"],
+      hlMenu: "Simulation",
+      path: "Simulation → Setup Solver → Start",
+      fields: [
+        {lbl:"Mesh type", val:"Tetrahedral", hl:false},
+        {lbl:"Accuracy", val:"1e-6", hl:false},
+        {lbl:"Adaptive mesh refinement", val:"✓ işaretli", hl:true},
+      ]
+    }
+  },
+  {
+    title: "Sonuçları Görselleştir",
+    desc: `<strong>Navigation Tree → 2D/3D Results → E-Field</strong>'e tıklayın — sonuç otomatik açılır.<br><br>
+           <strong>Görüntüyü sadeleştirmek için:</strong> E-Field üzerinde sağ tık → <strong>Plot Properties</strong> → Arrow Type: <code>Filled Line Arrows</code>.<br><br>
+           <strong>2B kesit almak için:</strong> üstte <strong>View → 2D/3D Plot</strong> sekmesine geçin. <strong>Fields on Plane</strong> grubunda:<br>
+           1. <strong>Activate Cross Section A</strong>'ya tıklayın<br>
+           2. <strong>Select Cross Section A</strong> ile düzlemi seçin — XY (Z=0) kürenin tam ortasından geçer.<br><br>
+           <strong>Potansiyel için:</strong> Navigation Tree'de <code>Potential</code>'e tıklayın, aynı kesit düzlemi aktif kalır.`,
+    hint: "Logaritmik skala için üst şeritten <strong>dB</strong>'ye tıklayın. Renk haritasını değiştirmek için: sağ tık → <strong>Properties → Color Ramp Settings → Scalar color mapping</strong>: Rainbow yerine <strong>Far Fire</strong> daha okunabilir bir görüntü verir.",
+    screen: {
+      menuBar: ["View", "2D/3D Plot", "Post-Processing", "Simulation"],
+      hlMenu: "2D/3D Plot",
+      path: "View → 2D/3D Plot → Fields on Plane → Activate Cross Section A",
+      fields: [
+        {lbl:"Arrow Type", val:"Filled Line Arrows", hl:true},
+        {lbl:"Activate Cross Section A", val:"✓ tıklayın", hl:true},
+        {lbl:"Kesit düzlemi", val:"YZ  (X = 0)", hl:false},
+      ]
+    }
+  },
+];
+
+let currentStep = 0;
+
+function buildModal() {
+  const body = document.getElementById('modalBody');
+  // keep progress wrap, build steps after it
+  const pw = body.querySelector('.progress-wrap');
+  // remove old step cards
+  body.querySelectorAll('.step-card').forEach(el=>el.remove());
+
+  STEPS.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'step-card' + (i===0?' visible':'');
+    div.id = 'step'+i;
+
+    const screenRows = s.screen.fields.map(f=>
+      `<div class="field-row">
+        <span class="field-lbl">${f.lbl}</span>
+        <span class="field-val${f.hl?' hl':''}">${f.val}</span>
+       </div>`
+    ).join('');
+    const menuItems = s.screen.menuBar.map(m=>
+      `<span${m===s.screen.hlMenu?' class="hl"':''}>${m}</span>`
+    ).join('');
+
+    div.innerHTML = `
+      <div class="step-num">ADIM <span>${i+1}</span> / ${STEPS.length}</div>
+      <div class="step-title">${s.title}</div>
+      <div class="step-desc">${s.desc}</div>
+      <div class="screen-mock">
+        <div class="menu-bar">${menuItems}</div>
+        <div class="path">▸ ${s.screen.path}</div>
+        ${screenRows}
+      </div>
+      <div class="hint"><span class="hint-icon">💡</span><span>${s.hint}</span></div>
+    `;
+    body.appendChild(div);
+  });
+
+  // dots
+  const dots = document.getElementById('stepDots');
+  dots.innerHTML = STEPS.map((_,i)=>
+    `<div class="dot2${i===0?' on':''}" onclick="goStep(${i})"></div>`
+  ).join('');
+}
+
+function showStep(i) {
+  document.querySelectorAll('#modalBody .step-card').forEach((el,j)=>{
+    el.classList.toggle('visible', j===i);
+  });
+  document.querySelectorAll('#stepDots .dot2').forEach((el,j)=>{
+    el.classList.toggle('on', j===i);
+  });
+  const pct = Math.round((i/(STEPS.length-1))*100);
+  document.getElementById('progFill').style.width = pct+'%';
+  document.getElementById('progTxt').textContent = (i+1)+' / '+STEPS.length;
+  document.getElementById('btnPrev').disabled = i===0;
+  const btnNext = document.getElementById('btnNext');
+  if(i===STEPS.length-1){
+    btnNext.textContent='Tamamla ✓'; btnNext.disabled=false;
+  } else {
+    btnNext.textContent='İleri →'; btnNext.disabled=false;
+  }
+  currentStep=i;
+}
+
+function stepNav(dir) {
+  if(dir===1 && currentStep===STEPS.length-1){ closeGuide(); return; }
+  const next = Math.max(0, Math.min(STEPS.length-1, currentStep+dir));
+  showStep(next);
+}
+
+function goStep(i){ showStep(i); }
+
+function openGuide(){
+  buildModal();
+  showStep(0);
+  document.getElementById('guideOverlay').classList.add('open');
+}
+function closeGuide(){ document.getElementById('guideOverlay').classList.remove('open'); }
+function handleOverlayClick(e){ if(e.target===document.getElementById('guideOverlay')) closeGuide(); }
+// ── CST Guide 2: Dipol ────────────────────────────────────────────────────────
+const STEPS2 = [
+  {
+    title: "Yeni Proje — Sıfırdan Başlıyoruz",
+    desc: `CST Studio Suite 2025'i açın. <strong>New Project from Template</strong>'e tıklayın.<br><br>
+           Tab 1'i tamamladıysanız E-Static template'i zaten oluşturulmuş olacak — listeden direkt seçin, <em>New Template</em>'e tıklamaya gerek yok.<br><br>
+           <strong>İlk kez geliyorsanız:</strong> <strong>New Template → High Voltage / Heavy Current → Insulators → E-Static</strong> seçin. Birimler bu ekranda ayarlanır: <code>mm / V</code>. <code>Finish</code> ile tamamlayın.<br><br>
+           <strong>En hızlı yol:</strong> Tab 1 projesini <strong>File → Save As</strong> ile kopyalayın — solver, birimler ve arka plan ayarları hazır.`,
+    hint: "Template'i bir kez oluşturduktan sonra her yeni projede direkt kullanılabilir. Bu dersin geri kalan tab'ları için de aynı template geçerli.",
+    screen: {
+      menuBar: ["File", "Simulation", "Solve", "Post Processing", "Help"],
+      hlMenu: "File",
+      path: "New Project from Template → [E-Static template]",
+      fields: [
+        {lbl:"Template (hazırsa)", val:"Listeden direkt seç", hl:true},
+        {lbl:"İlk kez", val:"New Template → Insulators → E-Static", hl:false},
+        {lbl:"Kısa yol", val:"File → Save As (Tab 1'den kopyala)", hl:false},
+      ]
+    }
+  },
+  {
+    title: "Arka Plan ve Kutu Boyutu",
+    desc: `<strong>Simulation → Background</strong>'a gidin.<br><br>
+           <strong>Material</strong> olarak <code>Normal</code> seçin (ε = 1, boş uzay).<br><br>
+           Kutu boyutu için <strong>Surrounding Space → Distance</strong> değerini ayarlayın. Dipol için iki yük arasındaki mesafe <code>d</code> ise en az <code>10d</code> tutun — örneğin d = 20 mm ise Distance için <code>200 mm</code> yeterli.`,
+    hint: "Dipol alanı tek yüke göre çok daha hızlı düşer (1/r³) — bu yüzden kutu boyutu tek yük kadar kritik değil. Ama uzak-alan davranışını görmek istiyorsanız yine de 10d tutun.",
+    screen: {
+      menuBar: ["Simulation", "Modeling", "Solve", "Post Processing"],
+      hlMenu: "Simulation",
+      path: "Simulation → Background",
+      fields: [
+        {lbl:"Material", val:"Normal (ε = 1)", hl:true},
+        {lbl:"Surrounding Space → Distance", val:"≥ 10 × d", hl:true},
+      ]
+    }
+  },
+  {
+    title: "Sınır Koşulları",
+    desc: `<strong>Simulation → Boundaries</strong>'e tıklayın. <strong>"Apply in all directions"</strong> kutusunu işaretleyin.<br><br>
+           Type olarak <strong>open (add space lf)</strong> seçin.<br><br>
+           • <code>Electric (Et = 0)</code> — E alanını sınırda duvara dik zorlar. Sanki etraf metal levhayla çevrili — alan çizgileri yansır, fizik bozulur.<br>
+           • <code>Magnetic (Ht = 0)</code> — E alanını sınırda duvara paralel zorlar. Yine yapay kısıtlama — yanlış.<br>
+           • <code>open (add space lf)</code> — geometriyi sanal olarak sonsuza uzatır, ekstra boş uzay katmanı ekler. Bizim problemimiz için doğru seçim.`,
+    hint: "İki yükü dikdörtgen kutuya koyduk — alan çizgileri köşelere çapraz gidiyor. Electric veya Magnetic seçmek bu çizgileri yapay olarak zorlar. Open, sınırın 'orada olmadığını' varsayar — fiziksel olarak doğru olan bu.",
+    screen: {
+      menuBar: ["Simulation", "Modeling", "Solve", "Post Processing"],
+      hlMenu: "Simulation",
+      path: "Simulation → Boundaries",
+      fields: [
+        {lbl:"Apply in all directions", val:"✓ işaretleyin", hl:true},
+        {lbl:"Type", val:"open (add space lf)", hl:true},
+      ]
+    }
+  },
+  {
+    title: "Birinci Küreyi Çiz (+q)",
+    desc: `Üstteki <strong>Modeling</strong> sekmesine geçin. Şekil ikonları arasından <strong>küre</strong> ikonuna tıklayın.<br><br>
+           <code>ESC</code>'ye basarak koordinat kutusunu açın. Merkez: <code>(−10, 0, 0)</code>, yarıçap: <code>1 mm</code> girin.<br><br>
+           <strong>Fare ile tercih ederseniz:</strong> 3B görünümde alt çubuktan koordinatları takip ederek merkezi çift tıklamayla belirleyin, yarıçapı çekerek ayarlayın.<br><br>
+           Küreyi <code>sphere_pos</code> olarak adlandırın. Orijini iki yük ortasına koymak simetriyi kolaylaştırır: d = 20 mm için merkez <code>(−10, 0, 0)</code>.`,
+    hint: "Koordinat orijinini iki yükün tam ortasına koymak hem simetriyi hem de sonuçların yorumlanmasını kolaylaştırır. Dipol momenti p = qd formülündeki d, yükler arası toplam mesafedir.",
+    screen: {
+      menuBar: ["Modeling", "Simulation", "Post Processing", "Results"],
+      hlMenu: "Modeling",
+      path: "Modeling (üst sekme) → küre ikonu → ESC → koordinat girişi",
+      fields: [
+        {lbl:"Center", val:"(−10, 0, 0) mm", hl:true},
+        {lbl:"Radius", val:"1 mm", hl:false},
+        {lbl:"Name", val:"sphere_pos", hl:false},
+      ]
+    }
+  },
+  {
+    title: "İkinci Küreyi Çiz (−q)",
+    desc: `<strong>Hızlı yol — kopyala:</strong> Navigation Tree'de <code>sphere_pos</code>'u seçin → <strong>Modeling → Transform → Translate</strong>. <code>Copy</code> seçeneğini işaretleyin, öteleme değeri olarak <code>X: +20 mm</code> girin. Adını <code>sphere_neg</code> yapın.<br><br>
+           <strong>Sıfırdan çizecekseniz:</strong> küre ikonuna tıklayın → <code>ESC</code> → merkez <code>(+10, 0, 0)</code>, yarıçap <code>1 mm</code>.`,
+    hint: "Transform → Translate'de 'Copy' kutusunu işaretlemeyi unutmayın — aksi halde sphere_pos kaybolur, sadece taşınır.",
+    screen: {
+      menuBar: ["Modeling", "Simulation", "Post Processing", "Results"],
+      hlMenu: "Modeling",
+      path: "Modeling → Transform → Translate  (Copy işaretli)",
+      fields: [
+        {lbl:"Translate X", val:"+20 mm", hl:true},
+        {lbl:"Copy", val:"✓ işaretli", hl:true},
+        {lbl:"Name", val:"sphere_neg", hl:false},
+      ]
+    }
+  },
+  {
+    title: "+q Yükünü Tanımla",
+    desc: `Navigation Tree'de <strong>Charges</strong> başlığına sağ tıklayın → <strong>New Charge Distribution</strong>.<br><br>
+           Açılan pencerede <code>sphere_pos</code> üzerine <strong>çift tıklayın</strong>.<br><br>
+           <strong>Volume</strong> seçin, <strong>Density</strong>: <code>+1e-9 C/m³</code> girin (pozitif değer). Ad: <code>charge_pos</code>.`,
+    hint: "Toplam yükü kontrol etmek isterseniz: Q = ρ × V_küre. 1 mm yarıçaplı küre için V ≈ 4.2×10⁻⁹ m³ → yaklaşık 4 pC. Tercih ederseniz Total (C) seçip doğrudan değer de girebilirsiniz.",
+    screen: {
+      menuBar: ["Simulation", "Modeling", "Solve", "Post Processing"],
+      hlMenu: "Simulation",
+      path: "Navigation Tree → Charges → sağ tık → New Charge Distribution",
+      fields: [
+        {lbl:"Nesne", val:"sphere_pos  (çift tık)", hl:false},
+        {lbl:"Type", val:"Volume", hl:false},
+        {lbl:"Density", val:"+1e-9 C/m³", hl:true},
+      ]
+    }
+  },
+  {
+    title: "−q Yükünü Tanımla",
+    desc: `Tekrar <strong>Charges → New Charge Distribution</strong>. Bu sefer <code>sphere_neg</code> üzerine <strong>çift tıklayın</strong>.<br><br>
+           <strong>Volume</strong> seçin, <strong>Density</strong>: <code>−1e-9 C/m³</code> — <strong>eksi işaretine dikkat</strong>. Ad: <code>charge_neg</code>.<br><br>
+           Navigation Tree'de Charges altında iki girdinin göründüğünü doğrulayın.`,
+    hint: "İşareti yanlış girerseniz iki eş yük simülasyonu yaparsınız — Tab 3'ün konusu o! Solver sonrası alan çizgilerinin +q'dan çıkıp −q'ya girdiğini görürseniz doğru demektir.",
+    screen: {
+      menuBar: ["Simulation", "Modeling", "Solve", "Post Processing"],
+      hlMenu: "Simulation",
+      path: "Navigation Tree → Charges → sağ tık → New Charge Distribution",
+      fields: [
+        {lbl:"Nesne", val:"sphere_neg  (çift tık)", hl:false},
+        {lbl:"Type", val:"Volume", hl:false},
+        {lbl:"Density", val:"−1e-9 C/m³  ← eksi!", hl:true},
+      ]
+    }
+  },
+  {
+    title: "Mesh — İki Küre İçin Yoğunlaştırma",
+    desc: `<strong>Simulation → Mesh View → Global Properties</strong> (Tetrahedral). Model değerini <code>20</code>'ye çıkarın.<br><br>
+           Her iki küreye ayrı ayrı sağ tıklayın → <strong>Local Mesh Properties</strong>.<br><br>
+           • <strong>Max. step width</strong>: <code>0.05</code> mm girin — küre yüzeyindeki maksimum eleman boyutunu sınırlar.<br><br>
+           • <strong>Consider for auto edge refinement</strong>: sadece Z yönündeki düzlemsel yüzeyler için çalışır — kürelerimize uygulanmaz, işaretlemeyin.`,
+    hint: "Mesh kalitesi dipol alanının doğruluğunu doğrudan etkiler. Eş-potansiyel çizgiler pürüzlü görünüyorsa önce mesh'i sıklaştırın. CST yardım ekranında 3D Simulation → Mesh Generation → Tetrahedral and Surface Mesh bölümü bu konuyu derinlemesine ele alıyor.",
+    screen: {
+      menuBar: ["Simulation", "Modeling", "Solve", "Post Processing"],
+      hlMenu: "Simulation",
+      path: "Simulation → Mesh View → Global Properties  (Tetrahedral)",
+      fields: [
+        {lbl:"Cells / edge (Model)", val:"20  ← artırın", hl:true},
+        {lbl:"Local: Max. step width", val:"0.05 mm  (her iki küre)", hl:true},
+        {lbl:"Auto edge refinement", val:"işaretlemeyin", hl:false},
+      ]
+    }
+  },
+  {
+    title: "Solver Çalıştır",
+    desc: `<strong>Simulation → Setup Solver</strong>'a tıklayın.<br><br>
+           • Mesh type: <code>Tetrahedral</code><br>
+           • Accuracy: <code>1e-6</code><br>
+           • <strong>Adaptive mesh refinement</strong> işaretli olsun.<br><br>
+           <strong>Start</strong>'a tıklayın. Tamamlanınca Navigation Tree'de <strong>2D/3D Results</strong> altında <code>E-Field</code> ve <code>Potential</code> belirir.`,
+    hint: "Hata: 'The mesher has aborted' → geometride sorun var. Mesh View'i açıp kırmızı/sarı bölgeleri arayın. En yaygın neden: iki kürenin çakışması veya çok küçük eleman boyutu. Kürelerin birbirine değmediğini kontrol edin.",
+    screen: {
+      menuBar: ["Simulation", "Modeling", "Post Processing", "View"],
+      hlMenu: "Simulation",
+      path: "Simulation → Setup Solver → Start",
+      fields: [
+        {lbl:"Mesh type", val:"Tetrahedral", hl:false},
+        {lbl:"Accuracy", val:"1e-6", hl:false},
+        {lbl:"Adaptive mesh refinement", val:"✓ işaretli", hl:true},
+      ]
+    }
+  },
+  {
+    title: "Görselleştir — Dipole Özgü İpuçları",
+    desc: `<strong>Navigation Tree → 2D/3D Results → E-Field</strong>'e tıklayın.<br><br>
+           <strong>Sadeleştirmek için:</strong> sağ tık → <strong>Plot Properties</strong> → Arrow Type: <code>Filled Line Arrows</code>.<br><br>
+           <strong>2B kesit:</strong> üstte <strong>View → 2D/3D Plot</strong> sekmesi → <strong>Fields on Plane → Activate Cross Section A</strong> → <strong>Select Cross Section A</strong> ile düzlemi seçin.<br><br>
+           Dipol için <strong>XZ düzlemi (Y=0)</strong> en bilgilendirici kesittir — her iki yük de bu düzlemde.<br><br>
+           <strong>Potansiyel:</strong> <code>Potential</code>'e tıklayın, V=0 düzlemini arayın — iki yük tam ortasında dikey geçmelidir.`,
+    hint: "Logaritmik skala için üst şeritten <strong>dB</strong>'ye tıklayın. Renk haritası için: sağ tık → <strong>Properties → Color Ramp Settings → Scalar color mapping</strong>: Rainbow yerine <strong>Far Fire</strong> daha okunabilir. Alan çizgilerinin +q'dan çıkıp −q'ya girdiğini görürseniz işaretler doğru.",
+    screen: {
+      menuBar: ["View", "2D/3D Plot", "Post-Processing", "Simulation"],
+      hlMenu: "2D/3D Plot",
+      path: "View → 2D/3D Plot → Fields on Plane → Activate Cross Section A",
+      fields: [
+        {lbl:"Arrow Type", val:"Filled Line Arrows", hl:true},
+        {lbl:"Activate Cross Section A", val:"✓ tıklayın", hl:true},
+        {lbl:"Kesit düzlemi", val:"YZ  (X = 0)", hl:false},
+      ]
+    }
+  },
+];
+
+let currentStep2 = 0;
+
+function buildModal2() {
+  const body = document.getElementById('modalBody2');
+  body.querySelectorAll('.step-card').forEach(el=>el.remove());
+  STEPS2.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'step-card' + (i===0?' visible':'');
+    div.id = 'step2_'+i;
+    const screenRows = s.screen.fields.map(f=>
+      `<div class="field-row">
+        <span class="field-lbl">${f.lbl}</span>
+        <span class="field-val${f.hl?' hl':''}">${f.val}</span>
+       </div>`
+    ).join('');
+    const menuItems = s.screen.menuBar.map(m=>
+      `<span${m===s.screen.hlMenu?' class="hl"':''}>${m}</span>`
+    ).join('');
+    div.innerHTML = `
+      <div class="step-num">ADIM <span>${i+1}</span> / ${STEPS2.length}</div>
+      <div class="step-title">${s.title}</div>
+      <div class="step-desc">${s.desc}</div>
+      <div class="screen-mock">
+        <div class="menu-bar">${menuItems}</div>
+        <div class="path">▸ ${s.screen.path}</div>
+        ${screenRows}
+      </div>
+      <div class="hint"><span class="hint-icon">💡</span><span>${s.hint}</span></div>
+    `;
+    body.appendChild(div);
+  });
+  const dots = document.getElementById('stepDots2');
+  dots.innerHTML = STEPS2.map((_,i)=>
+    `<div class="dot2${i===0?' on':''}" onclick="goStep2(${i})"></div>`
+  ).join('');
+}
+
+function showStep2(i) {
+  document.querySelectorAll('#modalBody2 .step-card').forEach((el,j)=>{
+    el.classList.toggle('visible', j===i);
+  });
+  document.querySelectorAll('#stepDots2 .dot2').forEach((el,j)=>{
+    el.classList.toggle('on', j===i);
+  });
+  const pct = Math.round((i/(STEPS2.length-1))*100);
+  document.getElementById('progFill2').style.width = pct+'%';
+  document.getElementById('progTxt2').textContent = (i+1)+' / '+STEPS2.length;
+  document.getElementById('btnPrev2').disabled = i===0;
+  const btnNext2 = document.getElementById('btnNext2');
+  if(i===STEPS2.length-1){ btnNext2.textContent='Tamamla ✓'; }
+  else { btnNext2.textContent='İleri →'; }
+  currentStep2=i;
+}
+
+function stepNav2(dir) {
+  if(dir===1 && currentStep2===STEPS2.length-1){ closeGuide2(); return; }
+  showStep2(Math.max(0, Math.min(STEPS2.length-1, currentStep2+dir)));
+}
+function goStep2(i){ showStep2(i); }
+function openGuide2(){ buildModal2(); showStep2(0); document.getElementById('guideOverlay2').classList.add('open'); }
+function closeGuide2(){ document.getElementById('guideOverlay2').classList.remove('open'); }
+function handleOverlayClick2(e){ if(e.target===document.getElementById('guideOverlay2')) closeGuide2(); }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeGuide(); closeGuide2(); } });
+
+function toggleImPopup(e){
+  const popup = document.getElementById('imPopup');
+  if(popup.style.display==='none'||popup.style.display===''){
+    const rect = e.target.getBoundingClientRect();
+    popup.style.top  = Math.min(rect.bottom+8, window.innerHeight-200)+'px';
+    popup.style.left = Math.min(rect.left, window.innerWidth-320)+'px';
+    popup.style.display='flex';
+  } else {
+    popup.style.display='none';
+  }
+}
+
+// Sürükleme
+(function(){
+  const popup = ()=>document.getElementById('imPopup');
+  const head  = ()=>document.getElementById('imPopupHead');
+  let dragging=false, ox=0, oy=0;
+  document.addEventListener('mousedown', e=>{
+    if(head() && head().contains(e.target)){
+      dragging=true;
+      ox = e.clientX - popup().getBoundingClientRect().left;
+      oy = e.clientY - popup().getBoundingClientRect().top;
+      head().style.cursor='grabbing';
+      e.preventDefault();
+    }
+  });
+  document.addEventListener('mousemove', e=>{
+    if(!dragging) return;
+    const p=popup();
+    const x = Math.max(0, Math.min(window.innerWidth-p.offsetWidth,  e.clientX-ox));
+    const y = Math.max(0, Math.min(window.innerHeight-p.offsetHeight, e.clientY-oy));
+    p.style.left=x+'px'; p.style.top=y+'px';
+  });
+  document.addEventListener('mouseup', ()=>{
+    dragging=false;
+    const h=head(); if(h) h.style.cursor='grab';
+  });
+})();
+
+document.addEventListener('click', e=>{
+  const popup=document.getElementById('imPopup');
+  if(popup.style.display==='flex' && !popup.contains(e.target) && !e.target.closest('.tog-row')) popup.style.display='none';
+});
+
+
+
+// ── Üç yük için temiz alan çizgisi fonksiyonu ─────────────────────────────────
+// qExt: dış yük {x, y, q}
+// qNeg: negatif görüntü yükü {x, y, q}  (q < 0)
+// qPos: pozitif görüntü yükü {x, y, q}  (q > 0, merkez)
+// nExt: dış yükten çıkacak çizgi sayısı
+// nPos: pozitif görüntü yükünden çıkacak çizgi sayısı
+// allCharges: alan hesabında kullanılacak tüm yükler [qExt, qNeg, qPos]
+function drawThreeChargeLines(ctx, allCharges, qExt, qNeg, qPos, nExt, nPos, sc, W, H, steps=2000){
+  const STEP = 0.035;
+
+  function traceFrom(startX, startY, charges, maxSteps){
+    let wx=startX, wy=startY;
+    ctx.beginPath();
+    let first=true;
+    for(let s=0;s<maxSteps;s++){
+      const sx=wx*sc+W/2, sy=wy*sc+H/2;
+      const onScreen=sx>=-10&&sx<=W+10&&sy>=-10&&sy<=H+10;
+      if(onScreen){
+        if(first){ctx.moveTo(sx,sy);first=false;}
+        else ctx.lineTo(sx,sy);
+      } else {
+        if(!first){ctx.strokeStyle='rgba(0,212,255,0.45)';ctx.lineWidth=1;ctx.stroke();ctx.beginPath();first=true;}
+      }
+      // negatif yüke yaklaştı mı?
+      let hit=false;
+      for(const c of charges){
+        if(c.q<0 && (wx-c.x)**2+(wy-c.y)**2 < 0.02){hit=true;break;}
+      }
+      if(hit) break;
+      const {ex,ey}=eAt(charges,wx,wy);
+      const m=Math.sqrt(ex*ex+ey*ey);
+      if(m<1e-9) break;
+      wx+=STEP*ex/m; wy+=STEP*ey/m;
+    }
+    ctx.strokeStyle='rgba(0,212,255,0.45)';ctx.lineWidth=1;ctx.stroke();
+  }
+
+  // 1) Dış +q'dan çizgiler — tüm yükler alanı etkiliyor
+  for(let a=0;a<nExt;a++){
+    const ang=2*Math.PI*a/nExt;
+    traceFrom(qExt.x+0.14*Math.cos(ang), qExt.y+0.14*Math.sin(ang), allCharges, steps);
+  }
+
+  // 2) Pozitif görüntü yükü q'₂'den çizgiler
+  // Alan hesabında TÜM yükler var (doğru fizik)
+  // Sadece hit detection'da q'₁ atlanır — böylece başlangıçta hemen durmuyor
+  function traceFromNoHitNeg(startX, startY, maxSteps){
+    let wx=startX, wy=startY;
+    ctx.beginPath();
+    let first=true;
+    for(let s=0;s<maxSteps;s++){
+      const sx=wx*sc+W/2, sy=wy*sc+H/2;
+      const onScreen=sx>=-10&&sx<=W+10&&sy>=-10&&sy<=H+10;
+      if(onScreen){
+        if(first){ctx.moveTo(sx,sy);first=false;}
+        else ctx.lineTo(sx,sy);
+      } else {
+        if(!first){ctx.strokeStyle='rgba(0,212,255,0.45)';ctx.lineWidth=1;ctx.stroke();ctx.beginPath();first=true;}
+      }
+      // Dış uzaya çıkınca (ekran dışı uzun süre) dur
+      if(sx<-W||sx>2*W||sy<-H||sy>2*H) break;
+      // Dış +q'ya yaklaştı mı? (o zaman dur — oradan zaten çizgi çıkıyor)
+      if((wx-qExt.x)**2+(wy-qExt.y)**2 < 0.02) break;
+      // Alan hesabında tüm yükler
+      const {ex,ey}=eAt(allCharges,wx,wy);
+      const m=Math.sqrt(ex*ex+ey*ey);
+      if(m<1e-9) break;
+      wx+=STEP*ex/m; wy+=STEP*ey/m;
+    }
+    ctx.strokeStyle='rgba(0,212,255,0.45)';ctx.lineWidth=1;ctx.stroke();
+  }
+
+  for(let a=0;a<nPos;a++){
+    const ang=2*Math.PI*a/nPos;
+    traceFromNoHitNeg(0.14*Math.cos(ang), 0.14*Math.sin(ang), steps);
+  }
+}
+
+// ── VBA Seçenekleri (Tab 3) ───────────────────────────────────────────────────
+const V3 = { v3gnd: false, v3shell: false };
+function togVBA(tid, key){
+  V3[key]=!V3[key];
+  document.getElementById(tid).classList.toggle('on');
+}
+function togGnd(){
+  V3.v3gnd=!V3.v3gnd;
+  document.getElementById('t3gnd').classList.toggle('on');
+  redraw(3);
+}
+
+// ── VBA Export 3 ──────────────────────────────────────────────────────────────
+function generateVBA3(){
+  const q    = +document.getElementById('r3q').value;
+  const dist = +document.getElementById('r3di').value;
+  const R    = +document.getElementById('r3r').value;
+  const grounded = V3.v3gnd;
+  const shell    = V3.v3shell;
+
+  // Simülatör birimleri → mm (1 birim = 10 mm)
+  const dist_mm = (dist * 10).toFixed(1);
+  const R_mm    = (R    * 10).toFixed(1);
+  const rho_val = (q * 1e-9).toExponential(2);
+
+  // Kabuk kalınlığı: yarıçapın %10'u
+  const R_inner = (R * 10 * 0.9).toFixed(1);
+
+  const shellComment = shell
+    ? `' Küre: içi boş kabuk (dış R=${R_mm} mm, iç R=${R_inner} mm)`
+    : `' Küre: dolu iletken (R=${R_mm} mm)`;
+  const gndComment = grounded
+    ? `' Küre topraklanmış → Electric Potential = 0 V`
+    : `' Küre yüzene (floating) → Net yük = 0, potansiyel serbest`;
+
+  const shellVBA = shell ? `
+    ' --- İç boşluğu çıkar (kabuk yapmak için) ---
+    With Sphere
+        .Reset
+        .Name "sphere_inner"
+        .Component "component1"
+        .Material "Vacuum"
+        .Axis "z"
+        .CenterRadius "${R_inner}"
+        .TopRadius "0"
+        .BottomRadius "0"
+        .Center "0", "0", "0"
+        .Segments "0"
+        .Create
+    End With
+
+    Solid.Subtract "component1:sphere_pec", "component1:sphere_inner"
+` : '';
+
+  const groundVBA = grounded ? `
+    ' --- Topraklama (Potential = 0 V) ---
+    With Potential
+        .Reset
+        .Name "ground"
+        .Value "0"
+        .Face "component1:sphere_pec", "1"
+        .Create
+    End With
+` : '';
+
+  return `Option Explicit
+
+' ============================================================
+' CST VBA Macro — İletken Küre Geometrisi
+' Slider: q=${q}, dist=${dist}, R=${R}
+' ${shellComment}
+' ${gndComment}
+' ============================================================
+
+Sub Main
+    CreateIletkenKure()
+End Sub
+
+Sub CreateIletkenKure()
+
+    ' --- Birimler ---
+    With Units
+        .SetUnit "Length", "mm"
+        .SetUnit "Voltage", "V"
+    End With
+
+    ' --- Arka plan ---
+    With Background
+        .Type "Normal"
+        .XminSpace "50"
+        .XmaxSpace "50"
+        .YminSpace "50"
+        .YmaxSpace "50"
+        .ZminSpace "50"
+        .ZmaxSpace "50"
+    End With
+
+    ' --- Sınır koşulları ---
+    With Boundary
+        .Xmin "expanded lf open"
+        .Xmax "expanded lf open"
+        .Ymin "expanded lf open"
+        .Ymax "expanded lf open"
+        .Zmin "expanded lf open"
+        .Zmax "expanded lf open"
+    End With
+
+    ' --- PEC malzemesi tanımla ---
+    With Material
+        .Reset
+        .Name "PEC_sphere"
+        .Type "PEC"
+        .Create
+    End With
+
+    ' --- İletken küre ---
+    With Sphere
+        .Reset
+        .Name "sphere_pec"
+        .Component "component1"
+        .Material "PEC_sphere"
+        .Axis "z"
+        .CenterRadius "${R_mm}"
+        .TopRadius "0"
+        .BottomRadius "0"
+        .Center "0", "0", "0"
+        .Segments "0"
+        .Create
+    End With
+${shellVBA}
+    ' --- Dış nokta yükü ---
+    With Sphere
+        .Reset
+        .Name "sphere_charge"
+        .Component "component1"
+        .Material "Air"
+        .Axis "z"
+        .CenterRadius "1"
+        .TopRadius "0"
+        .BottomRadius "0"
+        .Center "${dist_mm}", "0", "0"
+        .Segments "0"
+        .Create
+    End With
+
+    With Charge
+        .Reset
+        .Name "charge_ext"
+        .Type "Volume"
+        .ValueType "Density"
+        .Value "${rho_val}"
+        .Face "component1:sphere_charge", "1"
+        .Create
+    End With
+${groundVBA}
+    MsgBox "Geometri olusturuldu! Mesh ayarlarinizi yapip E-Static Solver'i calistirin."
+
+End Sub`;
+}
+
+function buildVBA3Steps(){
+  const grounded = V3.v3gnd;
+  const shell    = V3.v3shell;
+  const code     = generateVBA3();
+
+  return [
+    {
+      title: "Projeyi Aç ve Makroyu Çalıştır",
+      desc: `CST'de yeni proje açın: <strong>New Template → Statics / Low Frequency → High Voltage / Heavy Current → Insulators → E-Static</strong>.<br><br>
+             Ardından <strong>Home → VBA Macros → Open VBA Macro Editor</strong>'ı açın. Aşağıdaki kodu yapıştırıp <strong>Run</strong>'a basın.<br><br>
+             Slider ve seçenek değerleri otomatik yansıtılmıştır.`,
+      hint: "Makro çalıştıktan sonra Navigation Tree'de iletken küre ve dış yük küresi görünmeli.",
+      code: code
+    },
+    {
+      title: "Neden Ayrıca Malzeme Tanımladık?",
+      desc: `VBA kodunda önce <code>With Material ... .Type "PEC" ... .Create</code> ile <strong>PEC_sphere</strong> malzemesi oluşturduk, ardından küreye <code>.Material "PEC_sphere"</code> atadık.<br><br>
+             <strong>Doğrudan <code>.Material "PEC"</code> yazılamaz mıydı?</strong> Yazılamazdı — CST'nin VBA API'sında <code>.Material</code> komutu yalnızca <em>daha önce tanımlanmış</em> bir malzeme adı alır. <code>"PEC"</code> adında yerleşik bir malzeme yoktur; önce <code>With Material</code> bloğuyla tanımlanması gerekir.<br><br>
+             Arayüzden yapmak için: Navigation Tree'de <strong>Materials</strong>'a sağ tıklayın → <strong>New Material</strong>; ya da üst menüde <strong>Modeling [Materials] → New/Edit → New Material</strong>. Type olarak <strong>PEC</strong> seçin → OK.`,
+      hint: "İleriki projelerde aynı PEC malzemesini tekrar kullanacaksanız şablon dosyasına ekleyebilirsiniz — her seferinde tanımlamak zorunda kalmazsınız.",
+      screen: {
+        path: "Navigation Tree → Materials → sağ tık → New Material",
+        fields: [
+          {lbl:"Name", val:"PEC_sphere", hl:false},
+          {lbl:"Type", val:"PEC", hl:true},
+        ]
+      }
+    },
+    {
+      title: shell ? "Kabuk Geometrisi — Çıkarma İşlemi" : "Dolu Küre Geometrisi",
+      desc: shell
+        ? `Makroda <code>Solid.Subtract "component1:sphere_pec", "component1:sphere_inner"</code> komutuyla dış küreden iç küreyi çıkardık → kabuk oluştu.<br><br>
+           <strong>Arayüzden yapmak için:</strong> önce dış küreyi, sonra iç küreyi çizin. Ardından dış küreyi seçin → <strong>Modeling → Boolean → Subtract</strong> → açılan pencerede iç küreyi seçin → OK.<br><br>
+           <strong>Kabuk olduğunu doğrulamak için:</strong> üst şeritte <strong>View → 2D/3D Plot</strong> sekmesine geçin → <strong>Sectional View</strong> grubunda <strong>Cutting Plane</strong>'i aktif edin. Normal: <code>Y</code>, Position: <code>0</code> yapın — kesit görünümünde içi boş kabuk görünmeli.`
+        : `Makroda dolu iletken küre oluşturuldu. Arayüzden yapmak için: <strong>Modeling → Shapes → Sphere</strong> → merkez (0,0,0), yarıçap girin → malzeme olarak PEC_sphere seçin.`,
+      hint: shell
+        ? "Cutting Plane'i kapatmak için Sectional View grubundaki butona tekrar tıklayın."
+        : "Dolu iletken kürede yük yalnızca yüzeyde toplanır — içeride alan sıfırdır.",
+      screen: shell ? {
+        path: "View → 2D/3D Plot → Sectional View → Cutting Plane",
+        fields: [
+          {lbl:"Normal", val:"Y", hl:true},
+          {lbl:"Position", val:"0", hl:true},
+        ]
+      } : null
+    },
+    {
+      title: grounded ? "Topraklama — Potential = 0" : "Yüzen İletken (Floating)",
+      desc: grounded
+        ? `Makroda <code>With Potential ... .Value "0" ... .Face "component1:sphere_pec", "1"</code> ile küre yüzeyine V = 0 potansiyeli atandı.<br><br>
+           <strong>Arayüzden yapmak için:</strong> <strong>Simulation [Sources and Loads] → Electric Potential</strong> → küre yüzeyini seçin → değer: <code>0 V</code> → OK.<br><br>
+           Topraklı küreden dış yüke net yük akabilir. Sonuçta küredeki toplam indüklenmiş yük dış yük büyüklüğüne bağlıdır.`
+        : `Küre topraklanmamış — <strong>yüzen iletken (floating conductor)</strong>. Bu durumda kürenin toplam net yükü sıfırdır: negatif yük dış yüke bakan tarafta, pozitif yük karşı tarafta toplanır.<br><br>
+           CST'de yüzen iletken için ayrıca bir tanım yapmanıza gerek yok — PEC malzemesi zaten potansiyeli serbestçe çözer.`,
+      hint: grounded
+        ? "Topraklı durumda kürenin potansiyeli sabittir (0 V). Yüzen durumda ise kürenin potansiyeli hesaplanır — ama sabit olma koşulu yine geçerlidir (tüm yüzey aynı potansiyelde)."
+        : "Yüzen iletken ile topraklı iletken arasındaki farkı görmek için: solver'ı iki durumda da çalıştırıp küre üzerindeki potansiyel değerini karşılaştırın.",
+      screen: grounded ? {
+        path: "Simulation [Sources and Loads] → Electric Potential",
+        fields: [
+          {lbl:"Face", val:"component1:sphere_pec", hl:false},
+          {lbl:"Value", val:"0 V", hl:true},
+        ]
+      } : null
+    },
+    {
+      title: "Sonuçları İncele — Yüzey Yük Dağılımı",
+      desc: `Solver çalıştıktan sonra <strong>Navigation Tree → 2D/3D Results</strong> altında D-Field [Es], E-Field [Es] ve Potential [Es] görünür.<br><br>
+             <strong>Yüzey yük dağılımını görmek için D-Field kullanın:</strong> PEC yüzeyinde yüzey yük yoğunluğu σ = D·n bağıntısıyla D alanının normal bileşenine eşittir. D-Field'e tıklayın → Cutting Plane aktif edin (Normal: Y, Position: 0) → küre yüzeyindeki renk dağılımı yük yoğunluğunu gösterir.`,
+      hint: "D-Field = ε₀·E (boş uzayda). Yüzey yük yoğunluğu σ = ε₀·Eₙ — yani E-Field'ın normal bileşenini de kullanabilirsiniz. Far Fire renk haritası ve logaritmik skala (dB butonu) dağılımı daha net gösterir.",
+      screen: {
+        path: "2D/3D Results → D-Field [Es]  →  Cutting Plane: Normal Y, Pos 0",
+        fields: [
+          {lbl:"Fiziksel bağıntı", val:"σ = D·n = ε₀·Eₙ", hl:true},
+          {lbl:"Renk haritası", val:"Far Fire", hl:false},
+          {lbl:"Skala", val:"dB butonu (logaritmik)", hl:false},
+        ]
+      }
+    }
+  ];
+}
+
+let vba3Step = 0;
+let vba3Steps = [];
+
+function buildVBA3Modal(){
+  vba3Steps = buildVBA3Steps();
+  const body = document.getElementById('vba3Body');
+  body.querySelectorAll('.step-card').forEach(el=>el.remove());
+
+  vba3Steps.forEach((s,i)=>{
+    const div = document.createElement('div');
+    div.className = 'step-card' + (i===0?' visible':'');
+
+    // kod bloğu mu normal adım mı?
+    const codeBlock = s.code ? `
+      <div style="position:relative;margin-top:4px">
+        <pre style="background:#060c18;border:1px solid var(--border);border-radius:7px;
+          padding:14px;font-family:'Space Mono',monospace;font-size:10px;color:#a5b4c8;
+          line-height:1.7;overflow-x:auto;white-space:pre;max-height:260px;overflow-y:auto;margin:0">${s.code.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
+        <button onclick="copyVBA3()" id="copyBtn3" style="position:absolute;top:8px;right:8px;
+          background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:5px;
+          padding:4px 10px;color:var(--accent);font-family:'Space Mono',monospace;font-size:9px;
+          cursor:pointer;letter-spacing:1px">KOPYALA</button>
+      </div>` : '';
+
+    const screenBlock = s.screen ? `
+      <div class="screen-mock">
+        <div class="path">▸ ${s.screen.path}</div>
+        ${(s.screen.fields||[]).map(f=>`<div class="field-row"><span class="field-lbl">${f.lbl}</span><span class="field-val${f.hl?' hl':''}">${f.val}</span></div>`).join('')}
+      </div>` : '';
+
+    div.innerHTML = `
+      <div class="step-num">ADIM <span>${i+1}</span> / ${vba3Steps.length}</div>
+      <div class="step-title">${s.title}</div>
+      <div class="step-desc">${s.desc}</div>
+      ${codeBlock}
+      ${screenBlock}
+      <div class="hint"><span class="hint-icon">💡</span><span>${s.hint}</span></div>
+    `;
+    body.appendChild(div);
+  });
+
+  const dots = document.getElementById('vba3Dots');
+  dots.innerHTML = vba3Steps.map((_,i)=>
+    `<div class="dot2${i===0?' on':''}" onclick="vba3GoStep(${i})"></div>`
+  ).join('');
+}
+
+function vba3ShowStep(i){
+  document.querySelectorAll('#vba3Body .step-card').forEach((el,j)=>el.classList.toggle('visible',j===i));
+  document.querySelectorAll('#vba3Dots .dot2').forEach((el,j)=>el.classList.toggle('on',j===i));
+  const pct=Math.round((i/(vba3Steps.length-1))*100);
+  document.getElementById('vba3Fill').style.width=pct+'%';
+  document.getElementById('vba3Txt').textContent=(i+1)+' / '+vba3Steps.length;
+  document.getElementById('vba3Prev').disabled=i===0;
+  const nx=document.getElementById('vba3Next');
+  nx.textContent = i===vba3Steps.length-1 ? 'Tamamla ✓' : 'İleri →';
+  vba3Step=i;
+}
+
+function vba3Nav(dir){
+  if(dir===1 && vba3Step===vba3Steps.length-1){ closeVBA3(); return; }
+  vba3ShowStep(Math.max(0,Math.min(vba3Steps.length-1,vba3Step+dir)));
+}
+function vba3GoStep(i){ vba3ShowStep(i); }
+
+function openVBA3(){
+  buildVBA3Modal();
+  vba3ShowStep(0);
+  document.getElementById('vbaOverlay3').classList.add('open');
+}
+function closeVBA3(){ document.getElementById('vbaOverlay3').classList.remove('open'); }
+function handleVBA3Click(e){ if(e.target===document.getElementById('vbaOverlay3')) closeVBA3(); }
+function copyVBA3(){
+  const code = vba3Steps[0]?.code || generateVBA3();
+  navigator.clipboard.writeText(code).then(()=>{
+    const btn=document.getElementById('copyBtn3');
+    if(!btn) return;
+    btn.textContent='KOPYALANDI ✓'; btn.style.color='#51cf66'; btn.style.borderColor='rgba(81,207,102,0.4)';
+    setTimeout(()=>{ btn.textContent='KOPYALA'; btn.style.color='var(--accent)'; btn.style.borderColor='rgba(0,212,255,0.3)'; },2000);
+  });
+}
+
+// ── VBA Export ────────────────────────────────────────────────────────────────
+function generateVBA(){
+  const d  = +document.getElementById('r2d').value;   // normalize birim
+  const q1 = +document.getElementById('r2q1').value;  // normalize birim
+  const q2 = +document.getElementById('r2q2').value;
+
+  // Simülatörde 1 birim = 1 cm → mm'ye çevir
+  const d_mm  = (d * 10).toFixed(1);
+  const x1_mm = (-d/2 * 10).toFixed(1);
+  const x2_mm = ( d/2 * 10).toFixed(1);
+  const r_mm  = 1.0;  // küre yarıçapı sabit 1 mm
+
+  // Yük yoğunluğu: normalize q → gerçek C/m³
+  // 1 nC/m³ referans alındı
+  const rho1 = (q1 * 1e-9).toExponential(2);
+  const rho2 = (q2 * 1e-9).toExponential(2);
+
+  return `Option Explicit
+
+' ============================================================
+' CST VBA Macro — Eş Yükler Elektrostatik Geometrisi
+' Slider değerleri: d=${d} birim, q1=${q1}, q2=${q2}
+' ============================================================
+
+Sub Main
+    CreateEsYukler()
+End Sub
+
+Sub CreateEsYukler()
+
+    ' --- Proje ayarları ---
+    With Units
+        .SetUnit "Length", "mm"
+        .SetUnit "Voltage", "V"
+    End With
+
+    ' --- Arka plan ---
+    With Background
+        .Type "Normal"
+        .XminSpace "50"
+        .XmaxSpace "50"
+        .YminSpace "50"
+        .YmaxSpace "50"
+        .ZminSpace "50"
+        .ZmaxSpace "50"
+    End With
+
+    ' --- Sınır koşulları ---
+    With Boundary
+        .Xmin "expanded lf open"
+        .Xmax "expanded lf open"
+        .Ymin "expanded lf open"
+        .Ymax "expanded lf open"
+        .Zmin "expanded lf open"
+        .Zmax "expanded lf open"
+    End With
+
+    ' --- Küre 1 (sol yük, q1) ---
+    With Sphere
+        .Reset
+        .Name "sphere_q1"
+        .Component "component1"
+        .Material "Air"
+        .Axis "z"
+        .CenterRadius "${r_mm}"
+        .TopRadius "0"
+        .BottomRadius "0"
+        .Center "${x1_mm}", "0", "0"
+        .Segments "0"
+        .Create
+    End With
+
+    ' --- Küre 2 (sağ yük, q2) ---
+    With Sphere
+        .Reset
+        .Name "sphere_q2"
+        .Component "component1"
+        .Material "Air"
+        .Axis "z"
+        .CenterRadius "${r_mm}"
+        .TopRadius "0"
+        .BottomRadius "0"
+        .Center "${x2_mm}", "0", "0"
+        .Segments "0"
+        .Create
+    End With
+
+    ' --- Yük 1 tanımı ---
+    With Charge
+        .Reset
+        .Name "charge_q1"
+        .Type "Volume"
+        .ValueType "Density"
+        .Value "${rho1}"
+        .Face "component1:sphere_q1", "1"
+        .Create
+    End With
+
+    ' --- Yük 2 tanımı ---
+    With Charge
+        .Reset
+        .Name "charge_q2"
+        .Type "Volume"
+        .ValueType "Density"
+        .Value "${rho2}"
+        .Face "component1:sphere_q2", "1"
+        .Create
+    End With
+
+    MsgBox "Geometri olusturuldu! Mesh ayarlarinizi yapip E-Static Solver'i calistirin."
+
+End Sub`;
+}
+
+function openVBA(){
+  document.getElementById('vbaCode').textContent = generateVBA();
+  document.getElementById('vbaOverlay').classList.add('open');
+}
+function closeVBA(){ document.getElementById('vbaOverlay').classList.remove('open'); }
+function handleVBAClick(e){ if(e.target===document.getElementById('vbaOverlay')) closeVBA(); }
+
+function copyVBA(){
+  const code = document.getElementById('vbaCode').textContent;
+  navigator.clipboard.writeText(code).then(()=>{
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'KOPYALANDI ✓';
+    btn.style.color = '#51cf66';
+    btn.style.borderColor = 'rgba(81,207,102,0.4)';
+    setTimeout(()=>{
+      btn.textContent = 'KOPYALA';
+      btn.style.color = 'var(--accent)';
+      btn.style.borderColor = 'rgba(0,212,255,0.3)';
+    }, 2000);
+  });
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+window.addEventListener('load',()=>{
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    fitAll();
+    redrawAll();
+  }));
+});
+</script>
+</body>
+</html>
