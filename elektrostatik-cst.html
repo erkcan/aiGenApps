@@ -258,6 +258,7 @@
       <div class="progress-wrap">
         <div class="progress-bar"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
         <div class="progress-txt" id="progTxt">1 / 8</div>
+        <!-- adım sayısı JS ile güncellenir -->
       </div>
       <!-- Steps injected by JS -->
     </div>
@@ -1400,15 +1401,63 @@ const STEPS = [
       ]
     }
   },
+  {
+    title: "Radyal Potansiyel Grafiği — Field on Curve",
+    desc: `<strong>1. Önce 2B kesitle genel resmi görün:</strong><br>
+           Navigation Tree → <strong>2D/3D Results → Potential [Es]</strong>'e çift tıklayın. 3B görünüm açılır. Üst şeritte <strong>2D/3D Plot → Fields on Plane</strong> → <code>Normal: Z</code>, <code>Position: 0</code> — yük çevresindeki eş-potansiyel dağılımı 2B kesitte görünür.<br><br>
+           <strong>2. Radyal çizgi tanımlayın:</strong><br>
+           Grafik penceresinin sağ altından <strong>3D sekmesine</strong> geri dönün. Üst şeritte <strong>Modelling → Curves → Line</strong> seçin. Çift tıklamalarla iki nokta girin:<br>
+           <code>Başlangıç: (0, 0)</code> → <code>Bitiş: (7, 7)</code> (z=0 çalışma düzlemi).<br>
+           CST sizi uyaracak: <em>"Solver'ı yeniden çalıştırmanız gerekiyor."</em><br><br>
+           <strong>3. Field on Curve ile grafik alın:</strong><br>
+           Solver'ı çalıştırın. Tamamlanınca tekrar <strong>2D/3D Results → Potential [Es]</strong>'e çift tıklayın. Üst şeritte artık <strong>Tools → Field on Curve</strong> aktif — tıklayın. Tanımladığınız curve'ü seçip <strong>Make 1D Plot</strong>'a basın.<br><br>
+           <strong>4. Sonucu inceleyin:</strong><br>
+           Navigation Tree → <strong>1D Results → Field Along Curves</strong> — V(r) grafiği burada. Yatay eksen curve boyunca mesafe (mm), dikey eksen potansiyel. Teorik beklenti: <strong>V ∝ 1/r</strong>.`,
+    hint: "Grafiğin neden tam 1/r olmadığını fark ettiniz mi? r < 1mm bölgesinde yük küresi içindeyiz — burada V(r) parabolik (uniform hacimsel yük için V ∝ 3R²−r²). Dışarıda (r > 1mm) ise 1/r'ye döner. Gerçek nokta yük simüle etmek isteseydiniz küre yarıçapını çok küçültmeniz gerekirdi. Log-log doğrulama için: her iki ekseni logaritmik yapın — dış bölgede düz çizgi (eğim −1) görmelisiniz.",
+    chart: (()=>{
+      // Küre yarıçapı R=1mm, curve (0,0)→(7,7) normalize birim → max r=sqrt(98)≈9.9mm
+      // r < R: V(r) = (ρ/6ε₀)(3R²-r²) ∝ (3R²-r²) — parabolik, maksimum merkezde
+      // r > R: V(r) ∝ 1/r
+      // Normalize: V(R)'de süreklilik sağlanacak şekilde ölçekle
+      const R = 1; // mm
+      const rMax = Math.sqrt(98); // ≈9.9mm
+      const pts = [];
+      // İç bölge: 0'dan R'ye (parabolik)
+      for(let r=0; r<=R; r+=0.15){
+        pts.push({r, v: (3*R*R - r*r) / (2*R*R*R)}); // normalize: V(0)=3/(2R), V(R)=1/R
+      }
+      // Dış bölge: R'den rMax'a (1/r)
+      for(let r=R; r<=rMax; r+=0.5){
+        pts.push({r, v: 1/r});
+      }
+      // Tüm değerleri V(R)=1 olacak şekilde normalize et
+      const vAtR = 1/R;
+      const normalized = pts.map(p=>({r:p.r, v:p.v/vAtR}));
+      return {
+        points: normalized,
+        xLabel: "r (mm)",
+        yLabel: "V (normalize)",
+        note: "⚠︎ Bu grafik neden tam 1/r değil? r < 1mm bölgesine bakın."
+      };
+    })(),
+    screen: {
+      menuBar: ["Modelling", "Simulation", "2D/3D Plot", "Tools"],
+      hlMenu: "Modelling",
+      path: "Modelling → Curves → Line  →  solver  →  Tools → Field on Curve",
+      fields: [
+        {lbl:"Curve başlangıç", val:"(0, 0, 0) mm", hl:false},
+        {lbl:"Curve bitiş", val:"(7, 7, 0) mm", hl:true},
+        {lbl:"Field on Curve", val:"Tools → Field on Curve → Make 1D Plot", hl:true},
+        {lbl:"Sonuç konumu", val:"1D Results → Field Along Curves", hl:false},
+      ]
+    }
+  },
 ];
 
 let currentStep = 0;
 
 function buildModal() {
   const body = document.getElementById('modalBody');
-  // keep progress wrap, build steps after it
-  const pw = body.querySelector('.progress-wrap');
-  // remove old step cards
   body.querySelectorAll('.step-card').forEach(el=>el.remove());
 
   STEPS.forEach((s, i) => {
@@ -1416,25 +1465,72 @@ function buildModal() {
     div.className = 'step-card' + (i===0?' visible':'');
     div.id = 'step'+i;
 
-    const screenRows = s.screen.fields.map(f=>
-      `<div class="field-row">
-        <span class="field-lbl">${f.lbl}</span>
-        <span class="field-val${f.hl?' hl':''}">${f.val}</span>
-       </div>`
-    ).join('');
-    const menuItems = s.screen.menuBar.map(m=>
-      `<span${m===s.screen.hlMenu?' class="hl"':''}>${m}</span>`
-    ).join('');
+    // screen-mock bloğu (opsiyonel)
+    let screenBlock = '';
+    if(s.screen){
+      const screenRows = s.screen.fields.map(f=>
+        `<div class="field-row">
+          <span class="field-lbl">${f.lbl}</span>
+          <span class="field-val${f.hl?' hl':''}">${f.val}</span>
+         </div>`
+      ).join('');
+      const menuItems = (s.screen.menuBar||[]).map(m=>
+        `<span${m===s.screen.hlMenu?' class="hl"':''}>${m}</span>`
+      ).join('');
+      screenBlock = `
+        <div class="screen-mock">
+          ${s.screen.menuBar ? `<div class="menu-bar">${menuItems}</div>` : ''}
+          <div class="path">▸ ${s.screen.path}</div>
+          ${screenRows}
+        </div>`;
+    }
+
+    // mini grafik bloğu (opsiyonel)
+    let chartBlock = '';
+    if(s.chart){
+      const pts = s.chart.points;
+      const W=220, H=90, pad={l:32,r:10,t:8,b:24};
+      const rMin=pts[0].r, rMax=pts[pts.length-1].r;
+      const vMin=0, vMax=pts[0].v*1.08;
+      const cx=r=>pad.l+(r-rMin)/(rMax-rMin)*(W-pad.l-pad.r);
+      const cy=v=>H-pad.b-(v-vMin)/(vMax-vMin)*(H-pad.t-pad.b);
+      const polyline=pts.map(p=>`${cx(p.r).toFixed(1)},${cy(p.v).toFixed(1)}`).join(' ');
+      // x ekseni etiketleri
+      const xTicks=[1,2,3,4,5];
+      const xTickSvg=xTicks.map(r=>`
+        <line x1="${cx(r)}" y1="${H-pad.b}" x2="${cx(r)}" y2="${H-pad.b+3}" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+        <text x="${cx(r)}" y="${H-pad.b+10}" text-anchor="middle" font-size="8" fill="#64748b">${r}</text>
+      `).join('');
+      // y ekseni etiketleri
+      const yTicks=[0.5,1.0,1.5,2.0];
+      const yTickSvg=yTicks.map(v=>`
+        <line x1="${pad.l-3}" y1="${cy(v)}" x2="${pad.l}" y2="${cy(v)}" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+        <text x="${pad.l-5}" y="${cy(v)+3}" text-anchor="end" font-size="8" fill="#64748b">${v.toFixed(1)}</text>
+      `).join('');
+      chartBlock = `
+        <div style="background:rgba(0,212,255,0.03);border:1px solid rgba(0,212,255,0.12);border-radius:7px;padding:10px 12px;">
+          <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:6px">V(r) — RADYAL POTANSİYEL PROFİLİ</div>
+          <svg width="${W}" height="${H}" style="display:block;overflow:visible">
+            <!-- grid -->
+            <line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${H-pad.b}" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+            <line x1="${pad.l}" y1="${H-pad.b}" x2="${W-pad.r}" y2="${H-pad.b}" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+            ${xTickSvg}${yTickSvg}
+            <!-- CST sonuç eğrisi -->
+            <polyline points="${polyline}" fill="none" stroke="rgba(0,212,255,0.85)" stroke-width="1.5"/>
+            <!-- eksen etiketleri -->
+            <text x="${(pad.l+W-pad.r)/2}" y="${H}" text-anchor="middle" font-size="8" fill="#475569">${s.chart.xLabel}</text>
+            <text x="8" y="${(pad.t+H-pad.b)/2}" text-anchor="middle" font-size="8" fill="#475569" transform="rotate(-90,8,${(pad.t+H-pad.b)/2})">${s.chart.yLabel}</text>
+          </svg>
+          <div style="font-size:10px;color:#475569;margin-top:4px">${s.chart.note}</div>
+        </div>`;
+    }
 
     div.innerHTML = `
       <div class="step-num">ADIM <span>${i+1}</span> / ${STEPS.length}</div>
       <div class="step-title">${s.title}</div>
       <div class="step-desc">${s.desc}</div>
-      <div class="screen-mock">
-        <div class="menu-bar">${menuItems}</div>
-        <div class="path">▸ ${s.screen.path}</div>
-        ${screenRows}
-      </div>
+      ${chartBlock}
+      ${screenBlock}
       <div class="hint"><span class="hint-icon">💡</span><span>${s.hint}</span></div>
     `;
     body.appendChild(div);
