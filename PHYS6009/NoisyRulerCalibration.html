@@ -1,0 +1,3822 @@
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								body {
+									background-color: white; /* Ensure the iframe has a white background */
+								}
+
+								
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg:        #0a0e17;
+    --panel:     #0f1623;
+    --border:    #1e2d45;
+    --accent:    #00d4ff;
+    --accent2:   #ff6b35;
+    --accent3:   #a78bfa;   /* signal colour for Stage 2 */
+    --text:      #c8daf0;
+    --muted:     #4a6080;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 24px 60px;
+  }
+
+  /* ── Top header ── */
+  .top-header {
+    width: 100%;
+    max-width: 1100px;
+    margin-bottom: 28px;
+  }
+  .top-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    opacity: 0.8;
+    margin-bottom: 6px;
+  }
+  .top-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 600;
+    color: #e8f4ff;
+    letter-spacing: -0.02em;
+  }
+
+  /* ── Tab bar ── */
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    width: 100%;
+    max-width: 1100px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 28px;
+  }
+  .tab-btn {
+    padding: 10px 28px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* ── Tab panels ── */
+  .tab-panel { display: none; width: 100%; max-width: 1100px; }
+  .tab-panel.active { display: block; }
+
+  /* ── Card ── */
+  .card {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 28px;
+    margin-bottom: 18px;
+  }
+
+  /* ── Controls grid ── */
+  .ctrl-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px 32px;
+  }
+  .ctrl-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .ctrl-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+    min-width: 68px;
+  }
+  .ctrl-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 54px;
+    text-align: right;
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 7px rgba(0,212,255,0.55);
+    cursor: pointer;
+  }
+
+  /* ── Stats row ── */
+  .stats {
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    margin-top: 14px;
+  }
+  .stat { display: flex; flex-direction: column; gap: 3px; }
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: #e8f4ff;
+  }
+  .stat-value span { font-size: 10px; color: var(--muted); font-weight: 400; margin-left: 2px; }
+
+  /* ── Plot layouts ── */
+  .plots-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+  .plot-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px 12px;
+  }
+  .plot-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  canvas { display: block; width: 100%; height: auto; }
+
+  /* ── Info box ── */
+  .info-box {
+    border-left: 3px solid var(--accent);
+    background: rgba(0,212,255,0.03);
+    border-radius: 0 8px 8px 0;
+    padding: 13px 17px;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  .info-box strong { color: var(--text); font-weight: 500; }
+  .info-box code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--accent);
+    background: rgba(0,212,255,0.08);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .info-box .s2 { color: var(--accent3); background: rgba(167,139,250,0.10); }
+
+  /* ── Scatter toolbar ── */
+  .scatter-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .scatter-toolbar .plot-title { margin-bottom: 0; flex: 1; }
+
+  .tog-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 13px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .tog-btn .swatch {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .tog-btn:hover { border-color: var(--text); color: var(--text); }
+  .tog-btn.on-ideal     { border-color: rgba(200,218,240,0.45); color: rgba(200,218,240,0.8); background: rgba(200,218,240,0.06); }
+  .tog-btn.on-systematic{ border-color: #ff6b35; color: #ff6b35; background: rgba(255,107,53,0.08); }
+
+  .csv-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 13px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .csv-btn:hover { border-color: var(--accent3); color: var(--accent3); background: rgba(167,139,250,0.07); }
+
+  /* ── CSV Modal ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(5,8,16,0.78);
+    backdrop-filter: blur(3px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #0f1623;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(680px, 92vw);
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .modal-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent3);
+  }
+  .modal-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+  .modal-close {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.12s;
+    flex-shrink: 0;
+  }
+  .modal-close:hover { color: var(--text); border-color: var(--text); }
+  .modal-body {
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+    flex: 1;
+  }
+  .modal-body textarea {
+    flex: 1;
+    min-height: 260px;
+    background: #070b12;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: rgba(200,218,240,0.75);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.6;
+    padding: 12px 14px;
+    resize: none;
+    outline: none;
+  }
+  .modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding: 0 20px 16px;
+    flex-shrink: 0;
+  }
+  .modal-copy-btn {
+    padding: 7px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: rgba(167,139,250,0.12);
+    border: 1px solid var(--accent3);
+    color: var(--accent3);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .modal-copy-btn:hover { background: rgba(167,139,250,0.22); }
+  .modal-copy-btn.copied { background: rgba(0,212,255,0.12); border-color: var(--accent); color: var(--accent); }
+
+  /* ── Shared detector parameters banner ── */
+  .det-banner {
+    width: 100%;
+    max-width: 1100px;
+    background: rgba(255,107,53,0.04);
+    border: 1px solid rgba(255,107,53,0.22);
+    border-radius: 10px;
+    padding: 12px 20px;
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: auto 1fr 1fr 1fr;
+    align-items: center;
+    gap: 0 20px;
+  }
+  @media (max-width: 600px) {
+    .det-banner { grid-template-columns: 1fr 1fr; }
+    .det-banner-label { grid-column: 1 / -1; }
+  }
+  .det-banner-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: #ff6b35;
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding-right: 8px;
+  }
+  /* Each param cell: label+value on top row, slider below */
+  .det-param {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 3px 8px;
+    min-width: 0;
+    padding: 4px 0;
+  }
+  .det-param-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: rgba(255,107,53,0.7);
+    text-transform: uppercase;
+    white-space: nowrap;
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .det-param-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: #ff6b35;
+    text-align: right;
+    white-space: nowrap;
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 36px;
+  }
+  .det-param input[type=range] {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    min-width: 0;
+  }
+  .det-banner input[type=range]::-webkit-slider-thumb {
+    background: #ff6b35;
+    box-shadow: 0 0 7px rgba(255,107,53,0.55);
+  }
+
+  /* ── Calibrate button ── */
+  .cal-btn {
+    padding: 8px 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: not-allowed;
+    transition: all 0.18s;
+    white-space: nowrap;
+  }
+  .cal-btn.ready {
+    border-color: #34d399;
+    color: #34d399;
+    background: rgba(52,211,153,0.07);
+    cursor: pointer;
+    box-shadow: 0 0 12px rgba(52,211,153,0.15);
+  }
+  .cal-btn.ready:hover {
+    background: rgba(52,211,153,0.15);
+    box-shadow: 0 0 18px rgba(52,211,153,0.25);
+  }
+  .cal-btn.done {
+    border-color: rgba(52,211,153,0.3);
+    color: rgba(52,211,153,0.4);
+    cursor: not-allowed;
+    background: transparent;
+    box-shadow: none;
+  }
+  .cal-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+  .cal-status.active { color: rgba(52,211,153,0.7); }
+  .cal-status.stale  { color: rgba(255,107,53,0.7); }
+
+  /* ── Poly tooltip ── */
+  #polyTooltip {
+    position: fixed;
+    display: none;
+    pointer-events: none;
+    z-index: 500;
+    background: #0a0e17;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--accent);
+    line-height: 1.7;
+    max-width: 340px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    white-space: pre;
+  }
+  #polyTooltip .tt-title {
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+
+  @media (max-width: 680px) {
+    .plots-row { grid-template-columns: 1fr; }
+  }
+
+
+							</style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1D Particle Detector Simulation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg:        #0a0e17;
+    --panel:     #0f1623;
+    --border:    #1e2d45;
+    --accent:    #00d4ff;
+    --accent2:   #ff6b35;
+    --accent3:   #a78bfa;   /* signal colour for Stage 2 */
+    --text:      #c8daf0;
+    --muted:     #4a6080;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 24px 60px;
+  }
+
+  /* ── Top header ── */
+  .top-header {
+    width: 100%;
+    max-width: 1100px;
+    margin-bottom: 28px;
+  }
+  .top-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    opacity: 0.8;
+    margin-bottom: 6px;
+  }
+  .top-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 600;
+    color: #e8f4ff;
+    letter-spacing: -0.02em;
+  }
+
+  /* ── Tab bar ── */
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    width: 100%;
+    max-width: 1100px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 28px;
+  }
+  .tab-btn {
+    padding: 10px 28px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* ── Tab panels ── */
+  .tab-panel { display: none; width: 100%; max-width: 1100px; }
+  .tab-panel.active { display: block; }
+
+  /* ── Card ── */
+  .card {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 28px;
+    margin-bottom: 18px;
+  }
+
+  /* ── Controls grid ── */
+  .ctrl-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px 32px;
+  }
+  .ctrl-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .ctrl-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+    min-width: 68px;
+  }
+  .ctrl-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 54px;
+    text-align: right;
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 7px rgba(0,212,255,0.55);
+    cursor: pointer;
+  }
+
+  /* ── Stats row ── */
+  .stats {
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    margin-top: 14px;
+  }
+  .stat { display: flex; flex-direction: column; gap: 3px; }
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: #e8f4ff;
+  }
+  .stat-value span { font-size: 10px; color: var(--muted); font-weight: 400; margin-left: 2px; }
+
+  /* ── Plot layouts ── */
+  .plots-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+  .plot-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px 12px;
+  }
+  .plot-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  canvas { display: block; width: 100%; height: auto; }
+
+  /* ── Info box ── */
+  .info-box {
+    border-left: 3px solid var(--accent);
+    background: rgba(0,212,255,0.03);
+    border-radius: 0 8px 8px 0;
+    padding: 13px 17px;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  .info-box strong { color: var(--text); font-weight: 500; }
+  .info-box code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--accent);
+    background: rgba(0,212,255,0.08);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .info-box .s2 { color: var(--accent3); background: rgba(167,139,250,0.10); }
+
+  /* ── Scatter toolbar ── */
+  .scatter-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .scatter-toolbar .plot-title { margin-bottom: 0; flex: 1; }
+
+  .tog-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 13px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .tog-btn .swatch {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .tog-btn:hover { border-color: var(--text); color: var(--text); }
+  .tog-btn.on-ideal     { border-color: rgba(200,218,240,0.45); color: rgba(200,218,240,0.8); background: rgba(200,218,240,0.06); }
+  .tog-btn.on-systematic{ border-color: #ff6b35; color: #ff6b35; background: rgba(255,107,53,0.08); }
+
+  .csv-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 13px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .csv-btn:hover { border-color: var(--accent3); color: var(--accent3); background: rgba(167,139,250,0.07); }
+
+  /* ── CSV Modal ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(5,8,16,0.78);
+    backdrop-filter: blur(3px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #0f1623;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(680px, 92vw);
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .modal-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent3);
+  }
+  .modal-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+  .modal-close {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.12s;
+    flex-shrink: 0;
+  }
+  .modal-close:hover { color: var(--text); border-color: var(--text); }
+  .modal-body {
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+    flex: 1;
+  }
+  .modal-body textarea {
+    flex: 1;
+    min-height: 260px;
+    background: #070b12;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: rgba(200,218,240,0.75);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.6;
+    padding: 12px 14px;
+    resize: none;
+    outline: none;
+  }
+  .modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding: 0 20px 16px;
+    flex-shrink: 0;
+  }
+  .modal-copy-btn {
+    padding: 7px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: rgba(167,139,250,0.12);
+    border: 1px solid var(--accent3);
+    color: var(--accent3);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .modal-copy-btn:hover { background: rgba(167,139,250,0.22); }
+  .modal-copy-btn.copied { background: rgba(0,212,255,0.12); border-color: var(--accent); color: var(--accent); }
+
+  /* ── Shared detector parameters banner ── */
+  .det-banner {
+    width: 100%;
+    max-width: 1100px;
+    background: rgba(255,107,53,0.04);
+    border: 1px solid rgba(255,107,53,0.22);
+    border-radius: 10px;
+    padding: 12px 20px;
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: auto 1fr 1fr 1fr;
+    align-items: center;
+    gap: 0 20px;
+  }
+  @media (max-width: 600px) {
+    .det-banner { grid-template-columns: 1fr 1fr; }
+    .det-banner-label { grid-column: 1 / -1; }
+  }
+  .det-banner-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: #ff6b35;
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding-right: 8px;
+  }
+  /* Each param cell: label+value on top row, slider below */
+  .det-param {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 3px 8px;
+    min-width: 0;
+    padding: 4px 0;
+  }
+  .det-param-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: rgba(255,107,53,0.7);
+    text-transform: uppercase;
+    white-space: nowrap;
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .det-param-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: #ff6b35;
+    text-align: right;
+    white-space: nowrap;
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 36px;
+  }
+  .det-param input[type=range] {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    min-width: 0;
+  }
+  .det-banner input[type=range]::-webkit-slider-thumb {
+    background: #ff6b35;
+    box-shadow: 0 0 7px rgba(255,107,53,0.55);
+  }
+
+  /* ── Calibrate button ── */
+  .cal-btn {
+    padding: 8px 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: not-allowed;
+    transition: all 0.18s;
+    white-space: nowrap;
+  }
+  .cal-btn.ready {
+    border-color: #34d399;
+    color: #34d399;
+    background: rgba(52,211,153,0.07);
+    cursor: pointer;
+    box-shadow: 0 0 12px rgba(52,211,153,0.15);
+  }
+  .cal-btn.ready:hover {
+    background: rgba(52,211,153,0.15);
+    box-shadow: 0 0 18px rgba(52,211,153,0.25);
+  }
+  .cal-btn.done {
+    border-color: rgba(52,211,153,0.3);
+    color: rgba(52,211,153,0.4);
+    cursor: not-allowed;
+    background: transparent;
+    box-shadow: none;
+  }
+  .cal-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+  .cal-status.active { color: rgba(52,211,153,0.7); }
+  .cal-status.stale  { color: rgba(255,107,53,0.7); }
+
+  /* ── Poly tooltip ── */
+  #polyTooltip {
+    position: fixed;
+    display: none;
+    pointer-events: none;
+    z-index: 500;
+    background: #0a0e17;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--accent);
+    line-height: 1.7;
+    max-width: 340px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    white-space: pre;
+  }
+  #polyTooltip .tt-title {
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+
+  @media (max-width: 680px) {
+    .plots-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-header">
+  <div class="top-tag">1D Particle Position Detector &nbsp;·&nbsp; Simulation</div>
+  <div class="top-title">Detector Response Study</div>
+</div>
+
+<!-- Shared detector parameters — used by Stage 2 and Stage 3 -->
+<div class="det-banner">
+  <span class="det-banner-label">Detector&nbsp;params</span>
+  <div class="det-param">
+    <span class="det-param-label">α (mm)</span>
+    <span class="det-param-value" id="det-alphaVal">4.0</span>
+    <input type="range" id="det-alphaSlider" min="0" max="12" value="4" step="0.1">
+  </div>
+  <div class="det-param">
+    <span class="det-param-label">L (mm)</span>
+    <span class="det-param-value" id="det-LVal">80</span>
+    <input type="range" id="det-LSlider" min="10" max="150" value="80" step="1">
+  </div>
+  <div class="det-param">
+    <span class="det-param-label">σ noise</span>
+    <span class="det-param-value" id="det-sigmaVal">2.0</span>
+    <input type="range" id="det-sigmaSlider" min="0" max="10" value="2" step="0.1">
+  </div>
+</div>
+
+<!-- Polynomial tooltip (floating, shown on hover near fitted curve) -->
+<div id="polyTooltip"><div class="tt-title">Fitted correction  f(s) → x_reco</div><span id="polyTooltipBody"></span></div>
+
+<!-- Point hover tooltip (floating, shown on hover near data points) -->
+<div id="pointTooltip" style="position:fixed;display:none;pointer-events:none;z-index:500;background:#0a0e17;border:1px solid var(--border);border-radius:8px;padding:8px 13px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text);line-height:1.6;max-width:260px;box-shadow:0 8px 32px rgba(0,0,0,0.5);white-space:pre;"></div>
+
+<!-- Tab bar -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('s1',this)">Stage 1 — True World</button>
+  <button class="tab-btn"        onclick="switchTab('s2',this)">Stage 2 — Detector Response</button>
+  <button class="tab-btn"        onclick="switchTab('s3',this)">Stage 3 — Calibration</button>
+  <button class="tab-btn"        onclick="switchTab('s4',this)">Stage 4 — Validation</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     STAGE 1
+═══════════════════════════════════════════════════ -->
+<div class="tab-panel active" id="tab-s1">
+
+  <div class="card">
+    <div class="ctrl-grid">
+      <div class="ctrl-row">
+        <span class="ctrl-label">Events N</span>
+        <input type="range" id="s1-nSlider" min="10" max="2000" value="500">
+        <span class="ctrl-value" id="s1-nVal">500</span>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="stat-label">Accepted</span>  <span class="stat-value" id="s1-accepted">—<span> ev</span></span></div>
+      <div class="stat"><span class="stat-label">Discarded</span> <span class="stat-value" id="s1-discarded">—<span> ev</span></span></div>
+      <div class="stat"><span class="stat-label">Acceptance</span><span class="stat-value" id="s1-acceptance">—<span>%</span></span></div>
+      <div class="stat"><span class="stat-label">Sample μ</span>  <span class="stat-value" id="s1-mean">—<span> mm</span></span></div>
+      <div class="stat"><span class="stat-label">Sample σ</span>  <span class="stat-value" id="s1-sigma">—<span> mm</span></span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <canvas id="s1-canvas"></canvas>
+  </div>
+
+  <div class="card info-box">
+    <strong>Ground truth:</strong> Each true position is drawn from
+    <code>𝒩(μ=50 mm, σ=15 mm)</code> via Box-Muller.
+    Events outside <code>[0, 100] mm</code> are discarded.
+    The orange curve is the scaled analytic Gaussian. This is the distribution we will later try to <em>recover</em> from the raw detector signal.
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     STAGE 2
+═══════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-s2">
+
+  <div class="card">
+    <div class="ctrl-grid">
+      <div class="ctrl-row">
+        <span class="ctrl-label">Events N</span>
+        <input type="range" id="s2-nSlider" min="10" max="2000" value="500">
+        <span class="ctrl-value" id="s2-nVal">500</span>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="stat-label">Accepted</span>    <span class="stat-value" id="s2-accepted">—<span> ev</span></span></div>
+      <div class="stat"><span class="stat-label">μ (x_true)</span>  <span class="stat-value" id="s2-meanTrue">—<span> mm</span></span></div>
+      <div class="stat"><span class="stat-label">μ (signal s)</span><span class="stat-value" id="s2-meanS">—<span> mm</span></span></div>
+      <div class="stat"><span class="stat-label">σ (x_true)</span>  <span class="stat-value" id="s2-sigTrue">—<span> mm</span></span></div>
+      <div class="stat"><span class="stat-label">σ (signal s)</span><span class="stat-value" id="s2-sigS">—<span> mm</span></span></div>
+      <div class="stat"><span class="stat-label">Mean bias</span>   <span class="stat-value" id="s2-bias">—<span> mm</span></span></div>
+    </div>
+  </div>
+
+  <!-- Two histograms side by side -->
+  <div class="plots-row">
+    <div class="plot-card">
+      <div class="plot-title">x_true &nbsp;—&nbsp; Ground Truth</div>
+      <canvas id="s2-canvasTrue"></canvas>
+    </div>
+    <div class="plot-card">
+      <div class="plot-title">s &nbsp;—&nbsp; Raw Detector Signal</div>
+      <canvas id="s2-canvasS"></canvas>
+    </div>
+  </div>
+
+  <!-- Scatter plot -->
+  <div class="card">
+    <div class="scatter-toolbar">
+      <div class="plot-title">Response Curve &nbsp;—&nbsp; s vs x_true</div>
+      <button class="tog-btn on-ideal"      id="btn-ideal"      onclick="s2ToggleIdeal(this)">
+        <span class="swatch" style="background:rgba(200,218,240,0.45);"></span>Ideal
+      </button>
+      <button class="tog-btn on-systematic" id="btn-systematic" onclick="s2ToggleSystematic(this)">
+        <span class="swatch" style="background:#ff6b35;"></span>Systematic
+      </button>
+      <button class="csv-btn" onclick="s2OpenCSV()">&#9113; Export CSV</button>
+    </div>
+    <canvas id="s2-canvasScatter"></canvas>
+  </div>
+
+  <!-- CSV Modal -->
+  <div class="modal-overlay" id="csvModal" onclick="s2CloseCSVIfOutside(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Event Data — CSV Export</div>
+          <div class="modal-meta" id="csvMeta">0 events</div>
+        </div>
+        <button class="modal-close" onclick="s2CloseCSV()">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+        <textarea id="csvText" spellcheck="false" readonly></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-copy-btn" id="copyBtn" onclick="s2CopyCSV()">Copy to clipboard</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card info-box">
+    <strong>Detector response model:</strong>
+    <code class="s2">s = x_true + α·sin(2π·x_true / L) + ε</code>
+    &nbsp;&nbsp;where&nbsp;&nbsp;
+    <code class="s2">ε ~ 𝒩(0, σ_noise²)</code>.<br>
+    The sinusoidal term is a <strong>systematic nonlinearity</strong> — a deterministic warp of the position axis (e.g. non-uniform strip pitch).
+    The <code>ε</code> term is <strong>stochastic readout noise</strong>.
+    Both broaden and distort the signal histogram compared to x_true.
+    Set α=0 and σ=0 to confirm the response curve collapses to the identity line.
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     STAGE 3
+═══════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-s3">
+
+  <!-- Controls -->
+  <div class="card">
+    <div class="ctrl-grid">
+      <div class="ctrl-row">
+        <span class="ctrl-label">Events N</span>
+        <input type="range" id="s3-nSlider" min="10" max="2000" value="500">
+        <span class="ctrl-value" id="s3-nVal">500</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">N_cal</span>
+        <input type="range" id="s3-ncalSlider" min="20" max="500" value="200" step="10">
+        <span class="ctrl-value" id="s3-ncalVal">200</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Poly order</span>
+        <input type="range" id="s3-polySlider" min="1" max="7" value="3" step="1">
+        <span class="ctrl-value" id="s3-polyVal">3</span>
+      </div>
+    </div>
+    <!-- Calibrate button row -->
+    <div style="display:flex;align-items:center;gap:16px;padding-top:14px;border-top:1px solid var(--border);margin-top:14px;">
+      <button class="cal-btn ready" id="calBtn" onclick="s3Calibrate()">&#9654; Calibrate</button>
+      <span class="cal-status" id="calStatus">No calibration applied yet — click to calibrate.</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="stat-label">Cal events</span>  <span class="stat-value" id="s3-ncalTotal">—</span></div>
+      <div class="stat"><span class="stat-label">Sig events</span>  <span class="stat-value" id="s3-nsig">—</span></div>
+      <div class="stat"><span class="stat-label">Resid mean</span>  <span class="stat-value" id="s3-residMean">—<span> mm</span></span></div>
+      <div class="stat"><span class="stat-label">Resid RMS</span>   <span class="stat-value" id="s3-residRMS">—<span> mm</span></span></div>
+      <div class="stat"><span class="stat-label">μ x_reco</span>    <span class="stat-value" id="s3-recoMean">—<span> mm</span></span></div>
+      <div class="stat"><span class="stat-label">σ x_reco</span>    <span class="stat-value" id="s3-recoSig">—<span> mm</span></span></div>
+    </div>
+  </div>
+
+  <!-- Calibration scatter -->
+  <div class="card">
+    <div class="scatter-toolbar">
+      <div class="plot-title" style="margin-bottom:0;">Calibration Data &nbsp;—&nbsp; measured s vs known x_ref</div>
+      <button class="csv-btn" onclick="s3OpenCSV()">&#9113; Export CSV</button>
+    </div>
+    <canvas id="s3-canvasCal"></canvas>
+  </div>
+
+  <!-- S3 CSV Modal -->
+  <div class="modal-overlay" id="csvCalModal" onclick="s3CloseCSVIfOutside(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Calibration Data — CSV Export</div>
+          <div class="modal-meta" id="csvCalMeta">0 events</div>
+        </div>
+        <button class="modal-close" onclick="s3CloseCSV()">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+        <textarea id="csvCalText" spellcheck="false" readonly></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-copy-btn" id="copyCalBtn" onclick="s3CopyCSV()">Copy to clipboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Three histograms: x_true / s / x_reco -->
+  <div class="plots-row" style="grid-template-columns:1fr 1fr 1fr;">
+    <div class="plot-card">
+      <div class="plot-title">x_true &nbsp;—&nbsp; Ground Truth</div>
+      <canvas id="s3-canvasTrue"></canvas>
+    </div>
+    <div class="plot-card">
+      <div class="plot-title">s &nbsp;—&nbsp; Raw Signal</div>
+      <canvas id="s3-canvasS"></canvas>
+    </div>
+    <div class="plot-card">
+      <div class="plot-title">x_reco &nbsp;—&nbsp; After Calibration</div>
+      <canvas id="s3-canvasReco"></canvas>
+    </div>
+  </div>
+
+  <!-- Residuals histogram -->
+  <div class="card">
+    <div class="plot-title" style="margin-bottom:10px;">Residuals &nbsp;—&nbsp; x_reco − x_true</div>
+    <canvas id="s3-canvasResid"></canvas>
+  </div>
+
+  <div class="card info-box">
+    <strong>Calibration procedure:</strong>
+    A calibration source fires <code>N_cal</code> particles at each of 9 known reference positions
+    <code>x_ref ∈ {10, 20, …, 90} mm</code>. The detector sees these through the same response model
+    <code class="s2">s = x_ref + α·sin(2π·x_ref/L) + ε</code>.
+    The mean measured signal at each reference point gives 9 <em>(s̄, x_ref)</em> pairs.
+    A degree-<em>p</em> polynomial is fitted to these pairs via least-squares (normal equations),
+    giving the correction map <code class="s2">x_reco = f(s)</code>.
+    This map is then applied to all physics events.
+    Watch how residuals shrink as you raise the polynomial order — but also watch for overfitting artefacts
+    near the edges when order is high relative to the 9 calibration points.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     STAGE 4
+═══════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-s4">
+
+  <!-- Controls + stats -->
+  <div class="card">
+    <div class="ctrl-grid">
+      <div class="ctrl-row">
+        <span class="ctrl-label">N_val</span>
+        <input type="range" id="s4-nvalSlider" min="50" max="1000" value="300" step="10">
+        <span class="ctrl-value" id="s4-nvalVal">300</span>
+      </div>
+    </div>
+
+    <!-- Calibration status notice -->
+    <div id="s4-calNotice" style="margin-top:14px;padding:10px 14px;border-radius:7px;border:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.08em;color:var(--muted);">
+      No calibration loaded from Stage 3 — showing raw signal s.
+    </div>
+
+    <div class="stats" style="margin-top:14px;">
+      <div class="stat"><span class="stat-label">Val events</span>    <span class="stat-value" id="s4-nval">—<span> ev</span></span></div>
+      <div class="stat"><span class="stat-label">Nominal pos.</span>  <span class="stat-value" id="s4-nominal">75.00<span> mm</span></span></div>
+      <div class="stat"><span class="stat-label">Reco mean μ</span>   <span class="stat-value" id="s4-mean">—<span> mm</span></span></div>
+      <div class="stat"><span class="stat-label">Peak σ</span>        <span class="stat-value" id="s4-sigma">—<span> mm</span></span></div>
+      <div class="stat"><span class="stat-label">Bias Δ = μ−75</span><span class="stat-value" id="s4-bias">—<span> mm</span></span></div>
+      <div class="stat"><span class="stat-label">Pull Δ/σ</span>     <span class="stat-value" id="s4-pull">—</span></div>
+    </div>
+  </div>
+
+  <!-- Main validation histogram -->
+  <div class="card">
+    <div class="plot-title" style="margin-bottom:10px;">
+      Validation Peak &nbsp;—&nbsp; x_reco for source at 75 mm
+    </div>
+    <canvas id="s4-canvasMain"></canvas>
+  </div>
+
+  <!-- Side-by-side: raw signal vs corrected -->
+  <div class="plots-row">
+    <div class="plot-card">
+      <div class="plot-title">Raw signal s &nbsp;—&nbsp; before correction</div>
+      <canvas id="s4-canvasRaw"></canvas>
+    </div>
+    <div class="plot-card">
+      <div class="plot-title">x_reco &nbsp;—&nbsp; after calibration correction</div>
+      <canvas id="s4-canvasReco"></canvas>
+    </div>
+  </div>
+
+  <div class="card info-box">
+    <strong>Independent validation:</strong>
+    A source at <code>75 mm</code> — not used during calibration — fires
+    <code>N_val</code> events through the same detector response.
+    The calibration correction from Stage 3 is applied (if it exists).
+    The reconstructed mean <code>μ_reco</code> should ideally equal 75 mm.
+    The <strong>bias</strong> <code>Δ = μ_reco − 75 mm</code> measures how well the calibration interpolates between
+    the two bracketing reference points (70 and 80 mm).
+    The <strong>pull</strong> <code>Δ/σ</code> expresses the bias in units of the peak resolution —
+    values near zero indicate a good calibration; large values indicate residual systematic error.
+    Try changing the detector params in the banner after calibrating to watch the bias grow.
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  SHARED UTILITIES
+// ═══════════════════════════════════════════════════
+
+const CFG = {
+  mu: 50, sigma: 15,   // true distribution
+  xMin: 0, xMax: 100,  // detector range
+  nBins: 40,
+};
+
+// Calibration getters — populated by Stage 3 when Calibrate is clicked
+window._s4GetCalCoeffs = () => null;
+window._s4GetCalSnap   = () => null;
+
+function randGaussian(mu, sigma) {
+  let u, v, s;
+  do {
+    u = 2*Math.random()-1;
+    v = 2*Math.random()-1;
+    s = u*u + v*v;
+  } while (s >= 1 || s === 0);
+  return mu + sigma * u * Math.sqrt(-2*Math.log(s)/s);
+}
+
+function generateTrue(N) {
+  const events = []; let discarded = 0;
+  for (let i = 0; i < N; i++) {
+    const x = randGaussian(CFG.mu, CFG.sigma);
+    if (x >= CFG.xMin && x <= CFG.xMax) events.push(x);
+    else discarded++;
+  }
+  return { events, discarded };
+}
+
+function makeHistogram(vals, xMin, xMax, nBins) {
+  const bins = new Array(nBins).fill(0);
+  const binW = (xMax - xMin) / nBins;
+  for (const v of vals) {
+    const idx = Math.min(Math.floor((v - xMin) / binW), nBins - 1);
+    if (idx >= 0) bins[idx]++;
+  }
+  return { bins, binW };
+}
+
+function sampleStats(arr) {
+  const n = arr.length;
+  if (n < 2) return { mean: arr[0]||0, sigma: 0 };
+  const mean = arr.reduce((a,b)=>a+b,0)/n;
+  const sigma = Math.sqrt(arr.reduce((s,x)=>s+(x-mean)**2,0)/(n-1));
+  return { mean, sigma };
+}
+
+function gaussianPDF(x, mu, sigma) {
+  return Math.exp(-0.5*((x-mu)/sigma)**2)/(sigma*Math.sqrt(2*Math.PI));
+}
+
+// ── Generic histogram painter ──────────────────────
+function paintHistogram(canvas, vals, barColor, labelX, refCurve) {
+  // refCurve: optional { mu, sigma, color } for analytic overlay
+  const W = canvas.width, H = canvas.height;
+  const M = { top:28, right:24, bottom:52, left:56 };
+  const pw = W-M.left-M.right, ph = H-M.top-M.bottom;
+  const ctx = canvas.getContext('2d');
+
+  // Determine x range: use detector range for x_true,
+  // for signal expand slightly to show tails
+  const xMin = CFG.xMin, xMax = CFG.xMax;
+  const { bins, binW } = makeHistogram(vals, xMin, xMax, CFG.nBins);
+  const maxCount = Math.max(...bins, 1);
+  const yMax = maxCount * 1.18;
+
+  function xp(x) { return M.left + (x-xMin)/(xMax-xMin)*pw; }
+  function yp(y) { return M.top + ph - (y/yMax)*ph; }
+
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#0f1623'; ctx.fillRect(0,0,W,H);
+
+  // Grid
+  ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
+  for(let i=0;i<=5;i++){
+    const y=M.top+(ph/5)*i;
+    ctx.beginPath(); ctx.moveTo(M.left,y); ctx.lineTo(M.left+pw,y); ctx.stroke();
+  }
+  for(let x=xMin;x<=xMax;x+=10){
+    const px=xp(x);
+    ctx.beginPath(); ctx.moveTo(px,M.top); ctx.lineTo(px,M.top+ph); ctx.stroke();
+  }
+
+  // Bars
+  const bpw = pw/CFG.nBins;
+  for(let i=0;i<CFG.nBins;i++){
+    const bx=xp(xMin+i*binW), topY=yp(bins[i]), bh=M.top+ph-topY;
+    const [r,g,b] = barColor;
+    const grad=ctx.createLinearGradient(0,topY,0,M.top+ph);
+    grad.addColorStop(0,`rgba(${r},${g},${b},0.82)`);
+    grad.addColorStop(1,`rgba(${r},${g},${b},0.18)`);
+    ctx.fillStyle=grad;
+    ctx.fillRect(bx+1,topY,bpw-2,bh);
+    ctx.strokeStyle=`rgba(${r},${g},${b},0.9)`;
+    ctx.lineWidth=1;
+    ctx.strokeRect(bx+1,topY,bpw-2,bh);
+  }
+
+  // Analytic overlay
+  if (refCurve) {
+    const histArea = vals.length * binW;
+    const [cr,cg,cb] = refCurve.color;
+    ctx.beginPath();
+    ctx.strokeStyle=`rgb(${cr},${cg},${cb})`;
+    ctx.lineWidth=2.2;
+    ctx.shadowColor=`rgb(${cr},${cg},${cb})`; ctx.shadowBlur=5;
+    for(let i=0;i<=300;i++){
+      const x=xMin+(xMax-xMin)*i/300;
+      const y=gaussianPDF(x,refCurve.mu,refCurve.sigma)*histArea;
+      i===0?ctx.moveTo(xp(x),yp(y)):ctx.lineTo(xp(x),yp(y));
+    }
+    ctx.stroke(); ctx.shadowBlur=0;
+  }
+
+  // Axes
+  ctx.strokeStyle='rgba(200,218,240,0.5)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(M.left,M.top+ph); ctx.lineTo(M.left+pw,M.top+ph); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(M.left,M.top);    ctx.lineTo(M.left,M.top+ph);    ctx.stroke();
+
+  // X ticks
+  ctx.fillStyle='rgba(200,218,240,0.6)';
+  ctx.font='10px "JetBrains Mono",monospace';
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  for(let x=xMin;x<=xMax;x+=20){
+    const px=xp(x);
+    ctx.strokeStyle='rgba(200,218,240,0.4)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(px,M.top+ph); ctx.lineTo(px,M.top+ph+4); ctx.stroke();
+    ctx.fillText(x,px,M.top+ph+7);
+  }
+
+  // Y ticks
+  ctx.textAlign='right'; ctx.textBaseline='middle';
+  for(let i=0;i<=4;i++){
+    const val=(yMax/4)*i, py=yp(val);
+    ctx.strokeStyle='rgba(200,218,240,0.4)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(M.left-4,py); ctx.lineTo(M.left,py); ctx.stroke();
+    ctx.fillText(Math.round(val),M.left-8,py);
+  }
+
+  // Axis labels
+  ctx.fillStyle='rgba(200,218,240,0.85)';
+  ctx.font='12px "DM Sans",sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='bottom';
+  ctx.fillText(labelX, M.left+pw/2, H-3);
+  ctx.save();
+  ctx.translate(12, M.top+ph/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.textBaseline='top';
+  ctx.fillText('Events / bin', 0, 0);
+  ctx.restore();
+}
+
+// ── Scatter plot painter ───────────────────────────
+function paintScatter(canvas, trueVals, sVals, alpha, L, showIdeal, showSystematic) {
+  const W=canvas.width, H=canvas.height;
+  const M={top:28, right:28, bottom:52, left:58};
+  const pw=W-M.left-M.right, ph=H-M.top-M.bottom;
+  const ctx=canvas.getContext('2d');
+
+  const xMin=CFG.xMin, xMax=CFG.xMax;
+  const sAll=[...sVals];
+  const sMin=Math.min(...sAll, xMin)-2;
+  const sMax=Math.max(...sAll, xMax)+2;
+
+  function xp(x){return M.left+(x-xMin)/(xMax-xMin)*pw;}
+  function yp(y){return M.top+ph-(y-sMin)/(sMax-sMin)*ph;}
+
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#0f1623'; ctx.fillRect(0,0,W,H);
+
+  // Grid
+  ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
+  for(let i=0;i<=5;i++){
+    const y=M.top+(ph/5)*i;
+    ctx.beginPath(); ctx.moveTo(M.left,y); ctx.lineTo(M.left+pw,y); ctx.stroke();
+  }
+  for(let x=xMin;x<=xMax;x+=10){
+    const px=xp(x);
+    ctx.beginPath(); ctx.moveTo(px,M.top); ctx.lineTo(px,M.top+ph); ctx.stroke();
+  }
+
+  // ── Ideal line  s = x
+  if (showIdeal) {
+    ctx.strokeStyle='rgba(200,218,240,0.45)'; ctx.lineWidth=1.8; ctx.setLineDash([5,5]);
+    ctx.beginPath();
+    ctx.moveTo(xp(xMin),yp(xMin));
+    ctx.lineTo(xp(xMax),yp(xMax));
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  // ── Systematic curve  s = x + α·sin(2πx/L)  [noiseless]
+  if (showSystematic) {
+    ctx.strokeStyle='#ff6b35'; ctx.lineWidth=2.2;
+    ctx.shadowColor='#ff6b35'; ctx.shadowBlur=5;
+    ctx.beginPath();
+    for(let i=0;i<=400;i++){
+      const x=xMin+(xMax-xMin)*i/400;
+      const s=x+alpha*Math.sin(2*Math.PI*x/L);
+      i===0?ctx.moveTo(xp(x),yp(s)):ctx.lineTo(xp(x),yp(s));
+    }
+    ctx.stroke(); ctx.shadowBlur=0;
+  }
+
+  // ── Scatter points
+  const n=trueVals.length;
+  const alpha_dot = Math.max(0.12, Math.min(0.55, 60/n));
+  ctx.fillStyle=`rgba(167,139,250,${alpha_dot})`;
+  for(let i=0;i<n;i++){
+    ctx.beginPath();
+    ctx.arc(xp(trueVals[i]),yp(sVals[i]),1.6,0,2*Math.PI);
+    ctx.fill();
+  }
+
+  // Axes
+  ctx.strokeStyle='rgba(200,218,240,0.5)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(M.left,M.top+ph); ctx.lineTo(M.left+pw,M.top+ph); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(M.left,M.top);    ctx.lineTo(M.left,M.top+ph);    ctx.stroke();
+
+  // X ticks
+  ctx.fillStyle='rgba(200,218,240,0.6)';
+  ctx.font='10px "JetBrains Mono",monospace';
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  for(let x=xMin;x<=xMax;x+=20){
+    const px=xp(x);
+    ctx.strokeStyle='rgba(200,218,240,0.4)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(px,M.top+ph); ctx.lineTo(px,M.top+ph+4); ctx.stroke();
+    ctx.fillText(x,px,M.top+ph+7);
+  }
+
+  // Y ticks
+  ctx.textAlign='right'; ctx.textBaseline='middle';
+  const yStep=20;
+  for(let y=Math.ceil(sMin/yStep)*yStep;y<=sMax;y+=yStep){
+    const py=yp(y);
+    if(py<M.top||py>M.top+ph) continue;
+    ctx.strokeStyle='rgba(200,218,240,0.4)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(M.left-4,py); ctx.lineTo(M.left,py); ctx.stroke();
+    ctx.fillText(y,M.left-8,py);
+  }
+
+  // Axis labels
+  ctx.fillStyle='rgba(200,218,240,0.85)';
+  ctx.font='12px "DM Sans",sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='bottom';
+  ctx.fillText('x_true  (mm)',M.left+pw/2,H-3);
+  ctx.save();
+  ctx.translate(12,M.top+ph/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.textBaseline='top';
+  ctx.fillText('s  (mm)',0,0);
+  ctx.restore();
+
+  // Legend — only show entries for active curves
+  const lx=M.left+12;
+  let ly=M.top+10;
+  const legLine=18;
+
+  if(showIdeal){
+    ctx.strokeStyle='rgba(200,218,240,0.45)'; ctx.lineWidth=1.8; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(lx,ly+5); ctx.lineTo(lx+18,ly+5); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='rgba(200,218,240,0.55)'; ctx.font='10px "DM Sans",sans-serif';
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillText('identity (s = x)',lx+23,ly+5);
+    ly+=legLine;
+  }
+  if(showSystematic){
+    ctx.strokeStyle='#ff6b35'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(lx,ly+5); ctx.lineTo(lx+18,ly+5); ctx.stroke();
+    ctx.fillStyle='rgba(200,218,240,0.55)'; ctx.font='10px "DM Sans",sans-serif';
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillText('x + \u03b1\u00b7sin(2\u03c0\u00b7x/L)',lx+23,ly+5);
+    ly+=legLine;
+  }
+  ctx.fillStyle=`rgba(167,139,250,0.75)`;
+  ctx.beginPath(); ctx.arc(lx+9,ly+5,3.5,0,2*Math.PI); ctx.fill();
+  ctx.fillStyle='rgba(200,218,240,0.55)'; ctx.font='10px "DM Sans",sans-serif';
+  ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillText('events (s with noise)',lx+23,ly+5);
+}
+
+
+// ═══════════════════════════════════════════════════
+//  SHARED DETECTOR PARAMETER ACCESSORS
+//  Always read α, L, σ from the shared banner sliders.
+// ═══════════════════════════════════════════════════
+function getDetParams() {
+  return {
+    alpha: +document.getElementById('det-alphaSlider').value,
+    L:     +document.getElementById('det-LSlider').value,
+    sigma: +document.getElementById('det-sigmaSlider').value,
+  };
+}
+
+// Wire the banner slider display labels
+['alpha','L','sigma'].forEach(key => {
+  const id = {alpha:'det-alphaSlider', L:'det-LSlider', sigma:'det-sigmaSlider'}[key];
+  const valId = {alpha:'det-alphaVal', L:'det-LVal', sigma:'det-sigmaVal'}[key];
+  document.getElementById(id).addEventListener('input', () => {
+    const v = +document.getElementById(id).value;
+    document.getElementById(valId).textContent = key==='L' ? v : v.toFixed(1);
+    // Notify each active tab to redraw
+    if(document.getElementById('tab-s2').classList.contains('active')) s2Redraw();
+    if(document.getElementById('tab-s3').classList.contains('active')) s3OnDetChange();
+    if(document.getElementById('tab-s4').classList.contains('active')) s4Redraw();
+  });
+});
+
+
+// ═══════════════════════════════════════════════════
+//  STAGE 1  logic
+// ═══════════════════════════════════════════════════
+(function(){
+  const cnv = document.getElementById('s1-canvas');
+  cnv.width=820; cnv.height=400;
+
+  function redraw(){
+    const N=+document.getElementById('s1-nSlider').value;
+    document.getElementById('s1-nVal').textContent=N;
+    const {events,discarded}=generateTrue(N);
+    const {mean,sigma}=sampleStats(events);
+    paintHistogram(
+      cnv, events,
+      [0,212,255],
+      'x_true  (mm)',
+      {mu:CFG.mu, sigma:CFG.sigma, color:[255,107,53]}
+    );
+    document.getElementById('s1-accepted').innerHTML=`${events.length}<span> ev</span>`;
+    document.getElementById('s1-discarded').innerHTML=`${discarded}<span> ev</span>`;
+    document.getElementById('s1-acceptance').innerHTML=`${(events.length/N*100).toFixed(1)}<span>%</span>`;
+    document.getElementById('s1-mean').innerHTML=`${mean.toFixed(2)}<span> mm</span>`;
+    document.getElementById('s1-sigma').innerHTML=`${sigma.toFixed(2)}<span> mm</span>`;
+  }
+
+  document.getElementById('s1-nSlider').addEventListener('input',redraw);
+  redraw();
+})();
+
+
+// ═══════════════════════════════════════════════════
+//  STAGE 2  logic
+// ═══════════════════════════════════════════════════
+(function(){
+  const cnvTrue    = document.getElementById('s2-canvasTrue');
+  const cnvS       = document.getElementById('s2-canvasS');
+  const cnvScatter = document.getElementById('s2-canvasScatter');
+  cnvTrue.width=480;    cnvTrue.height=340;
+  cnvS.width=480;       cnvS.height=340;
+  cnvScatter.width=820; cnvScatter.height=400;
+
+  let showIdeal      = true;
+  let showSystematic = true;
+  let _trueVals=[], _sVals=[], _sysVals=[], _noiseVals=[];
+  let _alpha=4, _L=80, _sNoise=2;
+
+  function redraw(){
+    const {alpha, L, sigma:sNoise} = getDetParams();
+    _alpha=alpha; _L=L; _sNoise=sNoise;
+    const N = +document.getElementById('s2-nSlider').value;
+    document.getElementById('s2-nVal').textContent=N;
+
+    const {events:trueVals, discarded}=generateTrue(N);
+    _sysVals   = trueVals.map(x => alpha*Math.sin(2*Math.PI*x/L));
+    _noiseVals = trueVals.map(() => randGaussian(0, sNoise||1e-9));
+    const sVals  = trueVals.map((x,i)=> x + _sysVals[i] + _noiseVals[i]);
+    _trueVals=trueVals; _sVals=sVals;
+
+    const stTrue = sampleStats(trueVals);
+    const stS    = sampleStats(sVals);
+    const bias   = stS.mean - stTrue.mean;
+
+    paintHistogram(cnvTrue, trueVals, [0,212,255],  'x_true  (mm)',
+      {mu:CFG.mu, sigma:CFG.sigma, color:[255,107,53]});
+    paintHistogram(cnvS,    sVals,    [167,139,250], 's  (mm)', null);
+    paintScatter(cnvScatter, trueVals, sVals, alpha, L, showIdeal, showSystematic);
+
+    document.getElementById('s2-accepted').innerHTML=`${trueVals.length}<span> ev</span>`;
+    document.getElementById('s2-meanTrue').innerHTML=`${stTrue.mean.toFixed(2)}<span> mm</span>`;
+    document.getElementById('s2-meanS').innerHTML=`${stS.mean.toFixed(2)}<span> mm</span>`;
+    document.getElementById('s2-sigTrue').innerHTML=`${stTrue.sigma.toFixed(2)}<span> mm</span>`;
+    document.getElementById('s2-sigS').innerHTML=`${stS.sigma.toFixed(2)}<span> mm</span>`;
+    document.getElementById('s2-bias').innerHTML=`${bias.toFixed(3)}<span> mm</span>`;
+  }
+
+  window.s2Redraw = redraw;
+
+  window.s2ToggleIdeal = function(btn){
+    showIdeal = !showIdeal;
+    btn.classList.toggle('on-ideal', showIdeal);
+    const {alpha,L}=getDetParams();
+    paintScatter(cnvScatter, _trueVals, _sVals, alpha, L, showIdeal, showSystematic);
+  };
+  window.s2ToggleSystematic = function(btn){
+    showSystematic = !showSystematic;
+    btn.classList.toggle('on-systematic', showSystematic);
+    const {alpha,L}=getDetParams();
+    paintScatter(cnvScatter, _trueVals, _sVals, alpha, L, showIdeal, showSystematic);
+  };
+
+  function buildCSV(){
+    const {alpha:a,L:l,sigma:sn}=getDetParams();
+    const header=[
+      '# 1D Particle Detector Simulation — Stage 2 Export',
+      `# alpha=${a} mm  L=${l} mm  sigma_noise=${sn} mm  N=${_trueVals.length}`,
+      '# Columns: x_true_mm, s_mm, systematic_mm, noise_mm',
+      'x_true_mm,s_mm,systematic_mm,noise_mm'
+    ].join('\n');
+    const rows=_trueVals.map((_,i)=>
+      `${_trueVals[i].toFixed(6)},${_sVals[i].toFixed(6)},${_sysVals[i].toFixed(6)},${_noiseVals[i].toFixed(6)}`);
+    return header+'\n'+rows.join('\n');
+  }
+  window.s2OpenCSV=function(){
+    const {alpha:a,L:l,sigma:sn}=getDetParams();
+    document.getElementById('csvText').value=buildCSV();
+    document.getElementById('csvMeta').textContent=
+      `${_trueVals.length} events  ·  alpha=${a} mm  L=${l} mm  σ_noise=${sn} mm`;
+    document.getElementById('csvModal').classList.add('open');
+    setTimeout(()=>{const ta=document.getElementById('csvText');ta.focus();ta.select();},80);
+  };
+  window.s2CloseCSV=function(){ document.getElementById('csvModal').classList.remove('open'); };
+  window.s2CloseCSVIfOutside=function(e){ if(e.target===document.getElementById('csvModal')) s2CloseCSV(); };
+  window.s2CopyCSV=function(){
+    const ta=document.getElementById('csvText'), btn=document.getElementById('copyBtn');
+    ta.select();
+    navigator.clipboard.writeText(ta.value).then(()=>{
+      btn.textContent='Copied!'; btn.classList.add('copied');
+      setTimeout(()=>{btn.textContent='Copy to clipboard';btn.classList.remove('copied');},2000);
+    }).catch(()=>{ document.execCommand('copy'); btn.textContent='Copied!'; btn.classList.add('copied');
+      setTimeout(()=>{btn.textContent='Copy to clipboard';btn.classList.remove('copied');},2000); });
+  };
+
+  document.getElementById('s2-nSlider').addEventListener('input', redraw);
+
+  // ── Hover tooltip on scatter canvas — shows nearest event's (x_true, s) values
+  cnvScatter.addEventListener('mousemove', function(e) {
+    if(!_trueVals.length) return;
+    const {alpha, L, sigma:sNoise} = getDetParams();
+    const sAll = _sVals;
+    const sMin = Math.min(...sAll, CFG.xMin)-2;
+    const sMax = Math.max(...sAll, CFG.xMax)+2;
+    const M={top:28,right:28,bottom:52,left:58};
+    const W=cnvScatter.width, H=cnvScatter.height;
+    const pw=W-M.left-M.right, ph=H-M.top-M.bottom;
+    const rect=cnvScatter.getBoundingClientRect();
+    const scaleX=W/rect.width, scaleY=H/rect.height;
+    const mx=(e.clientX-rect.left)*scaleX;
+    const my=(e.clientY-rect.top)*scaleY;
+    function xp(x){return M.left+(x-CFG.xMin)/(CFG.xMax-CFG.xMin)*pw;}
+    function yp(y){return M.top+ph-(y-sMin)/(sMax-sMin)*ph;}
+    // Find nearest point within 16px
+    let bestDist=16*16, bestI=-1;
+    for(let i=0;i<_trueVals.length;i++){
+      const dx=xp(_trueVals[i])-mx, dy=yp(_sVals[i])-my;
+      const d2=dx*dx+dy*dy;
+      if(d2<bestDist){bestDist=d2;bestI=i;}
+    }
+    const pt=document.getElementById('pointTooltip');
+    if(bestI>=0){
+      const xi=_trueVals[bestI], si=_sVals[bestI];
+      pt.textContent=`event #${bestI+1}\nx_true  = ${xi.toFixed(4)} mm\ns       = ${si.toFixed(4)} mm\nresid   = ${(si-xi).toFixed(4)} mm`;
+      pt.style.display='block';
+      pt.style.left=(e.clientX+14)+'px';
+      pt.style.top=(e.clientY-8)+'px';
+    } else {
+      pt.style.display='none';
+    }
+  });
+  cnvScatter.addEventListener('mouseleave',()=>{document.getElementById('pointTooltip').style.display='none';});
+
+  redraw();
+})();
+
+
+// ═══════════════════════════════════════════════════
+//  Tab switching  (updated to handle s4)
+// ═══════════════════════════════════════════════════
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='s3') s3OnTabActivated();
+  if(id==='s4') s4OnTabActivated();
+}
+
+// ═══════════════════════════════════════════════════
+//  STAGE 3  —  Calibration & Reconstruction
+// ═══════════════════════════════════════════════════
+(function(){
+
+  // ── Canvas setup
+  const cnvCal   = document.getElementById('s3-canvasCal');
+  const cnvTrue  = document.getElementById('s3-canvasTrue');
+  const cnvS     = document.getElementById('s3-canvasS');
+  const cnvReco  = document.getElementById('s3-canvasReco');
+  const cnvResid = document.getElementById('s3-canvasResid');
+  cnvCal.width=820;  cnvCal.height=380;
+  cnvTrue.width=400; cnvTrue.height=300;
+  cnvS.width=400;    cnvS.height=300;
+  cnvReco.width=400; cnvReco.height=300;
+  cnvResid.width=820; cnvResid.height=320;
+
+  const REF_POS = [10,20,30,40,50,60,70,80,90];
+
+  // ── Calibration state
+  // calCoeffs: frozen polynomial from last Calibrate click (null = never calibrated)
+  // calDirty: true when any calibration-affecting param has changed since last calibration
+  let calCoeffs = null;
+  let calDirty  = true;          // starts true so button is ready on first visit
+  let calParamsSnapshot = null;  // snapshot of params at calibration time
+
+  // ── Stored cal clusters for CSV export and hover
+  let _lastCalClusters = null;
+
+  // ── Tooltip state
+  let _tooltipCoeffs = null;
+  const CAL_CANVAS_MARGINS = {top:28, right:28, bottom:52, left:58};
+
+  // ── Linear algebra
+  function vandermonde(xs,deg){return xs.map(x=>{const r=[];for(let j=0;j<=deg;j++)r.push(Math.pow(x,j));return r;});}
+  function matMul(A,B){const m=A.length,k=B.length,n=B[0].length,C=Array.from({length:m},()=>new Array(n).fill(0));for(let i=0;i<m;i++)for(let j=0;j<n;j++)for(let p=0;p<k;p++)C[i][j]+=A[i][p]*B[p][j];return C;}
+  function transpose(A){return A[0].map((_,j)=>A.map(r=>r[j]));}
+  function gaussSolve(A,b){const n=A.length,M=A.map((r,i)=>[...r,b[i]]);for(let c=0;c<n;c++){let mv=Math.abs(M[c][c]),mr=c;for(let r=c+1;r<n;r++)if(Math.abs(M[r][c])>mv){mv=Math.abs(M[r][c]);mr=r;}if(mv<1e-14)return null;[M[c],M[mr]]=[M[mr],M[c]];const pv=M[c][c];for(let j=c;j<=n;j++)M[c][j]/=pv;for(let r=0;r<n;r++){if(r===c)continue;const f=M[r][c];for(let j=c;j<=n;j++)M[r][j]-=f*M[c][j];}}return M.map(r=>r[n]);}
+  function polyFit(xs,ys,deg){const A=vandermonde(xs,deg),At=transpose(A),AtA=matMul(At,A),Atb=At.map(r=>r.reduce((s,v,i)=>s+v*ys[i],0));return gaussSolve(AtA,Atb);}
+  function polyEval(c,x){let v=0,pw=1;for(const ci of c){v+=ci*pw;pw*=x;}return v;}
+
+  // ── Format polynomial for tooltip
+  function formatPoly(coeffs) {
+    const deg=coeffs.length-1, lines=[];
+    for(let p=deg;p>=0;p--){
+      const c=coeffs[p];
+      if(Math.abs(c)<1e-12) continue;
+      const sign=c>=0?'+':'−', abs=Math.abs(c);
+      let term;
+      if(p===0)      term=`${abs.toExponential(4)}`;
+      else if(p===1) term=`${abs.toExponential(4)} · s`;
+      else           term=`${abs.toExponential(4)} · s^${p}`;
+      lines.push(`  ${sign} ${term}`);
+    }
+    if(lines.length>0) lines[0]=lines[0].replace(/^  \+ /,'    ');
+    return 'f(s) =\n'+lines.join('\n');
+  }
+
+  // ─────────────────────────────────────────────────
+  //  S3 CSV helpers
+  // ─────────────────────────────────────────────────
+  function buildCalCSV() {
+    if(!_lastCalClusters) return '';
+    const snap = calParamsSnapshot;
+    const {alpha,L,sigma} = snap
+      ? {alpha:snap.alpha,L:snap.L,sigma:snap.sigma}
+      : getDetParams();
+    const Ncal = _lastCalClusters[0].sSamples.length;
+    const header = [
+      '# 1D Particle Detector Simulation — Stage 3 Calibration Export',
+      `# alpha=${alpha} mm  L=${L} mm  sigma_noise=${sigma} mm  N_cal=${Ncal} per ref`,
+      snap ? `# poly_order=${snap.polyOrd}` : '# (pre-calibration preview)',
+      '# Columns: x_ref_mm, s_mm',
+      '# Each reference position contributes N_cal rows',
+      'x_ref_mm,s_mm'
+    ].join('\n');
+    const rows = [];
+    for(const cl of _lastCalClusters)
+      for(const s of cl.sSamples)
+        rows.push(`${cl.xRef.toFixed(6)},${s.toFixed(6)}`);
+    return header + '\n' + rows.join('\n');
+  }
+
+  window.s3OpenCSV = function() {
+    const csv = buildCalCSV();
+    document.getElementById('csvCalText').value = csv;
+    const nEv = _lastCalClusters ? _lastCalClusters.reduce((a,c)=>a+c.sSamples.length,0) : 0;
+    const snap = calParamsSnapshot;
+    document.getElementById('csvCalMeta').textContent =
+      snap ? `${nEv} cal events  ·  order ${snap.polyOrd}, α=${snap.alpha.toFixed(1)} mm`
+           : `${nEv} cal events  ·  (preview — not yet calibrated)`;
+    document.getElementById('csvCalModal').classList.add('open');
+    setTimeout(()=>{const ta=document.getElementById('csvCalText');ta.focus();ta.select();},80);
+  };
+  window.s3CloseCSV = function(){ document.getElementById('csvCalModal').classList.remove('open'); };
+  window.s3CloseCSVIfOutside = function(e){ if(e.target===document.getElementById('csvCalModal')) s3CloseCSV(); };
+  window.s3CopyCSV = function(){
+    const ta=document.getElementById('csvCalText'), btn=document.getElementById('copyCalBtn');
+    ta.select();
+    navigator.clipboard.writeText(ta.value).then(()=>{
+      btn.textContent='Copied!'; btn.classList.add('copied');
+      setTimeout(()=>{btn.textContent='Copy to clipboard';btn.classList.remove('copied');},2000);
+    }).catch(()=>{document.execCommand('copy');btn.textContent='Copied!';btn.classList.add('copied');
+      setTimeout(()=>{btn.textContent='Copy to clipboard';btn.classList.remove('copied');},2000);});
+  };
+
+  // ─────────────────────────────────────────────────
+  //  Tooltip: mousemove handler on the cal canvas
+  //  Shows poly tooltip near the fitted curve,
+  //  and cluster info near calibration point columns.
+  // ─────────────────────────────────────────────────
+  cnvCal.addEventListener('mousemove', function(e) {
+    const polyTT = document.getElementById('polyTooltip');
+    const ptTT   = document.getElementById('pointTooltip');
+    const rect   = cnvCal.getBoundingClientRect();
+    const W=cnvCal.width, H=cnvCal.height;
+    const M=CAL_CANVAS_MARGINS;
+    const pw=W-M.left-M.right, ph=H-M.top-M.bottom;
+    const scaleX=W/rect.width, scaleY=H/rect.height;
+    const mx=(e.clientX-rect.left)*scaleX;
+    const my=(e.clientY-rect.top)*scaleY;
+
+    if(mx<M.left||mx>M.left+pw||my<M.top||my>M.top+ph){
+      polyTT.style.display='none'; ptTT.style.display='none'; return;
+    }
+
+    // Determine sMin/sMax the same way the painter does
+    const clusters = _lastCalClusters;
+    if(!clusters){ polyTT.style.display='none'; ptTT.style.display='none'; return; }
+    const allS=clusters.flatMap(c=>c.sSamples);
+    const sMin=Math.min(...allS,CFG.xMin)-3, sMax=Math.max(...allS,CFG.xMax)+3;
+
+    function xp(x){return M.left+(x-CFG.xMin)/(CFG.xMax-CFG.xMin)*pw;}
+    function yp(y){return M.top+ph-(y-sMin)/(sMax-sMin)*ph;}
+
+    // --- 1. Check proximity to individual calibration samples ---
+    let bestDist=20*20, bestClI=-1, bestSI=-1;
+    for(let ci=0;ci<clusters.length;ci++){
+      const cl=clusters[ci];
+      for(let si=0;si<cl.sSamples.length;si++){
+        const dx=xp(cl.xRef)-mx, dy=yp(cl.sSamples[si])-my;
+        const d2=dx*dx+dy*dy;
+        if(d2<bestDist){bestDist=d2;bestClI=ci;bestSI=si;}
+      }
+    }
+    if(bestClI>=0){
+      const cl=clusters[bestClI];
+      ptTT.textContent=`ref position: ${cl.xRef} mm\nsample #${bestSI+1}:  s = ${cl.sSamples[bestSI].toFixed(4)} mm\ncluster mean: ${cl.sMean.toFixed(4)} mm\ncluster σ:   ${cl.sSig.toFixed(4)} mm`;
+      ptTT.style.display='block';
+      ptTT.style.left=(e.clientX+14)+'px';
+      ptTT.style.top=(e.clientY-8)+'px';
+      polyTT.style.display='none';
+      return;
+    }
+    ptTT.style.display='none';
+
+    // --- 2. Check proximity to the fitted poly curve ---
+    if(!_tooltipCoeffs){ polyTT.style.display='none'; return; }
+    const xVal=CFG.xMin+(mx-M.left)/pw*(CFG.xMax-CFG.xMin);
+    const sFit=polyEval(_tooltipCoeffs,xVal);
+    const yFitPx=yp(sFit);
+    if(Math.abs(my-yFitPx)<18){
+      polyTT.style.display='block';
+      polyTT.style.left=(e.clientX+16)+'px';
+      polyTT.style.top=(e.clientY-10)+'px';
+      document.getElementById('polyTooltipBody').textContent=formatPoly(_tooltipCoeffs);
+    } else {
+      polyTT.style.display='none';
+    }
+  });
+  cnvCal.addEventListener('mouseleave', ()=>{
+    document.getElementById('polyTooltip').style.display='none';
+    document.getElementById('pointTooltip').style.display='none';
+  });
+
+  function setCalReady() {
+    calDirty = true;
+    const btn = document.getElementById('calBtn');
+    const st  = document.getElementById('calStatus');
+    btn.classList.remove('done'); btn.classList.add('ready');
+    if(calCoeffs) {
+      st.textContent = 'Parameters changed — recalibrate to update.';
+      st.className='cal-status stale';
+    } else {
+      st.textContent = 'No calibration applied yet — click to calibrate.';
+      st.className='cal-status';
+    }
+  }
+
+  function setCalDone(snap) {
+    calDirty = false;
+    const btn = document.getElementById('calBtn');
+    const st  = document.getElementById('calStatus');
+    btn.classList.remove('ready'); btn.classList.add('done');
+    st.textContent = `Calibrated — order ${snap.polyOrd}, N_cal=${snap.Ncal}×9, α=${snap.alpha.toFixed(1)} mm, L=${snap.L} mm, σ=${snap.sigma.toFixed(1)} mm`;
+    st.className='cal-status active';
+  }
+
+  // ─────────────────────────────────────────────────
+  //  Calibration scatter painter
+  // ─────────────────────────────────────────────────
+  function paintCalScatter(canvas, calClusters, fwdCoeffs, frozenCoeffs, alpha, L) {
+    _tooltipCoeffs = fwdCoeffs;
+    _lastCalClusters = calClusters;
+
+    const W=canvas.width, H=canvas.height;
+    const M=CAL_CANVAS_MARGINS;
+    const pw=W-M.left-M.right, ph=H-M.top-M.bottom;
+    const ctx=canvas.getContext('2d');
+
+    const xMin=CFG.xMin, xMax=CFG.xMax;
+    const allS=calClusters.flatMap(c=>c.sSamples);
+    const sMin=Math.min(...allS,xMin)-3, sMax=Math.max(...allS,xMax)+3;
+
+    function xp(x){return M.left+(x-xMin)/(xMax-xMin)*pw;}
+    function yp(y){return M.top+ph-(y-sMin)/(sMax-sMin)*ph;}
+
+    ctx.clearRect(0,0,W,H); ctx.fillStyle='#0f1623'; ctx.fillRect(0,0,W,H);
+
+    // Grid
+    ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
+    for(let i=0;i<=5;i++){const y=M.top+(ph/5)*i;ctx.beginPath();ctx.moveTo(M.left,y);ctx.lineTo(M.left+pw,y);ctx.stroke();}
+    for(let x=xMin;x<=xMax;x+=10){const px=xp(x);ctx.beginPath();ctx.moveTo(px,M.top);ctx.lineTo(px,M.top+ph);ctx.stroke();}
+
+    // Identity line
+    ctx.strokeStyle='rgba(200,218,240,0.12)'; ctx.lineWidth=1.2; ctx.setLineDash([5,5]);
+    ctx.beginPath(); ctx.moveTo(xp(xMin),yp(xMin)); ctx.lineTo(xp(xMax),yp(xMax));
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // True systematic curve
+    ctx.strokeStyle='rgba(255,107,53,0.5)'; ctx.lineWidth=1.5;
+    ctx.beginPath();
+    for(let i=0;i<=400;i++){const x=xMin+(xMax-xMin)*i/400,s=x+alpha*Math.sin(2*Math.PI*x/L);i===0?ctx.moveTo(xp(x),yp(s)):ctx.lineTo(xp(x),yp(s));}
+    ctx.stroke();
+
+    // Forward polynomial fit curve (for visual: maps x_ref → fitted s̄)
+    if(fwdCoeffs){
+      ctx.strokeStyle='#00d4ff'; ctx.lineWidth=2.2;
+      ctx.shadowColor='#00d4ff'; ctx.shadowBlur=4;
+      ctx.beginPath();
+      for(let i=0;i<=400;i++){const x=xMin+(xMax-xMin)*i/400,s=polyEval(fwdCoeffs,x);i===0?ctx.moveTo(xp(x),yp(s)):ctx.lineTo(xp(x),yp(s));}
+      ctx.stroke(); ctx.shadowBlur=0;
+    }
+
+    // Cluster points, means, error bars
+    const clCols=['rgba(0,212,255,','rgba(167,139,250,','rgba(255,107,53,','rgba(52,211,153,','rgba(251,191,36,','rgba(236,72,153,','rgba(99,179,237,','rgba(248,113,113,','rgba(163,230,53,'];
+    const ptA=Math.max(0.10,Math.min(0.50,40/calClusters[0].sSamples.length));
+    calClusters.forEach((cl,ci)=>{
+      ctx.fillStyle=clCols[ci%clCols.length]+`${ptA})`;
+      for(const s of cl.sSamples){ctx.beginPath();ctx.arc(xp(cl.xRef),yp(s),1.8,0,2*Math.PI);ctx.fill();}
+      ctx.fillStyle=clCols[ci%clCols.length]+'0.95)';
+      ctx.beginPath();ctx.arc(xp(cl.xRef),yp(cl.sMean),4.5,0,2*Math.PI);ctx.fill();
+      ctx.strokeStyle=clCols[ci%clCols.length]+'0.7)'; ctx.lineWidth=1.5;
+      const py2=yp(cl.sMean),erry=cl.sSig/(sMax-sMin)*ph;
+      ctx.beginPath();ctx.moveTo(xp(cl.xRef),py2-erry);ctx.lineTo(xp(cl.xRef),py2+erry);ctx.stroke();
+    });
+
+    // Axes + ticks + labels
+    ctx.strokeStyle='rgba(200,218,240,0.5)'; ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(M.left,M.top+ph);ctx.lineTo(M.left+pw,M.top+ph);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(M.left,M.top);ctx.lineTo(M.left,M.top+ph);ctx.stroke();
+    ctx.fillStyle='rgba(200,218,240,0.6)'; ctx.font='10px "JetBrains Mono",monospace';
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    for(let x=xMin;x<=xMax;x+=10){const px=xp(x);ctx.strokeStyle='rgba(200,218,240,0.4)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(px,M.top+ph);ctx.lineTo(px,M.top+ph+4);ctx.stroke();if(x%20===0||REF_POS.includes(x))ctx.fillText(x,px,M.top+ph+7);}
+    ctx.textAlign='right'; ctx.textBaseline='middle';
+    for(let y=Math.ceil(sMin/10)*10;y<=sMax;y+=10){const py2=yp(y);if(py2<M.top||py2>M.top+ph)continue;ctx.strokeStyle='rgba(200,218,240,0.4)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(M.left-4,py2);ctx.lineTo(M.left,py2);ctx.stroke();if(y%20===0)ctx.fillText(y,M.left-8,py2);}
+    ctx.fillStyle='rgba(200,218,240,0.85)'; ctx.font='12px "DM Sans",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='bottom';
+    ctx.fillText('x_ref  (mm)',M.left+pw/2,H-3);
+    ctx.save(); ctx.translate(12,M.top+ph/2); ctx.rotate(-Math.PI/2); ctx.textBaseline='top'; ctx.fillText('s  (mm)',0,0); ctx.restore();
+
+    // Legend
+    const lx=M.left+14, ly=M.top+10;
+    ctx.strokeStyle='rgba(255,107,53,0.5)'; ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(lx,ly+5);ctx.lineTo(lx+18,ly+5);ctx.stroke();
+    ctx.fillStyle='rgba(200,218,240,0.55)'; ctx.font='10px "DM Sans",sans-serif';
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillText('true response curve',lx+23,ly+5);
+    if(fwdCoeffs){
+      ctx.strokeStyle='#00d4ff'; ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(lx,ly+20);ctx.lineTo(lx+18,ly+20);ctx.stroke();
+      ctx.fillText('poly fit (order '+(frozenCoeffs?frozenCoeffs.length-1:'—')+')  — hover to see f(s)',lx+23,ly+20);
+    }
+    ctx.fillStyle='rgba(200,218,240,0.7)'; ctx.beginPath();ctx.arc(lx+9,ly+35,4,0,2*Math.PI);ctx.fill();
+    ctx.fillStyle='rgba(200,218,240,0.55)'; ctx.fillText('cluster mean ± 1σ',lx+23,ly+35);
+  }
+
+  // ─────────────────────────────────────────────────
+  //  Residuals histogram painter
+  // ─────────────────────────────────────────────────
+  function paintResiduals(canvas, residuals) {
+    const W=canvas.width, H=canvas.height;
+    const M={top:28, right:28, bottom:52, left:58};
+    const pw=W-M.left-M.right, ph=H-M.top-M.bottom;
+    const ctx=canvas.getContext('2d');
+    const absMax=Math.max(...residuals.map(Math.abs),1);
+    const rng=Math.ceil(absMax*1.2);
+    const nBins=50, binW=2*rng/nBins;
+    const bins=new Array(nBins).fill(0);
+    for(const r of residuals){const idx=Math.min(Math.floor((r+rng)/binW),nBins-1);if(idx>=0)bins[idx]++;}
+    const yMax=Math.max(...bins,1)*1.18;
+    function xp(x){return M.left+(x+rng)/(2*rng)*pw;}
+    function yp(y){return M.top+ph-(y/yMax)*ph;}
+    ctx.clearRect(0,0,W,H); ctx.fillStyle='#0f1623'; ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
+    for(let i=0;i<=5;i++){const y=M.top+(ph/5)*i;ctx.beginPath();ctx.moveTo(M.left,y);ctx.lineTo(M.left+pw,y);ctx.stroke();}
+    ctx.strokeStyle='rgba(200,218,240,0.2)'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.moveTo(xp(0),M.top);ctx.lineTo(xp(0),M.top+ph);ctx.stroke();ctx.setLineDash([]);
+    const bpw=pw/nBins;
+    for(let i=0;i<nBins;i++){const bx=M.left+i*bpw,topY=yp(bins[i]),bh=M.top+ph-topY;const grad=ctx.createLinearGradient(0,topY,0,M.top+ph);grad.addColorStop(0,'rgba(52,211,153,0.80)');grad.addColorStop(1,'rgba(52,211,153,0.15)');ctx.fillStyle=grad;ctx.fillRect(bx+0.5,topY,bpw-1,bh);ctx.strokeStyle='rgba(52,211,153,0.85)';ctx.lineWidth=0.8;ctx.strokeRect(bx+0.5,topY,bpw-1,bh);}
+    const {mean,sigma:rms}=sampleStats(residuals);
+    [[mean,'rgba(255,107,53,0.9)'],[mean+rms,'rgba(251,191,36,0.7)'],[mean-rms,'rgba(251,191,36,0.7)']].forEach(([val,col])=>{if(val<-rng||val>rng)return;ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(xp(val),M.top);ctx.lineTo(xp(val),M.top+ph);ctx.stroke();ctx.setLineDash([]);});
+    ctx.strokeStyle='rgba(200,218,240,0.5)'; ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(M.left,M.top+ph);ctx.lineTo(M.left+pw,M.top+ph);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(M.left,M.top);ctx.lineTo(M.left,M.top+ph);ctx.stroke();
+    ctx.fillStyle='rgba(200,218,240,0.6)'; ctx.font='10px "JetBrains Mono",monospace';
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    const tStep=rng<=5?1:rng<=10?2:rng<=20?5:10;
+    for(let x=-rng;x<=rng;x+=tStep){const px=xp(x);ctx.strokeStyle='rgba(200,218,240,0.4)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(px,M.top+ph);ctx.lineTo(px,M.top+ph+4);ctx.stroke();ctx.fillText(x.toFixed(tStep<1?1:0),px,M.top+ph+7);}
+    ctx.textAlign='right'; ctx.textBaseline='middle';
+    for(let i=0;i<=4;i++){const val=(yMax/4)*i,py2=yp(val);ctx.strokeStyle='rgba(200,218,240,0.4)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(M.left-4,py2);ctx.lineTo(M.left,py2);ctx.stroke();ctx.fillText(Math.round(val),M.left-8,py2);}
+    ctx.fillStyle='rgba(200,218,240,0.85)'; ctx.font='12px "DM Sans",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='bottom';
+    ctx.fillText('x_reco \u2212 x_true  (mm)',M.left+pw/2,H-3);
+    ctx.save();ctx.translate(12,M.top+ph/2);ctx.rotate(-Math.PI/2);ctx.textBaseline='top';ctx.fillText('Events / bin',0,0);ctx.restore();
+    const lx=M.left+14, ly=M.top+10;
+    ctx.strokeStyle='rgba(255,107,53,0.9)'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+    ctx.beginPath();ctx.moveTo(lx,ly+5);ctx.lineTo(lx+18,ly+5);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='rgba(200,218,240,0.55)'; ctx.font='10px "DM Sans",sans-serif';
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillText('mean = '+mean.toFixed(3)+' mm',lx+23,ly+5);
+    ctx.strokeStyle='rgba(251,191,36,0.7)'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+    ctx.beginPath();ctx.moveTo(lx,ly+20);ctx.lineTo(lx+18,ly+20);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillText('\u00b11\u03c3 = \u00b1'+rms.toFixed(3)+' mm',lx+23,ly+20);
+  }
+
+  // ─────────────────────────────────────────────────
+  //  Draw a "no calibration" placeholder on a canvas
+  // ─────────────────────────────────────────────────
+  function paintNoCal(canvas, msg) {
+    const ctx=canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#0f1623'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='rgba(74,96,128,0.5)';
+    ctx.font='13px "DM Sans",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(msg||'Calibration not yet applied',canvas.width/2,canvas.height/2);
+  }
+
+  // ─────────────────────────────────────────────────
+  //  Generate calibration clusters (pure function — no side effects)
+  // ─────────────────────────────────────────────────
+  function buildCalClusters(Ncal, alpha, L, sigma) {
+    return REF_POS.map(xRef => {
+      const sSamples=[];
+      for(let i=0;i<Ncal;i++) sSamples.push(xRef+alpha*Math.sin(2*Math.PI*xRef/L)+randGaussian(0,sigma||1e-9));
+      const {mean:sMean,sigma:sSig}=sampleStats(sSamples);
+      return {xRef,sSamples,sMean,sSig};
+    });
+  }
+
+  // ─────────────────────────────────────────────────
+  //  Main redraw — uses CURRENT detector params for physics events,
+  //  but FROZEN calCoeffs for the correction.
+  // ─────────────────────────────────────────────────
+  function redraw() {
+    const {alpha, L, sigma:sNoise} = getDetParams();
+    const N       = +document.getElementById('s3-nSlider').value;
+    const Ncal    = +document.getElementById('s3-ncalSlider').value;
+    const polyOrd = +document.getElementById('s3-polySlider').value;
+
+    document.getElementById('s3-nVal').textContent=N;
+    document.getElementById('s3-ncalVal').textContent=Ncal;
+    document.getElementById('s3-polyVal').textContent=polyOrd;
+
+    // ── Generate physics signal events with CURRENT detector params
+    const {events:trueVals}=generateTrue(N);
+    const sVals=trueVals.map(x=>x+alpha*Math.sin(2*Math.PI*x/L)+randGaussian(0,sNoise||1e-9));
+
+    paintHistogram(cnvTrue, trueVals, [0,212,255], 'x_true  (mm)',
+      {mu:CFG.mu,sigma:CFG.sigma,color:[255,107,53]});
+    paintHistogram(cnvS, sVals, [167,139,250], 's  (mm)', null);
+
+    document.getElementById('s3-nsig').innerHTML=`${trueVals.length}<span> ev</span>`;
+
+    if(!calCoeffs) {
+      // No calibration yet — draw cal scatter with clusters for inspection,
+      // but leave reco/residuals as placeholders.
+      const Ncal2 = +document.getElementById('s3-ncalSlider').value;
+      const clusters = buildCalClusters(Ncal2, alpha, L, sNoise);
+      const sMeans=clusters.map(c=>c.sMean), xRefs=clusters.map(c=>c.xRef);
+      const fitOrd=Math.min(polyOrd, REF_POS.length-1);
+      const fwdCoeffs=polyFit(xRefs, sMeans, fitOrd)||null;
+      paintCalScatter(cnvCal, clusters, fwdCoeffs, null, alpha, L);
+      document.getElementById('s3-ncalTotal').innerHTML=`${REF_POS.length*Ncal2}<span> ev</span>`;
+      paintNoCal(cnvReco, 'Calibration not yet applied');
+      paintNoCal(cnvResid, 'Calibration not yet applied');
+      document.getElementById('s3-residMean').innerHTML='—<span> mm</span>';
+      document.getElementById('s3-residRMS').innerHTML='—<span> mm</span>';
+      document.getElementById('s3-recoMean').innerHTML='—<span> mm</span>';
+      document.getElementById('s3-recoSig').innerHTML='—<span> mm</span>';
+      return;
+    }
+
+    // ── Apply FROZEN correction to current physics events
+    const recoVals  = sVals.map(s=>polyEval(calCoeffs,s));
+    const residuals = recoVals.map((r,i)=>r-trueVals[i]);
+    const stResid=sampleStats(residuals), stReco=sampleStats(recoVals);
+
+    // Repaint cal scatter using the FROZEN calibration's clusters
+    // (stored in calParamsSnapshot.clusters)
+    const snap = calParamsSnapshot;
+    paintCalScatter(cnvCal, snap.clusters, snap.fwdCoeffs, calCoeffs, snap.alpha, snap.L);
+    document.getElementById('s3-ncalTotal').innerHTML=`${REF_POS.length*snap.Ncal}<span> ev</span>`;
+
+    paintHistogram(cnvReco, recoVals, [52,211,153], 'x_reco  (mm)',
+      {mu:CFG.mu,sigma:CFG.sigma,color:[255,107,53]});
+    paintResiduals(cnvResid, residuals);
+
+    document.getElementById('s3-residMean').innerHTML=`${stResid.mean.toFixed(4)}<span> mm</span>`;
+    document.getElementById('s3-residRMS').innerHTML=`${stResid.sigma.toFixed(4)}<span> mm</span>`;
+    document.getElementById('s3-recoMean').innerHTML=`${stReco.mean.toFixed(2)}<span> mm</span>`;
+    document.getElementById('s3-recoSig').innerHTML=`${stReco.sigma.toFixed(2)}<span> mm</span>`;
+  }
+
+  // ─────────────────────────────────────────────────
+  //  Calibrate button handler — freezes the polynomial
+  // ─────────────────────────────────────────────────
+  window.s3Calibrate = function() {
+    if(!calDirty) return; // button is inactive — ignore
+    const {alpha, L, sigma:sNoise} = getDetParams();
+    const Ncal    = +document.getElementById('s3-ncalSlider').value;
+    const polyOrd = +document.getElementById('s3-polySlider').value;
+
+    const clusters   = buildCalClusters(Ncal, alpha, L, sNoise);
+    const sMeans     = clusters.map(c=>c.sMean);
+    const xRefs      = clusters.map(c=>c.xRef);
+    const fitOrd     = Math.min(polyOrd, REF_POS.length-1);
+    const coeffs     = polyFit(sMeans, xRefs, fitOrd) || [0,1];
+    const fwdCoeffs  = polyFit(xRefs, sMeans, fitOrd) || null;
+
+    calCoeffs = coeffs;
+    calParamsSnapshot = { alpha, L, sigma:sNoise, Ncal, polyOrd, clusters, fwdCoeffs };
+
+    setCalDone(calParamsSnapshot);
+    // Expose frozen coefficients so Stage 4 can read them
+    window._s4GetCalCoeffs = () => calCoeffs;
+    window._s4GetCalSnap   = () => calParamsSnapshot;
+    redraw();
+  };
+
+  // ─────────────────────────────────────────────────
+  //  Listeners — mark dirty when calibration params change,
+  //  just redraw (don't recalibrate) when physics params change.
+  // ─────────────────────────────────────────────────
+  // These affect calibration → mark dirty
+  ['s3-ncalSlider','s3-polySlider'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      setCalReady();
+      redraw();
+    });
+  });
+  // These affect physics events only → redraw without recalibrating
+  ['s3-nSlider'].forEach(id => {
+    document.getElementById(id).addEventListener('input', redraw);
+  });
+
+  // ─────────────────────────────────────────────────
+  //  Called by shared detector banner sliders
+  // ─────────────────────────────────────────────────
+  window.s3OnDetChange = function() {
+    // Detector changed → calibration is stale (physics changed, old cal no longer valid)
+    setCalReady();
+    redraw();
+  };
+
+  // ─────────────────────────────────────────────────
+  //  Tab activation (lazy init)
+  // ─────────────────────────────────────────────────
+  let s3Initialised = false;
+  window.s3OnTabActivated = function() {
+    if(!s3Initialised){ s3Initialised=true; redraw(); }
+  };
+
+})();
+
+// ═══════════════════════════════════════════════════
+//  STAGE 4  —  Validation Check
+// ═══════════════════════════════════════════════════
+(function(){
+
+  const VAL_POS   = 75;   // mm — nominal validation source position
+  const ZOOM_HALF = 18;   // mm — half-width of zoomed histogram x-axis around 75 mm
+
+  // ── Canvas setup
+  const cnvMain = document.getElementById('s4-canvasMain');
+  const cnvRaw  = document.getElementById('s4-canvasRaw');
+  const cnvReco = document.getElementById('s4-canvasReco');
+  cnvMain.width=820; cnvMain.height=400;
+  cnvRaw.width=480;  cnvRaw.height=320;
+  cnvReco.width=480; cnvReco.height=320;
+
+  // ─────────────────────────────────────────────────
+  //  Zoomed histogram painter
+  //  xCenter / halfW define the visible x window.
+  //  markers: array of { x, color, dash, label } drawn as vertical lines.
+  // ─────────────────────────────────────────────────
+  function paintZoomedHist(canvas, vals, barColor, labelX, xCenter, halfW, markers) {
+    const W=canvas.width, H=canvas.height;
+    const M={top:36, right:28, bottom:52, left:60};
+    const pw=W-M.left-M.right, ph=H-M.top-M.bottom;
+    const ctx=canvas.getContext('2d');
+
+    const xMin=xCenter-halfW, xMax=xCenter+halfW;
+    const nBins=40;
+    const binW=(xMax-xMin)/nBins;
+
+    // Bin the data
+    const bins=new Array(nBins).fill(0);
+    for(const v of vals){
+      const idx=Math.floor((v-xMin)/binW);
+      if(idx>=0 && idx<nBins) bins[idx]++;
+    }
+    const maxCount=Math.max(...bins,1);
+    const yMax=maxCount*1.22;
+
+    function xp(x){return M.left+(x-xMin)/(xMax-xMin)*pw;}
+    function yp(y){return M.top+ph-(y/yMax)*ph;}
+
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#0f1623'; ctx.fillRect(0,0,W,H);
+
+    // Grid
+    ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
+    for(let i=0;i<=5;i++){
+      const y=M.top+(ph/5)*i;
+      ctx.beginPath(); ctx.moveTo(M.left,y); ctx.lineTo(M.left+pw,y); ctx.stroke();
+    }
+    for(let x=Math.ceil(xMin/5)*5;x<=xMax;x+=5){
+      const px=xp(x);
+      ctx.beginPath(); ctx.moveTo(px,M.top); ctx.lineTo(px,M.top+ph); ctx.stroke();
+    }
+
+    // Bars
+    const bpw=pw/nBins;
+    const [r,g,b]=barColor;
+    for(let i=0;i<nBins;i++){
+      const bx=M.left+i*bpw, topY=yp(bins[i]), bh=M.top+ph-topY;
+      const grad=ctx.createLinearGradient(0,topY,0,M.top+ph);
+      grad.addColorStop(0,`rgba(${r},${g},${b},0.82)`);
+      grad.addColorStop(1,`rgba(${r},${g},${b},0.18)`);
+      ctx.fillStyle=grad;
+      ctx.fillRect(bx+0.5,topY,bpw-1,bh);
+      ctx.strokeStyle=`rgba(${r},${g},${b},0.85)`;
+      ctx.lineWidth=0.8;
+      ctx.strokeRect(bx+0.5,topY,bpw-1,bh);
+    }
+
+    // Vertical marker lines
+    if(markers) {
+      markers.forEach(mk => {
+        if(mk.x < xMin || mk.x > xMax) return;
+        const px=xp(mk.x);
+        ctx.strokeStyle=mk.color; ctx.lineWidth=mk.width||1.8;
+        ctx.setLineDash(mk.dash||[]);
+        ctx.beginPath(); ctx.moveTo(px,M.top); ctx.lineTo(px,M.top+ph);
+        ctx.stroke(); ctx.setLineDash([]);
+        // Label above the line
+        if(mk.label){
+          ctx.fillStyle=mk.color;
+          ctx.font=`600 10px "JetBrains Mono",monospace`;
+          ctx.textAlign='center'; ctx.textBaseline='bottom';
+          ctx.fillText(mk.label, px, M.top-3);
+        }
+      });
+    }
+
+    // Axes
+    ctx.strokeStyle='rgba(200,218,240,0.5)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(M.left,M.top+ph); ctx.lineTo(M.left+pw,M.top+ph); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(M.left,M.top);    ctx.lineTo(M.left,M.top+ph);    ctx.stroke();
+
+    // X ticks
+    ctx.fillStyle='rgba(200,218,240,0.6)';
+    ctx.font='10px "JetBrains Mono",monospace';
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    const tickStep = halfW<=10 ? 2 : halfW<=20 ? 5 : 10;
+    for(let x=Math.ceil(xMin/tickStep)*tickStep; x<=xMax; x+=tickStep){
+      const px=xp(x);
+      ctx.strokeStyle='rgba(200,218,240,0.4)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(px,M.top+ph); ctx.lineTo(px,M.top+ph+4); ctx.stroke();
+      ctx.fillText(x, px, M.top+ph+7);
+    }
+
+    // Y ticks
+    ctx.textAlign='right'; ctx.textBaseline='middle';
+    for(let i=0;i<=4;i++){
+      const val=(yMax/4)*i, py=yp(val);
+      ctx.strokeStyle='rgba(200,218,240,0.4)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(M.left-4,py); ctx.lineTo(M.left,py); ctx.stroke();
+      ctx.fillText(Math.round(val), M.left-8, py);
+    }
+
+    // Axis labels
+    ctx.fillStyle='rgba(200,218,240,0.85)';
+    ctx.font='12px "DM Sans",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='bottom';
+    ctx.fillText(labelX, M.left+pw/2, H-3);
+    ctx.save();
+    ctx.translate(14, M.top+ph/2); ctx.rotate(-Math.PI/2);
+    ctx.textBaseline='top'; ctx.fillText('Events / bin', 0, 0);
+    ctx.restore();
+  }
+
+  // ─────────────────────────────────────────────────
+  //  Paint the "no calibration" placeholder
+  // ─────────────────────────────────────────────────
+  function paintUncalNote(canvas, msg) {
+    const ctx=canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#0f1623'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='rgba(74,96,128,0.45)';
+    ctx.font='13px "DM Sans",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(msg, canvas.width/2, canvas.height/2);
+  }
+
+  // ─────────────────────────────────────────────────
+  //  Main redraw
+  // ─────────────────────────────────────────────────
+  function redraw() {
+    const {alpha, L, sigma:sNoise} = getDetParams();
+    const Nval = +document.getElementById('s4-nvalSlider').value;
+    document.getElementById('s4-nvalVal').textContent = Nval;
+
+    // Generate Nval events from the point source at VAL_POS
+    const sRaw = [];
+    for(let i=0; i<Nval; i++){
+      sRaw.push(VAL_POS + alpha*Math.sin(2*Math.PI*VAL_POS/L) + randGaussian(0, sNoise||1e-9));
+    }
+
+    // Update calibration notice
+    const notice  = document.getElementById('s4-calNotice');
+    const calCoeffs = window._s4GetCalCoeffs ? window._s4GetCalCoeffs() : null;
+    const calSnap   = window._s4GetCalSnap   ? window._s4GetCalSnap()   : null;
+
+    if(!calCoeffs) {
+      notice.textContent = '⚠  No calibration loaded from Stage 3 — showing raw signal s. Go to Stage 3 and click Calibrate first.';
+      notice.style.borderColor = 'rgba(255,107,53,0.4)';
+      notice.style.color = 'rgba(255,107,53,0.7)';
+      notice.style.background = 'rgba(255,107,53,0.04)';
+    } else {
+      const snap = calSnap;
+      notice.textContent = `✓  Calibration applied — order ${snap.polyOrd}, N_cal=${snap.Ncal}×9, α=${snap.alpha.toFixed(1)} mm, L=${snap.L} mm, σ=${snap.sigma.toFixed(1)} mm`;
+      notice.style.borderColor = 'rgba(52,211,153,0.35)';
+      notice.style.color = 'rgba(52,211,153,0.75)';
+      notice.style.background = 'rgba(52,211,153,0.04)';
+    }
+
+    // Raw signal histogram (always shown, full-range zoomed on VAL_POS)
+    const rawMean = sRaw.reduce((a,b)=>a+b,0)/sRaw.length;
+    paintZoomedHist(cnvRaw, sRaw, [167,139,250], 's  (mm)', VAL_POS, ZOOM_HALF, [
+      {x:VAL_POS, color:'rgba(251,191,36,0.7)', dash:[5,4], label:'75 mm', width:1.8},
+      {x:rawMean,  color:'rgba(167,139,250,0.95)', dash:[3,3], label:`s̄=${rawMean.toFixed(2)}`, width:1.5},
+    ]);
+
+    // Apply correction if calibration exists
+    if(!calCoeffs) {
+      paintUncalNote(cnvMain, 'Calibrate in Stage 3 to see corrected validation peak');
+      paintUncalNote(cnvReco, 'No calibration');
+      document.getElementById('s4-nval').innerHTML=`${Nval}<span> ev</span>`;
+      document.getElementById('s4-mean').innerHTML='—<span> mm</span>';
+      document.getElementById('s4-sigma').innerHTML='—<span> mm</span>';
+      document.getElementById('s4-bias').innerHTML='—<span> mm</span>';
+      document.getElementById('s4-pull').textContent='—';
+      return;
+    }
+
+    // Evaluate polynomial from S3
+    function polyEvalLocal(c,x){let v=0,pw=1;for(const ci of c){v+=ci*pw;pw*=x;}return v;}
+    const recoVals = sRaw.map(s => polyEvalLocal(calCoeffs, s));
+    const {mean:recoMean, sigma:recoSig} = sampleStats(recoVals);
+    const bias  = recoMean - VAL_POS;
+    const pull  = recoSig > 0 ? bias / recoSig : 0;
+
+    // Colour the bias indicator: green if |Δ| < 0.5σ, amber < 2σ, red beyond
+    const absPull = Math.abs(pull);
+    const biasColor = absPull < 0.5 ? '#34d399' : absPull < 2.0 ? '#fbbf24' : '#f87171';
+
+    // Main zoomed histogram — x_reco around 75 mm
+    paintZoomedHist(cnvMain, recoVals, [52,211,153], 'x_reco  (mm)', VAL_POS, ZOOM_HALF, [
+      {x:VAL_POS, color:'rgba(251,191,36,0.85)', dash:[6,4], label:'nominal 75 mm', width:2},
+      {x:recoMean, color:'rgba(255,107,53,0.95)', dash:[3,3], label:`μ=${recoMean.toFixed(3)}`, width:2},
+    ]);
+
+    // Reco histogram (same data, slightly smaller, no markers — for side-by-side comparison)
+    paintZoomedHist(cnvReco, recoVals, [52,211,153], 'x_reco  (mm)', VAL_POS, ZOOM_HALF, [
+      {x:VAL_POS, color:'rgba(251,191,36,0.7)', dash:[5,4], label:'75 mm', width:1.8},
+      {x:recoMean, color:'rgba(255,107,53,0.9)', dash:[3,3], label:`μ=${recoMean.toFixed(2)}`, width:1.5},
+    ]);
+
+    // Stats
+    document.getElementById('s4-nval').innerHTML=`${Nval}<span> ev</span>`;
+    document.getElementById('s4-mean').innerHTML=`${recoMean.toFixed(4)}<span> mm</span>`;
+    document.getElementById('s4-sigma').innerHTML=`${recoSig.toFixed(4)}<span> mm</span>`;
+
+    // Bias with colour
+    document.getElementById('s4-bias').innerHTML=
+      `<span style="color:${biasColor}">${bias>=0?'+':''}${bias.toFixed(4)}</span><span> mm</span>`;
+    document.getElementById('s4-pull').innerHTML=
+      `<span style="color:${biasColor}">${pull>=0?'+':''}${pull.toFixed(3)}</span>`;
+  }
+
+  // ─────────────────────────────────────────────────
+  //  Expose redraw globally so detector banner can call it
+  // ─────────────────────────────────────────────────
+  window.s4Redraw = redraw;
+
+  // ─────────────────────────────────────────────────
+  //  Slider wiring
+  // ─────────────────────────────────────────────────
+  document.getElementById('s4-nvalSlider').addEventListener('input', redraw);
+
+  // ─────────────────────────────────────────────────
+  //  Lazy init on tab activation
+  // ─────────────────────────────────────────────────
+  let s4Initialised = false;
+  window.s4OnTabActivated = function() {
+    if(!s4Initialised){ s4Initialised=true; redraw(); }
+    else redraw(); // always refresh in case S3 calibration changed
+  };
+
+})();
+</script>
+</body>
+</html>
+
+
+
+							<script>
+                            	
+// ═══════════════════════════════════════════════════
+//  SHARED UTILITIES
+// ═══════════════════════════════════════════════════
+
+const CFG = {
+  mu: 50, sigma: 15,   // true distribution
+  xMin: 0, xMax: 100,  // detector range
+  nBins: 40,
+};
+
+// Calibration getters — populated by Stage 3 when Calibrate is clicked
+window._s4GetCalCoeffs = () => null;
+window._s4GetCalSnap   = () => null;
+
+function randGaussian(mu, sigma) {
+  let u, v, s;
+  do {
+    u = 2*Math.random()-1;
+    v = 2*Math.random()-1;
+    s = u*u + v*v;
+  } while (s >= 1 || s === 0);
+  return mu + sigma * u * Math.sqrt(-2*Math.log(s)/s);
+}
+
+function generateTrue(N) {
+  const events = []; let discarded = 0;
+  for (let i = 0; i < N; i++) {
+    const x = randGaussian(CFG.mu, CFG.sigma);
+    if (x >= CFG.xMin && x <= CFG.xMax) events.push(x);
+    else discarded++;
+  }
+  return { events, discarded };
+}
+
+function makeHistogram(vals, xMin, xMax, nBins) {
+  const bins = new Array(nBins).fill(0);
+  const binW = (xMax - xMin) / nBins;
+  for (const v of vals) {
+    const idx = Math.min(Math.floor((v - xMin) / binW), nBins - 1);
+    if (idx >= 0) bins[idx]++;
+  }
+  return { bins, binW };
+}
+
+function sampleStats(arr) {
+  const n = arr.length;
+  if (n < 2) return { mean: arr[0]||0, sigma: 0 };
+  const mean = arr.reduce((a,b)=>a+b,0)/n;
+  const sigma = Math.sqrt(arr.reduce((s,x)=>s+(x-mean)**2,0)/(n-1));
+  return { mean, sigma };
+}
+
+function gaussianPDF(x, mu, sigma) {
+  return Math.exp(-0.5*((x-mu)/sigma)**2)/(sigma*Math.sqrt(2*Math.PI));
+}
+
+// ── Generic histogram painter ──────────────────────
+function paintHistogram(canvas, vals, barColor, labelX, refCurve) {
+  // refCurve: optional { mu, sigma, color } for analytic overlay
+  const W = canvas.width, H = canvas.height;
+  const M = { top:28, right:24, bottom:52, left:56 };
+  const pw = W-M.left-M.right, ph = H-M.top-M.bottom;
+  const ctx = canvas.getContext('2d');
+
+  // Determine x range: use detector range for x_true,
+  // for signal expand slightly to show tails
+  const xMin = CFG.xMin, xMax = CFG.xMax;
+  const { bins, binW } = makeHistogram(vals, xMin, xMax, CFG.nBins);
+  const maxCount = Math.max(...bins, 1);
+  const yMax = maxCount * 1.18;
+
+  function xp(x) { return M.left + (x-xMin)/(xMax-xMin)*pw; }
+  function yp(y) { return M.top + ph - (y/yMax)*ph; }
+
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#0f1623'; ctx.fillRect(0,0,W,H);
+
+  // Grid
+  ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
+  for(let i=0;i<=5;i++){
+    const y=M.top+(ph/5)*i;
+    ctx.beginPath(); ctx.moveTo(M.left,y); ctx.lineTo(M.left+pw,y); ctx.stroke();
+  }
+  for(let x=xMin;x<=xMax;x+=10){
+    const px=xp(x);
+    ctx.beginPath(); ctx.moveTo(px,M.top); ctx.lineTo(px,M.top+ph); ctx.stroke();
+  }
+
+  // Bars
+  const bpw = pw/CFG.nBins;
+  for(let i=0;i<CFG.nBins;i++){
+    const bx=xp(xMin+i*binW), topY=yp(bins[i]), bh=M.top+ph-topY;
+    const [r,g,b] = barColor;
+    const grad=ctx.createLinearGradient(0,topY,0,M.top+ph);
+    grad.addColorStop(0,`rgba(${r},${g},${b},0.82)`);
+    grad.addColorStop(1,`rgba(${r},${g},${b},0.18)`);
+    ctx.fillStyle=grad;
+    ctx.fillRect(bx+1,topY,bpw-2,bh);
+    ctx.strokeStyle=`rgba(${r},${g},${b},0.9)`;
+    ctx.lineWidth=1;
+    ctx.strokeRect(bx+1,topY,bpw-2,bh);
+  }
+
+  // Analytic overlay
+  if (refCurve) {
+    const histArea = vals.length * binW;
+    const [cr,cg,cb] = refCurve.color;
+    ctx.beginPath();
+    ctx.strokeStyle=`rgb(${cr},${cg},${cb})`;
+    ctx.lineWidth=2.2;
+    ctx.shadowColor=`rgb(${cr},${cg},${cb})`; ctx.shadowBlur=5;
+    for(let i=0;i<=300;i++){
+      const x=xMin+(xMax-xMin)*i/300;
+      const y=gaussianPDF(x,refCurve.mu,refCurve.sigma)*histArea;
+      i===0?ctx.moveTo(xp(x),yp(y)):ctx.lineTo(xp(x),yp(y));
+    }
+    ctx.stroke(); ctx.shadowBlur=0;
+  }
+
+  // Axes
+  ctx.strokeStyle='rgba(200,218,240,0.5)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(M.left,M.top+ph); ctx.lineTo(M.left+pw,M.top+ph); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(M.left,M.top);    ctx.lineTo(M.left,M.top+ph);    ctx.stroke();
+
+  // X ticks
+  ctx.fillStyle='rgba(200,218,240,0.6)';
+  ctx.font='10px "JetBrains Mono",monospace';
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  for(let x=xMin;x<=xMax;x+=20){
+    const px=xp(x);
+    ctx.strokeStyle='rgba(200,218,240,0.4)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(px,M.top+ph); ctx.lineTo(px,M.top+ph+4); ctx.stroke();
+    ctx.fillText(x,px,M.top+ph+7);
+  }
+
+  // Y ticks
+  ctx.textAlign='right'; ctx.textBaseline='middle';
+  for(let i=0;i<=4;i++){
+    const val=(yMax/4)*i, py=yp(val);
+    ctx.strokeStyle='rgba(200,218,240,0.4)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(M.left-4,py); ctx.lineTo(M.left,py); ctx.stroke();
+    ctx.fillText(Math.round(val),M.left-8,py);
+  }
+
+  // Axis labels
+  ctx.fillStyle='rgba(200,218,240,0.85)';
+  ctx.font='12px "DM Sans",sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='bottom';
+  ctx.fillText(labelX, M.left+pw/2, H-3);
+  ctx.save();
+  ctx.translate(12, M.top+ph/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.textBaseline='top';
+  ctx.fillText('Events / bin', 0, 0);
+  ctx.restore();
+}
+
+// ── Scatter plot painter ───────────────────────────
+function paintScatter(canvas, trueVals, sVals, alpha, L, showIdeal, showSystematic) {
+  const W=canvas.width, H=canvas.height;
+  const M={top:28, right:28, bottom:52, left:58};
+  const pw=W-M.left-M.right, ph=H-M.top-M.bottom;
+  const ctx=canvas.getContext('2d');
+
+  const xMin=CFG.xMin, xMax=CFG.xMax;
+  const sAll=[...sVals];
+  const sMin=Math.min(...sAll, xMin)-2;
+  const sMax=Math.max(...sAll, xMax)+2;
+
+  function xp(x){return M.left+(x-xMin)/(xMax-xMin)*pw;}
+  function yp(y){return M.top+ph-(y-sMin)/(sMax-sMin)*ph;}
+
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#0f1623'; ctx.fillRect(0,0,W,H);
+
+  // Grid
+  ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
+  for(let i=0;i<=5;i++){
+    const y=M.top+(ph/5)*i;
+    ctx.beginPath(); ctx.moveTo(M.left,y); ctx.lineTo(M.left+pw,y); ctx.stroke();
+  }
+  for(let x=xMin;x<=xMax;x+=10){
+    const px=xp(x);
+    ctx.beginPath(); ctx.moveTo(px,M.top); ctx.lineTo(px,M.top+ph); ctx.stroke();
+  }
+
+  // ── Ideal line  s = x
+  if (showIdeal) {
+    ctx.strokeStyle='rgba(200,218,240,0.45)'; ctx.lineWidth=1.8; ctx.setLineDash([5,5]);
+    ctx.beginPath();
+    ctx.moveTo(xp(xMin),yp(xMin));
+    ctx.lineTo(xp(xMax),yp(xMax));
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  // ── Systematic curve  s = x + α·sin(2πx/L)  [noiseless]
+  if (showSystematic) {
+    ctx.strokeStyle='#ff6b35'; ctx.lineWidth=2.2;
+    ctx.shadowColor='#ff6b35'; ctx.shadowBlur=5;
+    ctx.beginPath();
+    for(let i=0;i<=400;i++){
+      const x=xMin+(xMax-xMin)*i/400;
+      const s=x+alpha*Math.sin(2*Math.PI*x/L);
+      i===0?ctx.moveTo(xp(x),yp(s)):ctx.lineTo(xp(x),yp(s));
+    }
+    ctx.stroke(); ctx.shadowBlur=0;
+  }
+
+  // ── Scatter points
+  const n=trueVals.length;
+  const alpha_dot = Math.max(0.12, Math.min(0.55, 60/n));
+  ctx.fillStyle=`rgba(167,139,250,${alpha_dot})`;
+  for(let i=0;i<n;i++){
+    ctx.beginPath();
+    ctx.arc(xp(trueVals[i]),yp(sVals[i]),1.6,0,2*Math.PI);
+    ctx.fill();
+  }
+
+  // Axes
+  ctx.strokeStyle='rgba(200,218,240,0.5)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(M.left,M.top+ph); ctx.lineTo(M.left+pw,M.top+ph); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(M.left,M.top);    ctx.lineTo(M.left,M.top+ph);    ctx.stroke();
+
+  // X ticks
+  ctx.fillStyle='rgba(200,218,240,0.6)';
+  ctx.font='10px "JetBrains Mono",monospace';
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  for(let x=xMin;x<=xMax;x+=20){
+    const px=xp(x);
+    ctx.strokeStyle='rgba(200,218,240,0.4)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(px,M.top+ph); ctx.lineTo(px,M.top+ph+4); ctx.stroke();
+    ctx.fillText(x,px,M.top+ph+7);
+  }
+
+  // Y ticks
+  ctx.textAlign='right'; ctx.textBaseline='middle';
+  const yStep=20;
+  for(let y=Math.ceil(sMin/yStep)*yStep;y<=sMax;y+=yStep){
+    const py=yp(y);
+    if(py<M.top||py>M.top+ph) continue;
+    ctx.strokeStyle='rgba(200,218,240,0.4)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(M.left-4,py); ctx.lineTo(M.left,py); ctx.stroke();
+    ctx.fillText(y,M.left-8,py);
+  }
+
+  // Axis labels
+  ctx.fillStyle='rgba(200,218,240,0.85)';
+  ctx.font='12px "DM Sans",sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='bottom';
+  ctx.fillText('x_true  (mm)',M.left+pw/2,H-3);
+  ctx.save();
+  ctx.translate(12,M.top+ph/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.textBaseline='top';
+  ctx.fillText('s  (mm)',0,0);
+  ctx.restore();
+
+  // Legend — only show entries for active curves
+  const lx=M.left+12;
+  let ly=M.top+10;
+  const legLine=18;
+
+  if(showIdeal){
+    ctx.strokeStyle='rgba(200,218,240,0.45)'; ctx.lineWidth=1.8; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(lx,ly+5); ctx.lineTo(lx+18,ly+5); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='rgba(200,218,240,0.55)'; ctx.font='10px "DM Sans",sans-serif';
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillText('identity (s = x)',lx+23,ly+5);
+    ly+=legLine;
+  }
+  if(showSystematic){
+    ctx.strokeStyle='#ff6b35'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(lx,ly+5); ctx.lineTo(lx+18,ly+5); ctx.stroke();
+    ctx.fillStyle='rgba(200,218,240,0.55)'; ctx.font='10px "DM Sans",sans-serif';
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillText('x + \u03b1\u00b7sin(2\u03c0\u00b7x/L)',lx+23,ly+5);
+    ly+=legLine;
+  }
+  ctx.fillStyle=`rgba(167,139,250,0.75)`;
+  ctx.beginPath(); ctx.arc(lx+9,ly+5,3.5,0,2*Math.PI); ctx.fill();
+  ctx.fillStyle='rgba(200,218,240,0.55)'; ctx.font='10px "DM Sans",sans-serif';
+  ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillText('events (s with noise)',lx+23,ly+5);
+}
+
+
+// ═══════════════════════════════════════════════════
+//  SHARED DETECTOR PARAMETER ACCESSORS
+//  Always read α, L, σ from the shared banner sliders.
+// ═══════════════════════════════════════════════════
+function getDetParams() {
+  return {
+    alpha: +document.getElementById('det-alphaSlider').value,
+    L:     +document.getElementById('det-LSlider').value,
+    sigma: +document.getElementById('det-sigmaSlider').value,
+  };
+}
+
+// Wire the banner slider display labels
+['alpha','L','sigma'].forEach(key => {
+  const id = {alpha:'det-alphaSlider', L:'det-LSlider', sigma:'det-sigmaSlider'}[key];
+  const valId = {alpha:'det-alphaVal', L:'det-LVal', sigma:'det-sigmaVal'}[key];
+  document.getElementById(id).addEventListener('input', () => {
+    const v = +document.getElementById(id).value;
+    document.getElementById(valId).textContent = key==='L' ? v : v.toFixed(1);
+    // Notify each active tab to redraw
+    if(document.getElementById('tab-s2').classList.contains('active')) s2Redraw();
+    if(document.getElementById('tab-s3').classList.contains('active')) s3OnDetChange();
+    if(document.getElementById('tab-s4').classList.contains('active')) s4Redraw();
+  });
+});
+
+
+// ═══════════════════════════════════════════════════
+//  STAGE 1  logic
+// ═══════════════════════════════════════════════════
+(function(){
+  const cnv = document.getElementById('s1-canvas');
+  cnv.width=820; cnv.height=400;
+
+  function redraw(){
+    const N=+document.getElementById('s1-nSlider').value;
+    document.getElementById('s1-nVal').textContent=N;
+    const {events,discarded}=generateTrue(N);
+    const {mean,sigma}=sampleStats(events);
+    paintHistogram(
+      cnv, events,
+      [0,212,255],
+      'x_true  (mm)',
+      {mu:CFG.mu, sigma:CFG.sigma, color:[255,107,53]}
+    );
+    document.getElementById('s1-accepted').innerHTML=`${events.length}<span> ev</span>`;
+    document.getElementById('s1-discarded').innerHTML=`${discarded}<span> ev</span>`;
+    document.getElementById('s1-acceptance').innerHTML=`${(events.length/N*100).toFixed(1)}<span>%</span>`;
+    document.getElementById('s1-mean').innerHTML=`${mean.toFixed(2)}<span> mm</span>`;
+    document.getElementById('s1-sigma').innerHTML=`${sigma.toFixed(2)}<span> mm</span>`;
+  }
+
+  document.getElementById('s1-nSlider').addEventListener('input',redraw);
+  redraw();
+})();
+
+
+// ═══════════════════════════════════════════════════
+//  STAGE 2  logic
+// ═══════════════════════════════════════════════════
+(function(){
+  const cnvTrue    = document.getElementById('s2-canvasTrue');
+  const cnvS       = document.getElementById('s2-canvasS');
+  const cnvScatter = document.getElementById('s2-canvasScatter');
+  cnvTrue.width=480;    cnvTrue.height=340;
+  cnvS.width=480;       cnvS.height=340;
+  cnvScatter.width=820; cnvScatter.height=400;
+
+  let showIdeal      = true;
+  let showSystematic = true;
+  let _trueVals=[], _sVals=[], _sysVals=[], _noiseVals=[];
+  let _alpha=4, _L=80, _sNoise=2;
+
+  function redraw(){
+    const {alpha, L, sigma:sNoise} = getDetParams();
+    _alpha=alpha; _L=L; _sNoise=sNoise;
+    const N = +document.getElementById('s2-nSlider').value;
+    document.getElementById('s2-nVal').textContent=N;
+
+    const {events:trueVals, discarded}=generateTrue(N);
+    _sysVals   = trueVals.map(x => alpha*Math.sin(2*Math.PI*x/L));
+    _noiseVals = trueVals.map(() => randGaussian(0, sNoise||1e-9));
+    const sVals  = trueVals.map((x,i)=> x + _sysVals[i] + _noiseVals[i]);
+    _trueVals=trueVals; _sVals=sVals;
+
+    const stTrue = sampleStats(trueVals);
+    const stS    = sampleStats(sVals);
+    const bias   = stS.mean - stTrue.mean;
+
+    paintHistogram(cnvTrue, trueVals, [0,212,255],  'x_true  (mm)',
+      {mu:CFG.mu, sigma:CFG.sigma, color:[255,107,53]});
+    paintHistogram(cnvS,    sVals,    [167,139,250], 's  (mm)', null);
+    paintScatter(cnvScatter, trueVals, sVals, alpha, L, showIdeal, showSystematic);
+
+    document.getElementById('s2-accepted').innerHTML=`${trueVals.length}<span> ev</span>`;
+    document.getElementById('s2-meanTrue').innerHTML=`${stTrue.mean.toFixed(2)}<span> mm</span>`;
+    document.getElementById('s2-meanS').innerHTML=`${stS.mean.toFixed(2)}<span> mm</span>`;
+    document.getElementById('s2-sigTrue').innerHTML=`${stTrue.sigma.toFixed(2)}<span> mm</span>`;
+    document.getElementById('s2-sigS').innerHTML=`${stS.sigma.toFixed(2)}<span> mm</span>`;
+    document.getElementById('s2-bias').innerHTML=`${bias.toFixed(3)}<span> mm</span>`;
+  }
+
+  window.s2Redraw = redraw;
+
+  window.s2ToggleIdeal = function(btn){
+    showIdeal = !showIdeal;
+    btn.classList.toggle('on-ideal', showIdeal);
+    const {alpha,L}=getDetParams();
+    paintScatter(cnvScatter, _trueVals, _sVals, alpha, L, showIdeal, showSystematic);
+  };
+  window.s2ToggleSystematic = function(btn){
+    showSystematic = !showSystematic;
+    btn.classList.toggle('on-systematic', showSystematic);
+    const {alpha,L}=getDetParams();
+    paintScatter(cnvScatter, _trueVals, _sVals, alpha, L, showIdeal, showSystematic);
+  };
+
+  function buildCSV(){
+    const {alpha:a,L:l,sigma:sn}=getDetParams();
+    const header=[
+      '# 1D Particle Detector Simulation — Stage 2 Export',
+      `# alpha=${a} mm  L=${l} mm  sigma_noise=${sn} mm  N=${_trueVals.length}`,
+      '# Columns: x_true_mm, s_mm, systematic_mm, noise_mm',
+      'x_true_mm,s_mm,systematic_mm,noise_mm'
+    ].join('\n');
+    const rows=_trueVals.map((_,i)=>
+      `${_trueVals[i].toFixed(6)},${_sVals[i].toFixed(6)},${_sysVals[i].toFixed(6)},${_noiseVals[i].toFixed(6)}`);
+    return header+'\n'+rows.join('\n');
+  }
+  window.s2OpenCSV=function(){
+    const {alpha:a,L:l,sigma:sn}=getDetParams();
+    document.getElementById('csvText').value=buildCSV();
+    document.getElementById('csvMeta').textContent=
+      `${_trueVals.length} events  ·  alpha=${a} mm  L=${l} mm  σ_noise=${sn} mm`;
+    document.getElementById('csvModal').classList.add('open');
+    setTimeout(()=>{const ta=document.getElementById('csvText');ta.focus();ta.select();},80);
+  };
+  window.s2CloseCSV=function(){ document.getElementById('csvModal').classList.remove('open'); };
+  window.s2CloseCSVIfOutside=function(e){ if(e.target===document.getElementById('csvModal')) s2CloseCSV(); };
+  window.s2CopyCSV=function(){
+    const ta=document.getElementById('csvText'), btn=document.getElementById('copyBtn');
+    ta.select();
+    navigator.clipboard.writeText(ta.value).then(()=>{
+      btn.textContent='Copied!'; btn.classList.add('copied');
+      setTimeout(()=>{btn.textContent='Copy to clipboard';btn.classList.remove('copied');},2000);
+    }).catch(()=>{ document.execCommand('copy'); btn.textContent='Copied!'; btn.classList.add('copied');
+      setTimeout(()=>{btn.textContent='Copy to clipboard';btn.classList.remove('copied');},2000); });
+  };
+
+  document.getElementById('s2-nSlider').addEventListener('input', redraw);
+
+  // ── Hover tooltip on scatter canvas — shows nearest event's (x_true, s) values
+  cnvScatter.addEventListener('mousemove', function(e) {
+    if(!_trueVals.length) return;
+    const {alpha, L, sigma:sNoise} = getDetParams();
+    const sAll = _sVals;
+    const sMin = Math.min(...sAll, CFG.xMin)-2;
+    const sMax = Math.max(...sAll, CFG.xMax)+2;
+    const M={top:28,right:28,bottom:52,left:58};
+    const W=cnvScatter.width, H=cnvScatter.height;
+    const pw=W-M.left-M.right, ph=H-M.top-M.bottom;
+    const rect=cnvScatter.getBoundingClientRect();
+    const scaleX=W/rect.width, scaleY=H/rect.height;
+    const mx=(e.clientX-rect.left)*scaleX;
+    const my=(e.clientY-rect.top)*scaleY;
+    function xp(x){return M.left+(x-CFG.xMin)/(CFG.xMax-CFG.xMin)*pw;}
+    function yp(y){return M.top+ph-(y-sMin)/(sMax-sMin)*ph;}
+    // Find nearest point within 16px
+    let bestDist=16*16, bestI=-1;
+    for(let i=0;i<_trueVals.length;i++){
+      const dx=xp(_trueVals[i])-mx, dy=yp(_sVals[i])-my;
+      const d2=dx*dx+dy*dy;
+      if(d2<bestDist){bestDist=d2;bestI=i;}
+    }
+    const pt=document.getElementById('pointTooltip');
+    if(bestI>=0){
+      const xi=_trueVals[bestI], si=_sVals[bestI];
+      pt.textContent=`event #${bestI+1}\nx_true  = ${xi.toFixed(4)} mm\ns       = ${si.toFixed(4)} mm\nresid   = ${(si-xi).toFixed(4)} mm`;
+      pt.style.display='block';
+      pt.style.left=(e.clientX+14)+'px';
+      pt.style.top=(e.clientY-8)+'px';
+    } else {
+      pt.style.display='none';
+    }
+  });
+  cnvScatter.addEventListener('mouseleave',()=>{document.getElementById('pointTooltip').style.display='none';});
+
+  redraw();
+})();
+
+
+// ═══════════════════════════════════════════════════
+//  Tab switching  (updated to handle s4)
+// ═══════════════════════════════════════════════════
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='s3') s3OnTabActivated();
+  if(id==='s4') s4OnTabActivated();
+}
+
+// ═══════════════════════════════════════════════════
+//  STAGE 3  —  Calibration & Reconstruction
+// ═══════════════════════════════════════════════════
+(function(){
+
+  // ── Canvas setup
+  const cnvCal   = document.getElementById('s3-canvasCal');
+  const cnvTrue  = document.getElementById('s3-canvasTrue');
+  const cnvS     = document.getElementById('s3-canvasS');
+  const cnvReco  = document.getElementById('s3-canvasReco');
+  const cnvResid = document.getElementById('s3-canvasResid');
+  cnvCal.width=820;  cnvCal.height=380;
+  cnvTrue.width=400; cnvTrue.height=300;
+  cnvS.width=400;    cnvS.height=300;
+  cnvReco.width=400; cnvReco.height=300;
+  cnvResid.width=820; cnvResid.height=320;
+
+  const REF_POS = [10,20,30,40,50,60,70,80,90];
+
+  // ── Calibration state
+  // calCoeffs: frozen polynomial from last Calibrate click (null = never calibrated)
+  // calDirty: true when any calibration-affecting param has changed since last calibration
+  let calCoeffs = null;
+  let calDirty  = true;          // starts true so button is ready on first visit
+  let calParamsSnapshot = null;  // snapshot of params at calibration time
+
+  // ── Stored cal clusters for CSV export and hover
+  let _lastCalClusters = null;
+
+  // ── Tooltip state
+  let _tooltipCoeffs = null;
+  const CAL_CANVAS_MARGINS = {top:28, right:28, bottom:52, left:58};
+
+  // ── Linear algebra
+  function vandermonde(xs,deg){return xs.map(x=>{const r=[];for(let j=0;j<=deg;j++)r.push(Math.pow(x,j));return r;});}
+  function matMul(A,B){const m=A.length,k=B.length,n=B[0].length,C=Array.from({length:m},()=>new Array(n).fill(0));for(let i=0;i<m;i++)for(let j=0;j<n;j++)for(let p=0;p<k;p++)C[i][j]+=A[i][p]*B[p][j];return C;}
+  function transpose(A){return A[0].map((_,j)=>A.map(r=>r[j]));}
+  function gaussSolve(A,b){const n=A.length,M=A.map((r,i)=>[...r,b[i]]);for(let c=0;c<n;c++){let mv=Math.abs(M[c][c]),mr=c;for(let r=c+1;r<n;r++)if(Math.abs(M[r][c])>mv){mv=Math.abs(M[r][c]);mr=r;}if(mv<1e-14)return null;[M[c],M[mr]]=[M[mr],M[c]];const pv=M[c][c];for(let j=c;j<=n;j++)M[c][j]/=pv;for(let r=0;r<n;r++){if(r===c)continue;const f=M[r][c];for(let j=c;j<=n;j++)M[r][j]-=f*M[c][j];}}return M.map(r=>r[n]);}
+  function polyFit(xs,ys,deg){const A=vandermonde(xs,deg),At=transpose(A),AtA=matMul(At,A),Atb=At.map(r=>r.reduce((s,v,i)=>s+v*ys[i],0));return gaussSolve(AtA,Atb);}
+  function polyEval(c,x){let v=0,pw=1;for(const ci of c){v+=ci*pw;pw*=x;}return v;}
+
+  // ── Format polynomial for tooltip
+  function formatPoly(coeffs) {
+    const deg=coeffs.length-1, lines=[];
+    for(let p=deg;p>=0;p--){
+      const c=coeffs[p];
+      if(Math.abs(c)<1e-12) continue;
+      const sign=c>=0?'+':'−', abs=Math.abs(c);
+      let term;
+      if(p===0)      term=`${abs.toExponential(4)}`;
+      else if(p===1) term=`${abs.toExponential(4)} · s`;
+      else           term=`${abs.toExponential(4)} · s^${p}`;
+      lines.push(`  ${sign} ${term}`);
+    }
+    if(lines.length>0) lines[0]=lines[0].replace(/^  \+ /,'    ');
+    return 'f(s) =\n'+lines.join('\n');
+  }
+
+  // ─────────────────────────────────────────────────
+  //  S3 CSV helpers
+  // ─────────────────────────────────────────────────
+  function buildCalCSV() {
+    if(!_lastCalClusters) return '';
+    const snap = calParamsSnapshot;
+    const {alpha,L,sigma} = snap
+      ? {alpha:snap.alpha,L:snap.L,sigma:snap.sigma}
+      : getDetParams();
+    const Ncal = _lastCalClusters[0].sSamples.length;
+    const header = [
+      '# 1D Particle Detector Simulation — Stage 3 Calibration Export',
+      `# alpha=${alpha} mm  L=${L} mm  sigma_noise=${sigma} mm  N_cal=${Ncal} per ref`,
+      snap ? `# poly_order=${snap.polyOrd}` : '# (pre-calibration preview)',
+      '# Columns: x_ref_mm, s_mm',
+      '# Each reference position contributes N_cal rows',
+      'x_ref_mm,s_mm'
+    ].join('\n');
+    const rows = [];
+    for(const cl of _lastCalClusters)
+      for(const s of cl.sSamples)
+        rows.push(`${cl.xRef.toFixed(6)},${s.toFixed(6)}`);
+    return header + '\n' + rows.join('\n');
+  }
+
+  window.s3OpenCSV = function() {
+    const csv = buildCalCSV();
+    document.getElementById('csvCalText').value = csv;
+    const nEv = _lastCalClusters ? _lastCalClusters.reduce((a,c)=>a+c.sSamples.length,0) : 0;
+    const snap = calParamsSnapshot;
+    document.getElementById('csvCalMeta').textContent =
+      snap ? `${nEv} cal events  ·  order ${snap.polyOrd}, α=${snap.alpha.toFixed(1)} mm`
+           : `${nEv} cal events  ·  (preview — not yet calibrated)`;
+    document.getElementById('csvCalModal').classList.add('open');
+    setTimeout(()=>{const ta=document.getElementById('csvCalText');ta.focus();ta.select();},80);
+  };
+  window.s3CloseCSV = function(){ document.getElementById('csvCalModal').classList.remove('open'); };
+  window.s3CloseCSVIfOutside = function(e){ if(e.target===document.getElementById('csvCalModal')) s3CloseCSV(); };
+  window.s3CopyCSV = function(){
+    const ta=document.getElementById('csvCalText'), btn=document.getElementById('copyCalBtn');
+    ta.select();
+    navigator.clipboard.writeText(ta.value).then(()=>{
+      btn.textContent='Copied!'; btn.classList.add('copied');
+      setTimeout(()=>{btn.textContent='Copy to clipboard';btn.classList.remove('copied');},2000);
+    }).catch(()=>{document.execCommand('copy');btn.textContent='Copied!';btn.classList.add('copied');
+      setTimeout(()=>{btn.textContent='Copy to clipboard';btn.classList.remove('copied');},2000);});
+  };
+
+  // ─────────────────────────────────────────────────
+  //  Tooltip: mousemove handler on the cal canvas
+  //  Shows poly tooltip near the fitted curve,
+  //  and cluster info near calibration point columns.
+  // ─────────────────────────────────────────────────
+  cnvCal.addEventListener('mousemove', function(e) {
+    const polyTT = document.getElementById('polyTooltip');
+    const ptTT   = document.getElementById('pointTooltip');
+    const rect   = cnvCal.getBoundingClientRect();
+    const W=cnvCal.width, H=cnvCal.height;
+    const M=CAL_CANVAS_MARGINS;
+    const pw=W-M.left-M.right, ph=H-M.top-M.bottom;
+    const scaleX=W/rect.width, scaleY=H/rect.height;
+    const mx=(e.clientX-rect.left)*scaleX;
+    const my=(e.clientY-rect.top)*scaleY;
+
+    if(mx<M.left||mx>M.left+pw||my<M.top||my>M.top+ph){
+      polyTT.style.display='none'; ptTT.style.display='none'; return;
+    }
+
+    // Determine sMin/sMax the same way the painter does
+    const clusters = _lastCalClusters;
+    if(!clusters){ polyTT.style.display='none'; ptTT.style.display='none'; return; }
+    const allS=clusters.flatMap(c=>c.sSamples);
+    const sMin=Math.min(...allS,CFG.xMin)-3, sMax=Math.max(...allS,CFG.xMax)+3;
+
+    function xp(x){return M.left+(x-CFG.xMin)/(CFG.xMax-CFG.xMin)*pw;}
+    function yp(y){return M.top+ph-(y-sMin)/(sMax-sMin)*ph;}
+
+    // --- 1. Check proximity to individual calibration samples ---
+    let bestDist=20*20, bestClI=-1, bestSI=-1;
+    for(let ci=0;ci<clusters.length;ci++){
+      const cl=clusters[ci];
+      for(let si=0;si<cl.sSamples.length;si++){
+        const dx=xp(cl.xRef)-mx, dy=yp(cl.sSamples[si])-my;
+        const d2=dx*dx+dy*dy;
+        if(d2<bestDist){bestDist=d2;bestClI=ci;bestSI=si;}
+      }
+    }
+    if(bestClI>=0){
+      const cl=clusters[bestClI];
+      ptTT.textContent=`ref position: ${cl.xRef} mm\nsample #${bestSI+1}:  s = ${cl.sSamples[bestSI].toFixed(4)} mm\ncluster mean: ${cl.sMean.toFixed(4)} mm\ncluster σ:   ${cl.sSig.toFixed(4)} mm`;
+      ptTT.style.display='block';
+      ptTT.style.left=(e.clientX+14)+'px';
+      ptTT.style.top=(e.clientY-8)+'px';
+      polyTT.style.display='none';
+      return;
+    }
+    ptTT.style.display='none';
+
+    // --- 2. Check proximity to the fitted poly curve ---
+    if(!_tooltipCoeffs){ polyTT.style.display='none'; return; }
+    const xVal=CFG.xMin+(mx-M.left)/pw*(CFG.xMax-CFG.xMin);
+    const sFit=polyEval(_tooltipCoeffs,xVal);
+    const yFitPx=yp(sFit);
+    if(Math.abs(my-yFitPx)<18){
+      polyTT.style.display='block';
+      polyTT.style.left=(e.clientX+16)+'px';
+      polyTT.style.top=(e.clientY-10)+'px';
+      document.getElementById('polyTooltipBody').textContent=formatPoly(_tooltipCoeffs);
+    } else {
+      polyTT.style.display='none';
+    }
+  });
+  cnvCal.addEventListener('mouseleave', ()=>{
+    document.getElementById('polyTooltip').style.display='none';
+    document.getElementById('pointTooltip').style.display='none';
+  });
+
+  function setCalReady() {
+    calDirty = true;
+    const btn = document.getElementById('calBtn');
+    const st  = document.getElementById('calStatus');
+    btn.classList.remove('done'); btn.classList.add('ready');
+    if(calCoeffs) {
+      st.textContent = 'Parameters changed — recalibrate to update.';
+      st.className='cal-status stale';
+    } else {
+      st.textContent = 'No calibration applied yet — click to calibrate.';
+      st.className='cal-status';
+    }
+  }
+
+  function setCalDone(snap) {
+    calDirty = false;
+    const btn = document.getElementById('calBtn');
+    const st  = document.getElementById('calStatus');
+    btn.classList.remove('ready'); btn.classList.add('done');
+    st.textContent = `Calibrated — order ${snap.polyOrd}, N_cal=${snap.Ncal}×9, α=${snap.alpha.toFixed(1)} mm, L=${snap.L} mm, σ=${snap.sigma.toFixed(1)} mm`;
+    st.className='cal-status active';
+  }
+
+  // ─────────────────────────────────────────────────
+  //  Calibration scatter painter
+  // ─────────────────────────────────────────────────
+  function paintCalScatter(canvas, calClusters, fwdCoeffs, frozenCoeffs, alpha, L) {
+    _tooltipCoeffs = fwdCoeffs;
+    _lastCalClusters = calClusters;
+
+    const W=canvas.width, H=canvas.height;
+    const M=CAL_CANVAS_MARGINS;
+    const pw=W-M.left-M.right, ph=H-M.top-M.bottom;
+    const ctx=canvas.getContext('2d');
+
+    const xMin=CFG.xMin, xMax=CFG.xMax;
+    const allS=calClusters.flatMap(c=>c.sSamples);
+    const sMin=Math.min(...allS,xMin)-3, sMax=Math.max(...allS,xMax)+3;
+
+    function xp(x){return M.left+(x-xMin)/(xMax-xMin)*pw;}
+    function yp(y){return M.top+ph-(y-sMin)/(sMax-sMin)*ph;}
+
+    ctx.clearRect(0,0,W,H); ctx.fillStyle='#0f1623'; ctx.fillRect(0,0,W,H);
+
+    // Grid
+    ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
+    for(let i=0;i<=5;i++){const y=M.top+(ph/5)*i;ctx.beginPath();ctx.moveTo(M.left,y);ctx.lineTo(M.left+pw,y);ctx.stroke();}
+    for(let x=xMin;x<=xMax;x+=10){const px=xp(x);ctx.beginPath();ctx.moveTo(px,M.top);ctx.lineTo(px,M.top+ph);ctx.stroke();}
+
+    // Identity line
+    ctx.strokeStyle='rgba(200,218,240,0.12)'; ctx.lineWidth=1.2; ctx.setLineDash([5,5]);
+    ctx.beginPath(); ctx.moveTo(xp(xMin),yp(xMin)); ctx.lineTo(xp(xMax),yp(xMax));
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // True systematic curve
+    ctx.strokeStyle='rgba(255,107,53,0.5)'; ctx.lineWidth=1.5;
+    ctx.beginPath();
+    for(let i=0;i<=400;i++){const x=xMin+(xMax-xMin)*i/400,s=x+alpha*Math.sin(2*Math.PI*x/L);i===0?ctx.moveTo(xp(x),yp(s)):ctx.lineTo(xp(x),yp(s));}
+    ctx.stroke();
+
+    // Forward polynomial fit curve (for visual: maps x_ref → fitted s̄)
+    if(fwdCoeffs){
+      ctx.strokeStyle='#00d4ff'; ctx.lineWidth=2.2;
+      ctx.shadowColor='#00d4ff'; ctx.shadowBlur=4;
+      ctx.beginPath();
+      for(let i=0;i<=400;i++){const x=xMin+(xMax-xMin)*i/400,s=polyEval(fwdCoeffs,x);i===0?ctx.moveTo(xp(x),yp(s)):ctx.lineTo(xp(x),yp(s));}
+      ctx.stroke(); ctx.shadowBlur=0;
+    }
+
+    // Cluster points, means, error bars
+    const clCols=['rgba(0,212,255,','rgba(167,139,250,','rgba(255,107,53,','rgba(52,211,153,','rgba(251,191,36,','rgba(236,72,153,','rgba(99,179,237,','rgba(248,113,113,','rgba(163,230,53,'];
+    const ptA=Math.max(0.10,Math.min(0.50,40/calClusters[0].sSamples.length));
+    calClusters.forEach((cl,ci)=>{
+      ctx.fillStyle=clCols[ci%clCols.length]+`${ptA})`;
+      for(const s of cl.sSamples){ctx.beginPath();ctx.arc(xp(cl.xRef),yp(s),1.8,0,2*Math.PI);ctx.fill();}
+      ctx.fillStyle=clCols[ci%clCols.length]+'0.95)';
+      ctx.beginPath();ctx.arc(xp(cl.xRef),yp(cl.sMean),4.5,0,2*Math.PI);ctx.fill();
+      ctx.strokeStyle=clCols[ci%clCols.length]+'0.7)'; ctx.lineWidth=1.5;
+      const py2=yp(cl.sMean),erry=cl.sSig/(sMax-sMin)*ph;
+      ctx.beginPath();ctx.moveTo(xp(cl.xRef),py2-erry);ctx.lineTo(xp(cl.xRef),py2+erry);ctx.stroke();
+    });
+
+    // Axes + ticks + labels
+    ctx.strokeStyle='rgba(200,218,240,0.5)'; ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(M.left,M.top+ph);ctx.lineTo(M.left+pw,M.top+ph);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(M.left,M.top);ctx.lineTo(M.left,M.top+ph);ctx.stroke();
+    ctx.fillStyle='rgba(200,218,240,0.6)'; ctx.font='10px "JetBrains Mono",monospace';
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    for(let x=xMin;x<=xMax;x+=10){const px=xp(x);ctx.strokeStyle='rgba(200,218,240,0.4)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(px,M.top+ph);ctx.lineTo(px,M.top+ph+4);ctx.stroke();if(x%20===0||REF_POS.includes(x))ctx.fillText(x,px,M.top+ph+7);}
+    ctx.textAlign='right'; ctx.textBaseline='middle';
+    for(let y=Math.ceil(sMin/10)*10;y<=sMax;y+=10){const py2=yp(y);if(py2<M.top||py2>M.top+ph)continue;ctx.strokeStyle='rgba(200,218,240,0.4)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(M.left-4,py2);ctx.lineTo(M.left,py2);ctx.stroke();if(y%20===0)ctx.fillText(y,M.left-8,py2);}
+    ctx.fillStyle='rgba(200,218,240,0.85)'; ctx.font='12px "DM Sans",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='bottom';
+    ctx.fillText('x_ref  (mm)',M.left+pw/2,H-3);
+    ctx.save(); ctx.translate(12,M.top+ph/2); ctx.rotate(-Math.PI/2); ctx.textBaseline='top'; ctx.fillText('s  (mm)',0,0); ctx.restore();
+
+    // Legend
+    const lx=M.left+14, ly=M.top+10;
+    ctx.strokeStyle='rgba(255,107,53,0.5)'; ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(lx,ly+5);ctx.lineTo(lx+18,ly+5);ctx.stroke();
+    ctx.fillStyle='rgba(200,218,240,0.55)'; ctx.font='10px "DM Sans",sans-serif';
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillText('true response curve',lx+23,ly+5);
+    if(fwdCoeffs){
+      ctx.strokeStyle='#00d4ff'; ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(lx,ly+20);ctx.lineTo(lx+18,ly+20);ctx.stroke();
+      ctx.fillText('poly fit (order '+(frozenCoeffs?frozenCoeffs.length-1:'—')+')  — hover to see f(s)',lx+23,ly+20);
+    }
+    ctx.fillStyle='rgba(200,218,240,0.7)'; ctx.beginPath();ctx.arc(lx+9,ly+35,4,0,2*Math.PI);ctx.fill();
+    ctx.fillStyle='rgba(200,218,240,0.55)'; ctx.fillText('cluster mean ± 1σ',lx+23,ly+35);
+  }
+
+  // ─────────────────────────────────────────────────
+  //  Residuals histogram painter
+  // ─────────────────────────────────────────────────
+  function paintResiduals(canvas, residuals) {
+    const W=canvas.width, H=canvas.height;
+    const M={top:28, right:28, bottom:52, left:58};
+    const pw=W-M.left-M.right, ph=H-M.top-M.bottom;
+    const ctx=canvas.getContext('2d');
+    const absMax=Math.max(...residuals.map(Math.abs),1);
+    const rng=Math.ceil(absMax*1.2);
+    const nBins=50, binW=2*rng/nBins;
+    const bins=new Array(nBins).fill(0);
+    for(const r of residuals){const idx=Math.min(Math.floor((r+rng)/binW),nBins-1);if(idx>=0)bins[idx]++;}
+    const yMax=Math.max(...bins,1)*1.18;
+    function xp(x){return M.left+(x+rng)/(2*rng)*pw;}
+    function yp(y){return M.top+ph-(y/yMax)*ph;}
+    ctx.clearRect(0,0,W,H); ctx.fillStyle='#0f1623'; ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
+    for(let i=0;i<=5;i++){const y=M.top+(ph/5)*i;ctx.beginPath();ctx.moveTo(M.left,y);ctx.lineTo(M.left+pw,y);ctx.stroke();}
+    ctx.strokeStyle='rgba(200,218,240,0.2)'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.moveTo(xp(0),M.top);ctx.lineTo(xp(0),M.top+ph);ctx.stroke();ctx.setLineDash([]);
+    const bpw=pw/nBins;
+    for(let i=0;i<nBins;i++){const bx=M.left+i*bpw,topY=yp(bins[i]),bh=M.top+ph-topY;const grad=ctx.createLinearGradient(0,topY,0,M.top+ph);grad.addColorStop(0,'rgba(52,211,153,0.80)');grad.addColorStop(1,'rgba(52,211,153,0.15)');ctx.fillStyle=grad;ctx.fillRect(bx+0.5,topY,bpw-1,bh);ctx.strokeStyle='rgba(52,211,153,0.85)';ctx.lineWidth=0.8;ctx.strokeRect(bx+0.5,topY,bpw-1,bh);}
+    const {mean,sigma:rms}=sampleStats(residuals);
+    [[mean,'rgba(255,107,53,0.9)'],[mean+rms,'rgba(251,191,36,0.7)'],[mean-rms,'rgba(251,191,36,0.7)']].forEach(([val,col])=>{if(val<-rng||val>rng)return;ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(xp(val),M.top);ctx.lineTo(xp(val),M.top+ph);ctx.stroke();ctx.setLineDash([]);});
+    ctx.strokeStyle='rgba(200,218,240,0.5)'; ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(M.left,M.top+ph);ctx.lineTo(M.left+pw,M.top+ph);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(M.left,M.top);ctx.lineTo(M.left,M.top+ph);ctx.stroke();
+    ctx.fillStyle='rgba(200,218,240,0.6)'; ctx.font='10px "JetBrains Mono",monospace';
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    const tStep=rng<=5?1:rng<=10?2:rng<=20?5:10;
+    for(let x=-rng;x<=rng;x+=tStep){const px=xp(x);ctx.strokeStyle='rgba(200,218,240,0.4)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(px,M.top+ph);ctx.lineTo(px,M.top+ph+4);ctx.stroke();ctx.fillText(x.toFixed(tStep<1?1:0),px,M.top+ph+7);}
+    ctx.textAlign='right'; ctx.textBaseline='middle';
+    for(let i=0;i<=4;i++){const val=(yMax/4)*i,py2=yp(val);ctx.strokeStyle='rgba(200,218,240,0.4)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(M.left-4,py2);ctx.lineTo(M.left,py2);ctx.stroke();ctx.fillText(Math.round(val),M.left-8,py2);}
+    ctx.fillStyle='rgba(200,218,240,0.85)'; ctx.font='12px "DM Sans",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='bottom';
+    ctx.fillText('x_reco \u2212 x_true  (mm)',M.left+pw/2,H-3);
+    ctx.save();ctx.translate(12,M.top+ph/2);ctx.rotate(-Math.PI/2);ctx.textBaseline='top';ctx.fillText('Events / bin',0,0);ctx.restore();
+    const lx=M.left+14, ly=M.top+10;
+    ctx.strokeStyle='rgba(255,107,53,0.9)'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+    ctx.beginPath();ctx.moveTo(lx,ly+5);ctx.lineTo(lx+18,ly+5);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='rgba(200,218,240,0.55)'; ctx.font='10px "DM Sans",sans-serif';
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillText('mean = '+mean.toFixed(3)+' mm',lx+23,ly+5);
+    ctx.strokeStyle='rgba(251,191,36,0.7)'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+    ctx.beginPath();ctx.moveTo(lx,ly+20);ctx.lineTo(lx+18,ly+20);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillText('\u00b11\u03c3 = \u00b1'+rms.toFixed(3)+' mm',lx+23,ly+20);
+  }
+
+  // ─────────────────────────────────────────────────
+  //  Draw a "no calibration" placeholder on a canvas
+  // ─────────────────────────────────────────────────
+  function paintNoCal(canvas, msg) {
+    const ctx=canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#0f1623'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='rgba(74,96,128,0.5)';
+    ctx.font='13px "DM Sans",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(msg||'Calibration not yet applied',canvas.width/2,canvas.height/2);
+  }
+
+  // ─────────────────────────────────────────────────
+  //  Generate calibration clusters (pure function — no side effects)
+  // ─────────────────────────────────────────────────
+  function buildCalClusters(Ncal, alpha, L, sigma) {
+    return REF_POS.map(xRef => {
+      const sSamples=[];
+      for(let i=0;i<Ncal;i++) sSamples.push(xRef+alpha*Math.sin(2*Math.PI*xRef/L)+randGaussian(0,sigma||1e-9));
+      const {mean:sMean,sigma:sSig}=sampleStats(sSamples);
+      return {xRef,sSamples,sMean,sSig};
+    });
+  }
+
+  // ─────────────────────────────────────────────────
+  //  Main redraw — uses CURRENT detector params for physics events,
+  //  but FROZEN calCoeffs for the correction.
+  // ─────────────────────────────────────────────────
+  function redraw() {
+    const {alpha, L, sigma:sNoise} = getDetParams();
+    const N       = +document.getElementById('s3-nSlider').value;
+    const Ncal    = +document.getElementById('s3-ncalSlider').value;
+    const polyOrd = +document.getElementById('s3-polySlider').value;
+
+    document.getElementById('s3-nVal').textContent=N;
+    document.getElementById('s3-ncalVal').textContent=Ncal;
+    document.getElementById('s3-polyVal').textContent=polyOrd;
+
+    // ── Generate physics signal events with CURRENT detector params
+    const {events:trueVals}=generateTrue(N);
+    const sVals=trueVals.map(x=>x+alpha*Math.sin(2*Math.PI*x/L)+randGaussian(0,sNoise||1e-9));
+
+    paintHistogram(cnvTrue, trueVals, [0,212,255], 'x_true  (mm)',
+      {mu:CFG.mu,sigma:CFG.sigma,color:[255,107,53]});
+    paintHistogram(cnvS, sVals, [167,139,250], 's  (mm)', null);
+
+    document.getElementById('s3-nsig').innerHTML=`${trueVals.length}<span> ev</span>`;
+
+    if(!calCoeffs) {
+      // No calibration yet — draw cal scatter with clusters for inspection,
+      // but leave reco/residuals as placeholders.
+      const Ncal2 = +document.getElementById('s3-ncalSlider').value;
+      const clusters = buildCalClusters(Ncal2, alpha, L, sNoise);
+      const sMeans=clusters.map(c=>c.sMean), xRefs=clusters.map(c=>c.xRef);
+      const fitOrd=Math.min(polyOrd, REF_POS.length-1);
+      const fwdCoeffs=polyFit(xRefs, sMeans, fitOrd)||null;
+      paintCalScatter(cnvCal, clusters, fwdCoeffs, null, alpha, L);
+      document.getElementById('s3-ncalTotal').innerHTML=`${REF_POS.length*Ncal2}<span> ev</span>`;
+      paintNoCal(cnvReco, 'Calibration not yet applied');
+      paintNoCal(cnvResid, 'Calibration not yet applied');
+      document.getElementById('s3-residMean').innerHTML='—<span> mm</span>';
+      document.getElementById('s3-residRMS').innerHTML='—<span> mm</span>';
+      document.getElementById('s3-recoMean').innerHTML='—<span> mm</span>';
+      document.getElementById('s3-recoSig').innerHTML='—<span> mm</span>';
+      return;
+    }
+
+    // ── Apply FROZEN correction to current physics events
+    const recoVals  = sVals.map(s=>polyEval(calCoeffs,s));
+    const residuals = recoVals.map((r,i)=>r-trueVals[i]);
+    const stResid=sampleStats(residuals), stReco=sampleStats(recoVals);
+
+    // Repaint cal scatter using the FROZEN calibration's clusters
+    // (stored in calParamsSnapshot.clusters)
+    const snap = calParamsSnapshot;
+    paintCalScatter(cnvCal, snap.clusters, snap.fwdCoeffs, calCoeffs, snap.alpha, snap.L);
+    document.getElementById('s3-ncalTotal').innerHTML=`${REF_POS.length*snap.Ncal}<span> ev</span>`;
+
+    paintHistogram(cnvReco, recoVals, [52,211,153], 'x_reco  (mm)',
+      {mu:CFG.mu,sigma:CFG.sigma,color:[255,107,53]});
+    paintResiduals(cnvResid, residuals);
+
+    document.getElementById('s3-residMean').innerHTML=`${stResid.mean.toFixed(4)}<span> mm</span>`;
+    document.getElementById('s3-residRMS').innerHTML=`${stResid.sigma.toFixed(4)}<span> mm</span>`;
+    document.getElementById('s3-recoMean').innerHTML=`${stReco.mean.toFixed(2)}<span> mm</span>`;
+    document.getElementById('s3-recoSig').innerHTML=`${stReco.sigma.toFixed(2)}<span> mm</span>`;
+  }
+
+  // ─────────────────────────────────────────────────
+  //  Calibrate button handler — freezes the polynomial
+  // ─────────────────────────────────────────────────
+  window.s3Calibrate = function() {
+    if(!calDirty) return; // button is inactive — ignore
+    const {alpha, L, sigma:sNoise} = getDetParams();
+    const Ncal    = +document.getElementById('s3-ncalSlider').value;
+    const polyOrd = +document.getElementById('s3-polySlider').value;
+
+    const clusters   = buildCalClusters(Ncal, alpha, L, sNoise);
+    const sMeans     = clusters.map(c=>c.sMean);
+    const xRefs      = clusters.map(c=>c.xRef);
+    const fitOrd     = Math.min(polyOrd, REF_POS.length-1);
+    const coeffs     = polyFit(sMeans, xRefs, fitOrd) || [0,1];
+    const fwdCoeffs  = polyFit(xRefs, sMeans, fitOrd) || null;
+
+    calCoeffs = coeffs;
+    calParamsSnapshot = { alpha, L, sigma:sNoise, Ncal, polyOrd, clusters, fwdCoeffs };
+
+    setCalDone(calParamsSnapshot);
+    // Expose frozen coefficients so Stage 4 can read them
+    window._s4GetCalCoeffs = () => calCoeffs;
+    window._s4GetCalSnap   = () => calParamsSnapshot;
+    redraw();
+  };
+
+  // ─────────────────────────────────────────────────
+  //  Listeners — mark dirty when calibration params change,
+  //  just redraw (don't recalibrate) when physics params change.
+  // ─────────────────────────────────────────────────
+  // These affect calibration → mark dirty
+  ['s3-ncalSlider','s3-polySlider'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      setCalReady();
+      redraw();
+    });
+  });
+  // These affect physics events only → redraw without recalibrating
+  ['s3-nSlider'].forEach(id => {
+    document.getElementById(id).addEventListener('input', redraw);
+  });
+
+  // ─────────────────────────────────────────────────
+  //  Called by shared detector banner sliders
+  // ─────────────────────────────────────────────────
+  window.s3OnDetChange = function() {
+    // Detector changed → calibration is stale (physics changed, old cal no longer valid)
+    setCalReady();
+    redraw();
+  };
+
+  // ─────────────────────────────────────────────────
+  //  Tab activation (lazy init)
+  // ─────────────────────────────────────────────────
+  let s3Initialised = false;
+  window.s3OnTabActivated = function() {
+    if(!s3Initialised){ s3Initialised=true; redraw(); }
+  };
+
+})();
+
+// ═══════════════════════════════════════════════════
+//  STAGE 4  —  Validation Check
+// ═══════════════════════════════════════════════════
+(function(){
+
+  const VAL_POS   = 75;   // mm — nominal validation source position
+  const ZOOM_HALF = 18;   // mm — half-width of zoomed histogram x-axis around 75 mm
+
+  // ── Canvas setup
+  const cnvMain = document.getElementById('s4-canvasMain');
+  const cnvRaw  = document.getElementById('s4-canvasRaw');
+  const cnvReco = document.getElementById('s4-canvasReco');
+  cnvMain.width=820; cnvMain.height=400;
+  cnvRaw.width=480;  cnvRaw.height=320;
+  cnvReco.width=480; cnvReco.height=320;
+
+  // ─────────────────────────────────────────────────
+  //  Zoomed histogram painter
+  //  xCenter / halfW define the visible x window.
+  //  markers: array of { x, color, dash, label } drawn as vertical lines.
+  // ─────────────────────────────────────────────────
+  function paintZoomedHist(canvas, vals, barColor, labelX, xCenter, halfW, markers) {
+    const W=canvas.width, H=canvas.height;
+    const M={top:36, right:28, bottom:52, left:60};
+    const pw=W-M.left-M.right, ph=H-M.top-M.bottom;
+    const ctx=canvas.getContext('2d');
+
+    const xMin=xCenter-halfW, xMax=xCenter+halfW;
+    const nBins=40;
+    const binW=(xMax-xMin)/nBins;
+
+    // Bin the data
+    const bins=new Array(nBins).fill(0);
+    for(const v of vals){
+      const idx=Math.floor((v-xMin)/binW);
+      if(idx>=0 && idx<nBins) bins[idx]++;
+    }
+    const maxCount=Math.max(...bins,1);
+    const yMax=maxCount*1.22;
+
+    function xp(x){return M.left+(x-xMin)/(xMax-xMin)*pw;}
+    function yp(y){return M.top+ph-(y/yMax)*ph;}
+
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#0f1623'; ctx.fillRect(0,0,W,H);
+
+    // Grid
+    ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
+    for(let i=0;i<=5;i++){
+      const y=M.top+(ph/5)*i;
+      ctx.beginPath(); ctx.moveTo(M.left,y); ctx.lineTo(M.left+pw,y); ctx.stroke();
+    }
+    for(let x=Math.ceil(xMin/5)*5;x<=xMax;x+=5){
+      const px=xp(x);
+      ctx.beginPath(); ctx.moveTo(px,M.top); ctx.lineTo(px,M.top+ph); ctx.stroke();
+    }
+
+    // Bars
+    const bpw=pw/nBins;
+    const [r,g,b]=barColor;
+    for(let i=0;i<nBins;i++){
+      const bx=M.left+i*bpw, topY=yp(bins[i]), bh=M.top+ph-topY;
+      const grad=ctx.createLinearGradient(0,topY,0,M.top+ph);
+      grad.addColorStop(0,`rgba(${r},${g},${b},0.82)`);
+      grad.addColorStop(1,`rgba(${r},${g},${b},0.18)`);
+      ctx.fillStyle=grad;
+      ctx.fillRect(bx+0.5,topY,bpw-1,bh);
+      ctx.strokeStyle=`rgba(${r},${g},${b},0.85)`;
+      ctx.lineWidth=0.8;
+      ctx.strokeRect(bx+0.5,topY,bpw-1,bh);
+    }
+
+    // Vertical marker lines
+    if(markers) {
+      markers.forEach(mk => {
+        if(mk.x < xMin || mk.x > xMax) return;
+        const px=xp(mk.x);
+        ctx.strokeStyle=mk.color; ctx.lineWidth=mk.width||1.8;
+        ctx.setLineDash(mk.dash||[]);
+        ctx.beginPath(); ctx.moveTo(px,M.top); ctx.lineTo(px,M.top+ph);
+        ctx.stroke(); ctx.setLineDash([]);
+        // Label above the line
+        if(mk.label){
+          ctx.fillStyle=mk.color;
+          ctx.font=`600 10px "JetBrains Mono",monospace`;
+          ctx.textAlign='center'; ctx.textBaseline='bottom';
+          ctx.fillText(mk.label, px, M.top-3);
+        }
+      });
+    }
+
+    // Axes
+    ctx.strokeStyle='rgba(200,218,240,0.5)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(M.left,M.top+ph); ctx.lineTo(M.left+pw,M.top+ph); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(M.left,M.top);    ctx.lineTo(M.left,M.top+ph);    ctx.stroke();
+
+    // X ticks
+    ctx.fillStyle='rgba(200,218,240,0.6)';
+    ctx.font='10px "JetBrains Mono",monospace';
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    const tickStep = halfW<=10 ? 2 : halfW<=20 ? 5 : 10;
+    for(let x=Math.ceil(xMin/tickStep)*tickStep; x<=xMax; x+=tickStep){
+      const px=xp(x);
+      ctx.strokeStyle='rgba(200,218,240,0.4)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(px,M.top+ph); ctx.lineTo(px,M.top+ph+4); ctx.stroke();
+      ctx.fillText(x, px, M.top+ph+7);
+    }
+
+    // Y ticks
+    ctx.textAlign='right'; ctx.textBaseline='middle';
+    for(let i=0;i<=4;i++){
+      const val=(yMax/4)*i, py=yp(val);
+      ctx.strokeStyle='rgba(200,218,240,0.4)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(M.left-4,py); ctx.lineTo(M.left,py); ctx.stroke();
+      ctx.fillText(Math.round(val), M.left-8, py);
+    }
+
+    // Axis labels
+    ctx.fillStyle='rgba(200,218,240,0.85)';
+    ctx.font='12px "DM Sans",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='bottom';
+    ctx.fillText(labelX, M.left+pw/2, H-3);
+    ctx.save();
+    ctx.translate(14, M.top+ph/2); ctx.rotate(-Math.PI/2);
+    ctx.textBaseline='top'; ctx.fillText('Events / bin', 0, 0);
+    ctx.restore();
+  }
+
+  // ─────────────────────────────────────────────────
+  //  Paint the "no calibration" placeholder
+  // ─────────────────────────────────────────────────
+  function paintUncalNote(canvas, msg) {
+    const ctx=canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#0f1623'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='rgba(74,96,128,0.45)';
+    ctx.font='13px "DM Sans",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(msg, canvas.width/2, canvas.height/2);
+  }
+
+  // ─────────────────────────────────────────────────
+  //  Main redraw
+  // ─────────────────────────────────────────────────
+  function redraw() {
+    const {alpha, L, sigma:sNoise} = getDetParams();
+    const Nval = +document.getElementById('s4-nvalSlider').value;
+    document.getElementById('s4-nvalVal').textContent = Nval;
+
+    // Generate Nval events from the point source at VAL_POS
+    const sRaw = [];
+    for(let i=0; i<Nval; i++){
+      sRaw.push(VAL_POS + alpha*Math.sin(2*Math.PI*VAL_POS/L) + randGaussian(0, sNoise||1e-9));
+    }
+
+    // Update calibration notice
+    const notice  = document.getElementById('s4-calNotice');
+    const calCoeffs = window._s4GetCalCoeffs ? window._s4GetCalCoeffs() : null;
+    const calSnap   = window._s4GetCalSnap   ? window._s4GetCalSnap()   : null;
+
+    if(!calCoeffs) {
+      notice.textContent = '⚠  No calibration loaded from Stage 3 — showing raw signal s. Go to Stage 3 and click Calibrate first.';
+      notice.style.borderColor = 'rgba(255,107,53,0.4)';
+      notice.style.color = 'rgba(255,107,53,0.7)';
+      notice.style.background = 'rgba(255,107,53,0.04)';
+    } else {
+      const snap = calSnap;
+      notice.textContent = `✓  Calibration applied — order ${snap.polyOrd}, N_cal=${snap.Ncal}×9, α=${snap.alpha.toFixed(1)} mm, L=${snap.L} mm, σ=${snap.sigma.toFixed(1)} mm`;
+      notice.style.borderColor = 'rgba(52,211,153,0.35)';
+      notice.style.color = 'rgba(52,211,153,0.75)';
+      notice.style.background = 'rgba(52,211,153,0.04)';
+    }
+
+    // Raw signal histogram (always shown, full-range zoomed on VAL_POS)
+    const rawMean = sRaw.reduce((a,b)=>a+b,0)/sRaw.length;
+    paintZoomedHist(cnvRaw, sRaw, [167,139,250], 's  (mm)', VAL_POS, ZOOM_HALF, [
+      {x:VAL_POS, color:'rgba(251,191,36,0.7)', dash:[5,4], label:'75 mm', width:1.8},
+      {x:rawMean,  color:'rgba(167,139,250,0.95)', dash:[3,3], label:`s̄=${rawMean.toFixed(2)}`, width:1.5},
+    ]);
+
+    // Apply correction if calibration exists
+    if(!calCoeffs) {
+      paintUncalNote(cnvMain, 'Calibrate in Stage 3 to see corrected validation peak');
+      paintUncalNote(cnvReco, 'No calibration');
+      document.getElementById('s4-nval').innerHTML=`${Nval}<span> ev</span>`;
+      document.getElementById('s4-mean').innerHTML='—<span> mm</span>';
+      document.getElementById('s4-sigma').innerHTML='—<span> mm</span>';
+      document.getElementById('s4-bias').innerHTML='—<span> mm</span>';
+      document.getElementById('s4-pull').textContent='—';
+      return;
+    }
+
+    // Evaluate polynomial from S3
+    function polyEvalLocal(c,x){let v=0,pw=1;for(const ci of c){v+=ci*pw;pw*=x;}return v;}
+    const recoVals = sRaw.map(s => polyEvalLocal(calCoeffs, s));
+    const {mean:recoMean, sigma:recoSig} = sampleStats(recoVals);
+    const bias  = recoMean - VAL_POS;
+    const pull  = recoSig > 0 ? bias / recoSig : 0;
+
+    // Colour the bias indicator: green if |Δ| < 0.5σ, amber < 2σ, red beyond
+    const absPull = Math.abs(pull);
+    const biasColor = absPull < 0.5 ? '#34d399' : absPull < 2.0 ? '#fbbf24' : '#f87171';
+
+    // Main zoomed histogram — x_reco around 75 mm
+    paintZoomedHist(cnvMain, recoVals, [52,211,153], 'x_reco  (mm)', VAL_POS, ZOOM_HALF, [
+      {x:VAL_POS, color:'rgba(251,191,36,0.85)', dash:[6,4], label:'nominal 75 mm', width:2},
+      {x:recoMean, color:'rgba(255,107,53,0.95)', dash:[3,3], label:`μ=${recoMean.toFixed(3)}`, width:2},
+    ]);
+
+    // Reco histogram (same data, slightly smaller, no markers — for side-by-side comparison)
+    paintZoomedHist(cnvReco, recoVals, [52,211,153], 'x_reco  (mm)', VAL_POS, ZOOM_HALF, [
+      {x:VAL_POS, color:'rgba(251,191,36,0.7)', dash:[5,4], label:'75 mm', width:1.8},
+      {x:recoMean, color:'rgba(255,107,53,0.9)', dash:[3,3], label:`μ=${recoMean.toFixed(2)}`, width:1.5},
+    ]);
+
+    // Stats
+    document.getElementById('s4-nval').innerHTML=`${Nval}<span> ev</span>`;
+    document.getElementById('s4-mean').innerHTML=`${recoMean.toFixed(4)}<span> mm</span>`;
+    document.getElementById('s4-sigma').innerHTML=`${recoSig.toFixed(4)}<span> mm</span>`;
+
+    // Bias with colour
+    document.getElementById('s4-bias').innerHTML=
+      `<span style="color:${biasColor}">${bias>=0?'+':''}${bias.toFixed(4)}</span><span> mm</span>`;
+    document.getElementById('s4-pull').innerHTML=
+      `<span style="color:${biasColor}">${pull>=0?'+':''}${pull.toFixed(3)}</span>`;
+  }
+
+  // ─────────────────────────────────────────────────
+  //  Expose redraw globally so detector banner can call it
+  // ─────────────────────────────────────────────────
+  window.s4Redraw = redraw;
+
+  // ─────────────────────────────────────────────────
+  //  Slider wiring
+  // ─────────────────────────────────────────────────
+  document.getElementById('s4-nvalSlider').addEventListener('input', redraw);
+
+  // ─────────────────────────────────────────────────
+  //  Lazy init on tab activation
+  // ─────────────────────────────────────────────────
+  let s4Initialised = false;
+  window.s4OnTabActivated = function() {
+    if(!s4Initialised){ s4Initialised=true; redraw(); }
+    else redraw(); // always refresh in case S3 calibration changed
+  };
+
+})();
+
+
+							</script>
+                        </body>
+                        </html>
+                    
