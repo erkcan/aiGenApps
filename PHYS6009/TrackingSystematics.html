@@ -1,0 +1,369 @@
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								body {
+									background-color: white; /* Ensure the iframe has a white background */
+								}
+
+								
+        .slider-label { @apply text-xs font-semibold text-gray-600 uppercase flex justify-between; }
+        input[type="range"] { @apply w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600; }
+    
+
+							</style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Straight-Track Detector Sim v2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .slider-label { @apply text-xs font-semibold text-gray-600 uppercase flex justify-between; }
+        input[type="range"] { @apply w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+
+        const randomGaussian = (mean, std) => {
+            const u = 1 - Math.random();
+            const v = Math.random();
+            const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+            return z * std + mean;
+        };
+
+        const calculateStats = (data) => {
+            if (data.length === 0) return { mean: 0, std: 0, count: 0 };
+            const n = data.length;
+            const mean = data.reduce((a, b) => a + b, 0) / n;
+            const std = Math.sqrt(data.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / n);
+            return { mean, std, count: n };
+        };
+
+        const solveLSQ = (points) => {
+            const n = points.length;
+            if (n < 2) return null;
+            let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+            points.forEach(p => {
+                sumX += p.x; sumY += p.y;
+                sumXY += p.x * p.y; sumXX += p.x * p.x;
+            });
+            const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+            const intercept = (sumY - slope * sumX) / n;
+            return { m: slope, b: intercept };
+        };
+
+        const DetectorApp = () => {
+            const [numTracks, setNumTracks] = useState(1000);
+            const [maxM, setMaxM] = useState(0.5);
+            const [sigmaCore, setSigmaCore] = useState(0.1);
+            const [sigmaTail, setSigmaTail] = useState(0.5);
+            const [tailFrac, setTailFrac] = useState(0.1);
+            const [slopeThreshold, setSlopeThreshold] = useState(0.2);
+            
+            // New Feature States
+            const [globalInefficiency, setGlobalInefficiency] = useState(50); // Percent
+            const [activeInactiveLayers, setActiveInactiveLayers] = useState(new Array(8).fill(true));
+            const [trackIdx, setTrackIdx] = useState(0);
+            const [isPlaying, setIsPlaying] = useState(false);
+            
+            const [results, setResults] = useState({ tracks: [], controlRes: [], signalRes: [] });
+
+            // Auto-play Logic
+            useEffect(() => {
+                let interval = null;
+                if (isPlaying) {
+                    interval = setInterval(() => {
+                        setTrackIdx(prev => (prev + 1) % numTracks);
+                    }, 1000);
+                }
+                return () => clearInterval(interval);
+            }, [isPlaying, numTracks]);
+
+            const runSimulation = () => {
+                const tracks = [];
+                const controlRes = [];
+                const signalRes = [];
+                const xPositions = [0, 1, 2, 3, 4, 5, 6, 7];
+
+                for (let i = 0; i < numTracks; i++) {
+                    const trueM = (Math.random() * 2 - 1) * maxM;
+                    const trueB = (Math.random() * 10 - 5);
+                    const hits = [];
+
+                    xPositions.forEach((x, idx) => {
+                        let efficiency = 1.0; 
+                        // If layer is toggled "off", apply the tunable inefficiency
+                        if (!activeInactiveLayers[idx]) {
+                            efficiency = (100 - globalInefficiency) / 100;
+                        }
+
+                        if (Math.random() < efficiency) {
+                            const isTail = Math.random() < tailFrac;
+                            const smear = randomGaussian(0, isTail ? sigmaTail : sigmaCore);
+                            hits.push({ x, y: (trueM * x + trueB) + smear });
+                        }
+                    });
+
+                    const fit = solveLSQ(hits);
+                    const res = fit ? (fit.b - trueB) : null;
+
+                    tracks.push({ trueM, trueB, hits, fit });
+                    if (res !== null) {
+                        if (Math.abs(trueM) < slopeThreshold) controlRes.push(res);
+                        else signalRes.push(res);
+                    }
+                }
+                setResults({ tracks, controlRes, signalRes });
+                setTrackIdx(0);
+            };
+
+            useEffect(() => { runSimulation(); }, []);
+
+            const toggleLayer = (i) => {
+                const updated = [...activeInactiveLayers];
+                updated[i] = !updated[i];
+                setActiveInactiveLayers(updated);
+            };
+
+            return (
+                <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
+                    <header className="bg-indigo-900 text-white p-6 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div>
+                            <h1 className="text-3xl font-extrabold tracking-tight">Straight-Track Sim</h1>
+                            <p className="text-indigo-200 text-sm">LSQ Residuals & Multi-Gaussian Resolution</p>
+                        </div>
+                        <button onClick={runSimulation} className="bg-white text-indigo-900 px-8 py-3 rounded-xl font-bold hover:bg-indigo-50 transition-all shadow-md active:scale-95">
+                            Regenerate Dataset
+                        </button>
+                    </header>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        {/* Control Panel */}
+                        <div className="lg:col-span-4 space-y-4">
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                                <h2 className="font-bold text-gray-800 border-b pb-2 mb-4">Physics Config</h2>
+                                
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="slider-label"><span>Tracks</span> <span>{numTracks}</span></label>
+                                        <input type="range" min="100" max="5000" step="100" value={numTracks} onChange={e => setNumTracks(Number(e.target.value))} />
+                                    </div>
+                                    <div>
+                                        <label className="slider-label"><span>Max Slope |m|</span> <span>{maxM}</span></label>
+                                        <input type="range" min="0.1" max="2" step="0.1" value={maxM} onChange={e => setMaxM(Number(e.target.value))} />
+                                    </div>
+                                    <div className="pt-2">
+                                        <label className="slider-label"><span>Core Resolution ($\sigma$)</span> <span>{sigmaCore}</span></label>
+                                        <input type="range" min="0.01" max="0.5" step="0.01" value={sigmaCore} onChange={e => setSigmaCore(Number(e.target.value))} />
+                                    </div>
+                                    <div>
+                                        <label className="slider-label text-orange-600"><span>Tail Frac / Width</span> <span>{tailFrac} / {sigmaTail}</span></label>
+                                        <div className="flex gap-2">
+                                            <input type="range" min="0" max="0.5" step="0.01" value={tailFrac} onChange={e => setTailFrac(Number(e.target.value))} />
+                                            <input type="range" min="0.5" max="3" step="0.1" value={sigmaTail} onChange={e => setSigmaTail(Number(e.target.value))} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                                <h2 className="font-bold text-gray-800 border-b pb-2 mb-4">Efficiency Settings</h2>
+                                <div className="mb-4">
+                                    <label className="slider-label text-red-600"><span>Inefficiency for toggled layers</span> <span>{globalInefficiency}%</span></label>
+                                    <input type="range" min="0" max="100" step="1" value={globalInefficiency} onChange={e => setGlobalInefficiency(Number(e.target.value))} />
+                                    <p className="text-[10px] text-gray-400 mt-1 uppercase">Green = 100% efficient | Grey = {100-globalInefficiency}% efficient</p>
+                                </div>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {activeInactiveLayers.map((isActive, i) => (
+                                        <button 
+                                            key={i} 
+                                            onClick={() => toggleLayer(i)}
+                                            className={`py-2 rounded-lg text-xs font-bold transition-colors ${isActive ? 'bg-green-100 text-green-700 border-green-200 border' : 'bg-gray-100 text-gray-400 border-gray-200 border'}`}
+                                        >
+                                            L{i}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Visuals */}
+                        <div className="lg:col-span-8 space-y-6">
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                                <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
+                                    <h2 className="font-bold text-lg">Live Event Display</h2>
+                                    <div className="flex items-center bg-gray-50 rounded-xl p-1 border border-gray-100">
+                                        <button 
+                                            onClick={() => setIsPlaying(!isPlaying)}
+                                            className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${isPlaying ? 'bg-red-500 text-white' : 'bg-indigo-600 text-white'}`}
+                                        >
+                                            {isPlaying ? 'Stop' : 'Run Auto'}
+                                        </button>
+                                        <div className="px-4 flex items-center gap-2">
+                                            <span className="text-xs font-bold text-gray-400">INDEX</span>
+                                            <input 
+                                                type="number" 
+                                                value={trackIdx} 
+                                                onChange={e => setTrackIdx(Number(e.target.value))} 
+                                                className="w-16 bg-transparent text-sm font-bold focus:outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="h-72">
+                                    <TrackChart track={results.tracks[trackIdx]} />
+                                </div>
+                                {results.tracks[trackIdx] && (
+                                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-2 text-xs font-mono bg-gray-900 text-green-400 p-3 rounded-lg overflow-x-auto">
+                                        <div>TRUE: y = ({results.tracks[trackIdx].trueM.toFixed(3)})x + ({results.tracks[trackIdx].trueB.toFixed(3)})</div>
+                                        <div>FIT : {results.tracks[trackIdx].fit ? `y = (${results.tracks[trackIdx].fit.m.toFixed(3)})x + (${results.tracks[trackIdx].fit.b.toFixed(3)})` : 'FIT FAILED (Insufficient Hits)'}</div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <HistogramCard 
+                                    title="Control Region (|m| < thr)" 
+                                    data={results.controlRes} 
+                                    color="rgba(79, 70, 229, 0.7)" 
+                                    threshold={slopeThreshold}
+                                    setThreshold={setSlopeThreshold}
+                                    hasSlider
+                                />
+                                <HistogramCard 
+                                    title="Signal Region (|m| > thr)" 
+                                    data={results.signalRes} 
+                                    color="rgba(236, 72, 153, 0.7)" 
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const TrackChart = ({ track }) => {
+            const canvasRef = useRef(null);
+            const chartRef = useRef(null);
+
+            useEffect(() => {
+                if (!track) return;
+                const ctx = canvasRef.current.getContext('2d');
+                if (chartRef.current) chartRef.current.destroy();
+
+                const xRange = [-0.5, 7.5];
+                const trueLine = xRange.map(x => ({ x, y: track.trueM * x + track.trueB }));
+                const fitLine = track.fit ? xRange.map(x => ({ x, y: track.fit.m * x + track.fit.b })) : [];
+
+                chartRef.current = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [
+                            { label: 'Hits', data: track.hits, backgroundColor: '#111', pointRadius: 6, z: 10 },
+                            { label: 'True', data: trueLine, borderColor: '#10b981', borderWidth: 2, type: 'line', pointRadius: 0, borderDash: [5, 5] },
+                            { label: 'LSQ Fit', data: fitLine, borderColor: '#4f46e5', borderWidth: 3, type: 'line', pointRadius: 0 }
+                        ]
+                    },
+                    options: { 
+                        responsive: true, maintainAspectRatio: false,
+                        scales: { 
+                            x: { type: 'linear', min: -0.5, max: 7.5, grid: { color: '#f3f4f6' } },
+                            y: { min: -10, max: 10, grid: { color: '#f3f4f6' } }
+                        },
+                        animation: false,
+                        plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: { size: 10 } } } }
+                    }
+                });
+            }, [track]);
+            return <canvas ref={canvasRef}></canvas>;
+        };
+
+        const HistogramCard = ({ title, data, color, threshold, setThreshold, hasSlider }) => {
+            const canvasRef = useRef(null);
+            const chartRef = useRef(null);
+            const stats = useMemo(() => calculateStats(data), [data]);
+
+            useEffect(() => {
+                if (!canvasRef.current || data.length < 5) return;
+                const ctx = canvasRef.current.getContext('2d');
+                if (chartRef.current) chartRef.current.destroy();
+
+                const sorted = [...data].sort((a,b) => a-b);
+                const low = sorted[Math.floor(sorted.length * 0.02)];
+                const high = sorted[Math.floor(sorted.length * 0.98)];
+                
+                const bins = 25;
+                const range = (high - low) || 0.1;
+                const binSize = range / bins;
+                const counts = new Array(bins).fill(0);
+                
+                data.forEach(v => {
+                    const idx = Math.floor((v - low) / binSize);
+                    if (idx >= 0 && idx < bins) counts[idx]++;
+                });
+
+                chartRef.current = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: counts.map((_, i) => (low + i * binSize).toFixed(2)),
+                        datasets: [{ data: counts, backgroundColor: color, barPercentage: 1, categoryPercentage: 1 }]
+                    },
+                    options: { 
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { x: { display: false }, y: { beginAtZero: true, grid: { display: false } } },
+                        animation: false
+                    }
+                });
+            }, [data, color]);
+
+            return (
+                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 flex flex-col h-full">
+                    <h3 className="font-bold text-gray-700 text-sm mb-3 uppercase tracking-wider">{title}</h3>
+                    <div className="flex-grow min-h-[120px] mb-4">
+                        <canvas ref={canvasRef}></canvas>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-[10px] font-mono text-gray-500 bg-gray-50 p-2 rounded-lg">
+                        <div>ENTRIES: {stats.count}</div>
+                        <div>MEAN: {stats.mean.toFixed(4)}</div>
+                        <div>STD: {stats.std.toFixed(4)}</div>
+                    </div>
+                    {hasSlider && (
+                        <div className="mt-4 pt-3 border-t">
+                            <label className="slider-label"><span>Slope Split Thr</span> <span>{threshold}</span></label>
+                            <input type="range" min="0" max="1" step="0.05" value={threshold} onChange={e => setThreshold(Number(e.target.value))} />
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<DetectorApp />);
+    </script>
+</body>
+</html>
+
+
+
+							<script>
+                            	
+							</script>
+                        </body>
+                        </html>
+                    
