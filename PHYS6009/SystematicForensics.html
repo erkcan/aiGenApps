@@ -1,0 +1,491 @@
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								body {
+									background-color: white; /* Ensure the iframe has a white background */
+								}
+
+								
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --primary: #3b82f6;
+            --secondary: #64748b;
+            --accent: #ef4444;
+            --text: #f8fafc;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            margin: 0;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1100px;
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .slider-card {
+            background: rgba(0,0,0,0.25);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            text-align: center;
+        }
+
+        .slider-card label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--secondary);
+        }
+
+        .val-display {
+            color: var(--primary);
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+
+        input[type=range] {
+            width: 100%;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        button.secondary { background-color: var(--secondary); }
+        button:hover { opacity: 0.9; }
+
+        .chart-container { position: relative; height: 350px; width: 100%; margin-bottom: 1rem; }
+        .residual-container { position: relative; height: 180px; width: 100%; }
+        
+        .hidden { display: none !important; }
+        #reveal-btn { background: none; color: #475569; font-size: 0.7rem; margin-top: 2rem; border-top: 1px dashed #334155; padding-top: 1rem; width: 100%; }
+    
+
+							</style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 4: Subtle Forensics Lab</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --primary: #3b82f6;
+            --secondary: #64748b;
+            --accent: #ef4444;
+            --text: #f8fafc;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            margin: 0;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1100px;
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .slider-card {
+            background: rgba(0,0,0,0.25);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            text-align: center;
+        }
+
+        .slider-card label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--secondary);
+        }
+
+        .val-display {
+            color: var(--primary);
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+
+        input[type=range] {
+            width: 100%;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        button.secondary { background-color: var(--secondary); }
+        button:hover { opacity: 0.9; }
+
+        .chart-container { position: relative; height: 350px; width: 100%; margin-bottom: 1rem; }
+        .residual-container { position: relative; height: 180px; width: 100%; }
+        
+        .hidden { display: none !important; }
+        #reveal-btn { background: none; color: #475569; font-size: 0.7rem; margin-top: 2rem; border-top: 1px dashed #334155; padding-top: 1rem; width: 100%; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header style="text-align:center; margin-bottom:1.5rem;">
+        <h2 style="margin:0; color:var(--primary);">Systematic Forensics: Subtle Edition</h2>
+        <p style="color:var(--secondary); font-size:0.9rem;">Week 4: The Epistemic Boundary of Measurement</p>
+    </header>
+    
+    <div class="action-btns">
+        <button onclick="generateData()">Generate New Data</button>
+        <button class="secondary" onclick="toggleResiduals()">Toggle Residual Plot</button>
+    </div>
+
+    <div class="controls-grid">
+        <div class="slider-card">
+            <label>Signal Amplitude (Floating Param)</label>
+            <span id="ampVal" class="val-display">0.080</span>
+            <input type="range" id="ampSlider" min="0" max="0.25" step="0.001" value="0.08" oninput="updateFit()">
+        </div>
+        <div class="slider-card">
+            <label>Peak Position (Mean)</label>
+            <span id="meanVal" class="val-display">50.0</span>
+            <input type="range" id="meanSlider" min="40" max="60" step="0.1" value="50.0" oninput="updateFit()">
+        </div>
+        <div class="slider-card">
+            <label>Peak Width (Sigma)</label>
+            <span id="sigmaVal" class="val-display">1.8</span>
+            <input type="range" id="sigmaSlider" min="0.5" max="8.0" step="0.1" value="1.8" oninput="updateFit()">
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="mainChart"></canvas>
+    </div>
+    
+    <div id="residualWrapper" class="residual-container">
+        <canvas id="residualChart"></canvas>
+    </div>
+    
+    <button id="reveal-btn" onclick="revealTruth()">Show Hidden Truth (Reveal Mystery)</button>
+</div>
+
+<script>
+    let activeSystematic = null;
+    let rawData = [];
+    let binnedData = [];
+    let labels = [];
+    let mainChart = null, residualChart = null;
+
+    const systematicOptions = [
+        { name: 'Non-linear Sag', desc: 'Detector is non-linear at high energy. Data peak is shifted left from 50.0.' },
+        { name: 'Non-Uniform Efficiency', desc: 'Detector efficiency drops as 1 - 0.5*(x/100)^2. This suppresses the signal region (~75% eff) more than the low-energy background (~95% eff), making the signal appear smaller than it is.' },
+        { name: 'Resolution Smearing', desc: 'Detector resolution is significantly worse than factory specification (1.8).' }
+    ];
+
+    function randomGaussian(m=0, s=1) {
+        let u=0, v=0; while(u===0) u=Math.random(); while(v===0) v=Math.random();
+        return m + s * Math.sqrt(-2*Math.log(u)) * Math.cos(2*Math.PI*v);
+    }
+
+    function generateData() {
+        // Reset Truth
+        activeSystematic = systematicOptions[Math.floor(Math.random() * systematicOptions.length)];
+        
+        const nEvents = 2500;
+        let physics = [];
+        for(let i=0; i<nEvents; i++){
+            // BG: Exp Tau=22 | Sig: True Mean=50, Sigma=1.8 (Sig Frac = 0.08)
+            if(Math.random() > 0.08) physics.push(-22 * Math.log(Math.random())); 
+            else physics.push(randomGaussian(50, 1.8));
+        }
+
+        // Apply Hidden Sabotage
+        if(activeSystematic.name === 'Non-linear Sag') {
+            rawData = physics.map(x => x * (1 - 0.0006 * x));
+        } else if(activeSystematic.name === 'Non-Uniform Efficiency') {
+            // Apply a smooth efficiency curve: Eff(x) = 1.0 - 0.5 * (x/100)^2
+            rawData = physics.filter(x => {
+                let eff = 1.0 - 0.5 * Math.pow(x / 100, 2);
+                return Math.random() < eff; // Keep event only if efficiency check passes
+            });
+        } else {
+            rawData = physics.map(x => x + randomGaussian(0, 3.8)); // Extra Smear
+        }
+
+        // Binning
+        const nBins = 65; const binW = 100/nBins;
+        binnedData = new Array(nBins).fill(0); labels = [];
+        for(let i=0; i<nBins; i++) labels.push((i*binW + binW/2).toFixed(1));
+        rawData.forEach(v => { let b = Math.floor(v/binW); if(b>=0 && b<nBins) binnedData[b]++; });
+
+        // Update display to match the default slider values for the new data
+        updateFit();
+    }
+
+    function updateFit() {
+        const amp = parseFloat(document.getElementById('ampSlider').value);
+        const mu = parseFloat(document.getElementById('meanSlider').value);
+        const sigma = parseFloat(document.getElementById('sigmaSlider').value);
+
+        document.getElementById('ampVal').innerText = amp.toFixed(3);
+        document.getElementById('meanVal').innerText = mu.toFixed(1);
+        document.getElementById('sigmaVal').innerText = sigma.toFixed(1);
+
+        const nBins = 65; const binW = 100/nBins;
+        const norm = rawData.length * binW;
+        let fit = [];
+        
+        for(let i=0; i<nBins; i++) {
+            let x = i * binW + binW/2;
+            // Analytical Prediction (Assuming 100% flat efficiency)
+            let bg = ((1 - amp) * norm / 22) * Math.exp(-x / 22);
+            let sig = (amp * norm) * (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x - mu) / sigma, 2));
+            fit.push(bg + sig);
+        }
+
+        renderCharts(fit);
+    }
+
+    function renderCharts(fitLine) {
+        const residuals = binnedData.map((d, i) => d - fitLine[i]);
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        const resCtx = document.getElementById('residualChart').getContext('2d');
+
+        if(mainChart) mainChart.destroy();
+        if(residualChart) residualChart.destroy();
+
+        mainChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'Data', data: binnedData, backgroundColor: 'rgba(59, 130, 246, 0.4)', borderColor: '#3b82f6', borderWidth: 1, barPercentage: 1, categoryPercentage: 1 },
+                    { label: 'Model (Assumes Perfect Detector)', data: fitLine, type: 'line', borderColor: '#ef4444', borderWidth: 2, pointRadius: 0 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: '#334155' } } }, animation: false }
+        });
+
+        residualChart = new Chart(resCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Residuals', data: residuals, borderColor: '#10b981', borderWidth: 2, pointRadius: 0, tension: 0.3,
+                    fill: { target: 'origin', above: 'rgba(16, 185, 129, 0.05)', below: 'rgba(239, 68, 68, 0.05)' }
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: false }, y: { grid: { color: '#334155' } } }, animation: false }
+        });
+    }
+
+    function toggleResiduals() { document.getElementById('residualWrapper').classList.toggle('hidden'); }
+    function revealTruth() { alert("SABOTAGE TRUTH:\n\nType: " + activeSystematic.name + "\nDetail: " + activeSystematic.desc); }
+
+    window.onload = generateData;
+</script>
+</body>
+</html>
+
+
+
+							<script>
+                            	
+    let activeSystematic = null;
+    let rawData = [];
+    let binnedData = [];
+    let labels = [];
+    let mainChart = null, residualChart = null;
+
+    const systematicOptions = [
+        { name: 'Non-linear Sag', desc: 'Detector is non-linear at high energy. Data peak is shifted left from 50.0.' },
+        { name: 'Non-Uniform Efficiency', desc: 'Detector efficiency drops as 1 - 0.5*(x/100)^2. This suppresses the signal region (~75% eff) more than the low-energy background (~95% eff), making the signal appear smaller than it is.' },
+        { name: 'Resolution Smearing', desc: 'Detector resolution is significantly worse than factory specification (1.8).' }
+    ];
+
+    function randomGaussian(m=0, s=1) {
+        let u=0, v=0; while(u===0) u=Math.random(); while(v===0) v=Math.random();
+        return m + s * Math.sqrt(-2*Math.log(u)) * Math.cos(2*Math.PI*v);
+    }
+
+    function generateData() {
+        // Reset Truth
+        activeSystematic = systematicOptions[Math.floor(Math.random() * systematicOptions.length)];
+        
+        const nEvents = 2500;
+        let physics = [];
+        for(let i=0; i<nEvents; i++){
+            // BG: Exp Tau=22 | Sig: True Mean=50, Sigma=1.8 (Sig Frac = 0.08)
+            if(Math.random() > 0.08) physics.push(-22 * Math.log(Math.random())); 
+            else physics.push(randomGaussian(50, 1.8));
+        }
+
+        // Apply Hidden Sabotage
+        if(activeSystematic.name === 'Non-linear Sag') {
+            rawData = physics.map(x => x * (1 - 0.0006 * x));
+        } else if(activeSystematic.name === 'Non-Uniform Efficiency') {
+            // Apply a smooth efficiency curve: Eff(x) = 1.0 - 0.5 * (x/100)^2
+            rawData = physics.filter(x => {
+                let eff = 1.0 - 0.5 * Math.pow(x / 100, 2);
+                return Math.random() < eff; // Keep event only if efficiency check passes
+            });
+        } else {
+            rawData = physics.map(x => x + randomGaussian(0, 3.8)); // Extra Smear
+        }
+
+        // Binning
+        const nBins = 65; const binW = 100/nBins;
+        binnedData = new Array(nBins).fill(0); labels = [];
+        for(let i=0; i<nBins; i++) labels.push((i*binW + binW/2).toFixed(1));
+        rawData.forEach(v => { let b = Math.floor(v/binW); if(b>=0 && b<nBins) binnedData[b]++; });
+
+        // Update display to match the default slider values for the new data
+        updateFit();
+    }
+
+    function updateFit() {
+        const amp = parseFloat(document.getElementById('ampSlider').value);
+        const mu = parseFloat(document.getElementById('meanSlider').value);
+        const sigma = parseFloat(document.getElementById('sigmaSlider').value);
+
+        document.getElementById('ampVal').innerText = amp.toFixed(3);
+        document.getElementById('meanVal').innerText = mu.toFixed(1);
+        document.getElementById('sigmaVal').innerText = sigma.toFixed(1);
+
+        const nBins = 65; const binW = 100/nBins;
+        const norm = rawData.length * binW;
+        let fit = [];
+        
+        for(let i=0; i<nBins; i++) {
+            let x = i * binW + binW/2;
+            // Analytical Prediction (Assuming 100% flat efficiency)
+            let bg = ((1 - amp) * norm / 22) * Math.exp(-x / 22);
+            let sig = (amp * norm) * (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x - mu) / sigma, 2));
+            fit.push(bg + sig);
+        }
+
+        renderCharts(fit);
+    }
+
+    function renderCharts(fitLine) {
+        const residuals = binnedData.map((d, i) => d - fitLine[i]);
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        const resCtx = document.getElementById('residualChart').getContext('2d');
+
+        if(mainChart) mainChart.destroy();
+        if(residualChart) residualChart.destroy();
+
+        mainChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'Data', data: binnedData, backgroundColor: 'rgba(59, 130, 246, 0.4)', borderColor: '#3b82f6', borderWidth: 1, barPercentage: 1, categoryPercentage: 1 },
+                    { label: 'Model (Assumes Perfect Detector)', data: fitLine, type: 'line', borderColor: '#ef4444', borderWidth: 2, pointRadius: 0 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: '#334155' } } }, animation: false }
+        });
+
+        residualChart = new Chart(resCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Residuals', data: residuals, borderColor: '#10b981', borderWidth: 2, pointRadius: 0, tension: 0.3,
+                    fill: { target: 'origin', above: 'rgba(16, 185, 129, 0.05)', below: 'rgba(239, 68, 68, 0.05)' }
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: false }, y: { grid: { color: '#334155' } } }, animation: false }
+        });
+    }
+
+    function toggleResiduals() { document.getElementById('residualWrapper').classList.toggle('hidden'); }
+    function revealTruth() { alert("SABOTAGE TRUTH:\n\nType: " + activeSystematic.name + "\nDetail: " + activeSystematic.desc); }
+
+    window.onload = generateData;
+
+
+							</script>
+                        </body>
+                        </html>
