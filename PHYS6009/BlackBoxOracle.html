@@ -1,0 +1,972 @@
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								body {
+									background-color: white; /* Ensure the iframe has a white background */
+								}
+
+								
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Courier New', monospace;
+    background: #0a0a0a;
+    color: #e0e0e0;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  h1 { font-size: 1.3rem; letter-spacing: 0.15em; color: #aaa; margin-bottom: 4px; }
+  .subtitle { font-size: 0.75rem; color: #555; margin-bottom: 28px; letter-spacing: 0.1em; }
+  .layout {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    grid-template-rows: auto 1fr;
+    gap: 20px;
+    max-width: 1100px;
+  }
+  .panel {
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 6px;
+    padding: 20px;
+  }
+  .panel h2 { font-size: 0.7rem; letter-spacing: 0.2em; color: #555; margin-bottom: 16px; text-transform: uppercase; }
+
+  /* Query panel */
+  .query-panel { grid-column: 1; grid-row: 1; }
+  .input-row { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+  .input-row label { font-size: 0.85rem; color: #888; width: 20px; }
+  .input-row input {
+    width: 80px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #e0e0e0;
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    padding: 6px 10px;
+    border-radius: 4px;
+    outline: none;
+  }
+  .input-row input:focus { border-color: #555; }
+  .mode-row { display: flex; gap: 0; margin-bottom: 16px; border: 1px solid #2a2a2a; border-radius: 4px; overflow: hidden; }
+  .mode-btn {
+    flex: 1; padding: 7px;
+    font-family: 'Courier New', monospace; font-size: 0.72rem; letter-spacing: 0.08em;
+    background: #1a1a1a; color: #555; border: none; cursor: pointer; transition: all 0.15s;
+  }
+  .mode-btn.active { background: #222; color: #ccc; }
+  .mode-btn:hover:not(.active) { background: #1e1e1e; color: #888; }
+  .mode-divider { width: 1px; background: #2a2a2a; }
+  #intervention-row { display: none; gap: 10px; align-items: center; margin-bottom: 14px; }
+  #intervention-row label { font-size: 0.8rem; color: #888; }
+  #force-select {
+    background: #1a1a1a; border: 1px solid #333; color: #e0e0e0;
+    font-family: 'Courier New', monospace; font-size: 0.85rem;
+    padding: 5px 8px; border-radius: 4px; outline: none;
+  }
+  #query-btn {
+    width: 100%; padding: 10px;
+    font-family: 'Courier New', monospace; font-size: 0.85rem; letter-spacing: 0.15em;
+    background: #1a1a1a; color: #aaa; border: 1px solid #333; border-radius: 4px;
+    cursor: pointer; transition: all 0.15s; margin-bottom: 20px;
+  }
+  #query-btn:hover { background: #222; border-color: #555; color: #ddd; }
+  #query-btn:active { background: #2a2a2a; }
+  .output-box {
+    border: 1px solid #2a2a2a; border-radius: 4px; padding: 16px;
+    text-align: center; min-height: 70px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .output-box.signal { border-color: #2d6a2d; background: #0d1f0d; }
+  .output-box.silence { border-color: #333; background: #111; }
+  #output-label { font-size: 1.6rem; letter-spacing: 0.2em; font-weight: bold; transition: color 0.2s; }
+  .signal #output-label { color: #4caf50; }
+  .silence #output-label { color: #888; }
+  #output-sub { font-size: 0.7rem; color: #555; margin-top: 4px; letter-spacing: 0.1em; }
+  #intervention-notice {
+    display: none; margin-top: 14px; padding: 10px 12px;
+    background: #1a1500; border: 1px solid #3a3000; border-radius: 4px;
+    font-size: 0.72rem; color: #998840; line-height: 1.5;
+  }
+
+  /* Log panel */
+  .log-panel { grid-column: 1; grid-row: 2; }
+  #log { max-height: 240px; overflow-y: auto; font-size: 0.78rem; line-height: 1.8; color: #666; }
+  #log::-webkit-scrollbar { width: 4px; }
+  #log::-webkit-scrollbar-track { background: #111; }
+  #log::-webkit-scrollbar-thumb { background: #333; }
+  .log-entry { display: flex; gap: 12px; }
+  .log-entry .coords { color: #888; min-width: 80px; }
+  .log-entry .res-signal { color: #4caf50; }
+  .log-entry .res-silence { color: #888; }
+  .log-entry .intervened { color: #998840; font-size: 0.7rem; }
+  #log-empty { color: #333; font-style: italic; }
+
+  /* Grid panel */
+  .grid-panel { grid-column: 2; grid-row: 1 / 3; display: flex; flex-direction: column; }
+  .grid-legend { display: flex; gap: 18px; margin-bottom: 12px; font-size: 0.7rem; color: #555; letter-spacing: 0.08em; }
+  .legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+  .grid-container { flex: 1; overflow: auto; }
+  #oracle-grid { border-collapse: collapse; font-size: 0.6rem; }
+  #oracle-grid td {
+    width: 26px; height: 26px; border: 1px solid #1a1a1a;
+    text-align: center; vertical-align: middle;
+    cursor: default; transition: background 0.15s; font-size: 0.55rem;
+  }
+  .cell-unqueried { background: #141414; color: #333; }
+  .cell-signal    { background: #1a3d1a; color: #4caf50; }
+  .cell-silence   { background: #2a2a2a; color: #888; }
+  .cell-intervened-signal  { background: #3d3500; color: #998840; }
+  .cell-intervened-silence { background: #2a2000; color: #887730; }
+  .axis-label-col, .axis-label-row { font-size: 0.55rem; color: #333; text-align: center; padding: 2px; }
+  .grid-stats { margin-top: 10px; font-size: 0.7rem; color: #444; letter-spacing: 0.05em; }
+  #stats-text { color: #666; }
+
+  /* Instructor panel */
+  .instructor-panel { grid-column: 1 / 3; border-color: #1e1800; background: #0d0d00; }
+  .instructor-header {
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer; user-select: none;
+  }
+  .instructor-header h2 { color: #443300; margin: 0; }
+  .instructor-header:hover h2 { color: #665500; }
+  .inst-chevron { font-size: 0.7rem; color: #443300; transition: transform 0.2s; }
+  .inst-chevron.open { transform: rotate(90deg); }
+  .instructor-lock { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .instructor-lock input {
+    width: 80px; background: #1a1200; border: 1px solid #2a2000;
+    color: #887700; font-family: 'Courier New', monospace; font-size: 0.8rem;
+    padding: 4px 8px; border-radius: 4px; outline: none; letter-spacing: 0.15em;
+  }
+  .instructor-lock input:focus { border-color: #554400; }
+  #lock-error { font-size: 0.68rem; color: #cc4400; display: none; }
+  .instructor-body { display: none; margin-top: 16px; }
+  .instructor-inner { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+  .instructor-inner p { font-size: 0.75rem; color: #554400; line-height: 1.6; max-width: 500px; }
+  .rule-display {
+    font-size: 0.8rem; color: #887700; background: #151200;
+    border: 1px solid #2a2200; border-radius: 4px; padding: 10px 16px; white-space: nowrap;
+  }
+  .rule-display span { color: #ccaa00; }
+  .reset-btn {
+    padding: 7px 16px; font-family: 'Courier New', monospace; font-size: 0.72rem; letter-spacing: 0.1em;
+    background: #1a1200; color: #665500; border: 1px solid #2a2000; border-radius: 4px;
+    cursor: pointer; transition: all 0.15s; margin-top: 2px;
+  }
+  .reset-btn:hover { background: #221800; color: #998840; border-color: #443300; }
+
+
+							</style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Black Box Oracle</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Courier New', monospace;
+    background: #0a0a0a;
+    color: #e0e0e0;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  h1 { font-size: 1.3rem; letter-spacing: 0.15em; color: #aaa; margin-bottom: 4px; }
+  .subtitle { font-size: 0.75rem; color: #555; margin-bottom: 28px; letter-spacing: 0.1em; }
+  .layout {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    grid-template-rows: auto 1fr;
+    gap: 20px;
+    max-width: 1100px;
+  }
+  .panel {
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 6px;
+    padding: 20px;
+  }
+  .panel h2 { font-size: 0.7rem; letter-spacing: 0.2em; color: #555; margin-bottom: 16px; text-transform: uppercase; }
+
+  /* Query panel */
+  .query-panel { grid-column: 1; grid-row: 1; }
+  .input-row { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+  .input-row label { font-size: 0.85rem; color: #888; width: 20px; }
+  .input-row input {
+    width: 80px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #e0e0e0;
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    padding: 6px 10px;
+    border-radius: 4px;
+    outline: none;
+  }
+  .input-row input:focus { border-color: #555; }
+  .mode-row { display: flex; gap: 0; margin-bottom: 16px; border: 1px solid #2a2a2a; border-radius: 4px; overflow: hidden; }
+  .mode-btn {
+    flex: 1; padding: 7px;
+    font-family: 'Courier New', monospace; font-size: 0.72rem; letter-spacing: 0.08em;
+    background: #1a1a1a; color: #555; border: none; cursor: pointer; transition: all 0.15s;
+  }
+  .mode-btn.active { background: #222; color: #ccc; }
+  .mode-btn:hover:not(.active) { background: #1e1e1e; color: #888; }
+  .mode-divider { width: 1px; background: #2a2a2a; }
+  #intervention-row { display: none; gap: 10px; align-items: center; margin-bottom: 14px; }
+  #intervention-row label { font-size: 0.8rem; color: #888; }
+  #force-select {
+    background: #1a1a1a; border: 1px solid #333; color: #e0e0e0;
+    font-family: 'Courier New', monospace; font-size: 0.85rem;
+    padding: 5px 8px; border-radius: 4px; outline: none;
+  }
+  #query-btn {
+    width: 100%; padding: 10px;
+    font-family: 'Courier New', monospace; font-size: 0.85rem; letter-spacing: 0.15em;
+    background: #1a1a1a; color: #aaa; border: 1px solid #333; border-radius: 4px;
+    cursor: pointer; transition: all 0.15s; margin-bottom: 20px;
+  }
+  #query-btn:hover { background: #222; border-color: #555; color: #ddd; }
+  #query-btn:active { background: #2a2a2a; }
+  .output-box {
+    border: 1px solid #2a2a2a; border-radius: 4px; padding: 16px;
+    text-align: center; min-height: 70px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .output-box.signal { border-color: #2d6a2d; background: #0d1f0d; }
+  .output-box.silence { border-color: #333; background: #111; }
+  #output-label { font-size: 1.6rem; letter-spacing: 0.2em; font-weight: bold; transition: color 0.2s; }
+  .signal #output-label { color: #4caf50; }
+  .silence #output-label { color: #888; }
+  #output-sub { font-size: 0.7rem; color: #555; margin-top: 4px; letter-spacing: 0.1em; }
+  #intervention-notice {
+    display: none; margin-top: 14px; padding: 10px 12px;
+    background: #1a1500; border: 1px solid #3a3000; border-radius: 4px;
+    font-size: 0.72rem; color: #998840; line-height: 1.5;
+  }
+
+  /* Log panel */
+  .log-panel { grid-column: 1; grid-row: 2; }
+  #log { max-height: 240px; overflow-y: auto; font-size: 0.78rem; line-height: 1.8; color: #666; }
+  #log::-webkit-scrollbar { width: 4px; }
+  #log::-webkit-scrollbar-track { background: #111; }
+  #log::-webkit-scrollbar-thumb { background: #333; }
+  .log-entry { display: flex; gap: 12px; }
+  .log-entry .coords { color: #888; min-width: 80px; }
+  .log-entry .res-signal { color: #4caf50; }
+  .log-entry .res-silence { color: #888; }
+  .log-entry .intervened { color: #998840; font-size: 0.7rem; }
+  #log-empty { color: #333; font-style: italic; }
+
+  /* Grid panel */
+  .grid-panel { grid-column: 2; grid-row: 1 / 3; display: flex; flex-direction: column; }
+  .grid-legend { display: flex; gap: 18px; margin-bottom: 12px; font-size: 0.7rem; color: #555; letter-spacing: 0.08em; }
+  .legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+  .grid-container { flex: 1; overflow: auto; }
+  #oracle-grid { border-collapse: collapse; font-size: 0.6rem; }
+  #oracle-grid td {
+    width: 26px; height: 26px; border: 1px solid #1a1a1a;
+    text-align: center; vertical-align: middle;
+    cursor: default; transition: background 0.15s; font-size: 0.55rem;
+  }
+  .cell-unqueried { background: #141414; color: #333; }
+  .cell-signal    { background: #1a3d1a; color: #4caf50; }
+  .cell-silence   { background: #2a2a2a; color: #888; }
+  .cell-intervened-signal  { background: #3d3500; color: #998840; }
+  .cell-intervened-silence { background: #2a2000; color: #887730; }
+  .axis-label-col, .axis-label-row { font-size: 0.55rem; color: #333; text-align: center; padding: 2px; }
+  .grid-stats { margin-top: 10px; font-size: 0.7rem; color: #444; letter-spacing: 0.05em; }
+  #stats-text { color: #666; }
+
+  /* Instructor panel */
+  .instructor-panel { grid-column: 1 / 3; border-color: #1e1800; background: #0d0d00; }
+  .instructor-header {
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer; user-select: none;
+  }
+  .instructor-header h2 { color: #443300; margin: 0; }
+  .instructor-header:hover h2 { color: #665500; }
+  .inst-chevron { font-size: 0.7rem; color: #443300; transition: transform 0.2s; }
+  .inst-chevron.open { transform: rotate(90deg); }
+  .instructor-lock { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .instructor-lock input {
+    width: 80px; background: #1a1200; border: 1px solid #2a2000;
+    color: #887700; font-family: 'Courier New', monospace; font-size: 0.8rem;
+    padding: 4px 8px; border-radius: 4px; outline: none; letter-spacing: 0.15em;
+  }
+  .instructor-lock input:focus { border-color: #554400; }
+  #lock-error { font-size: 0.68rem; color: #cc4400; display: none; }
+  .instructor-body { display: none; margin-top: 16px; }
+  .instructor-inner { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+  .instructor-inner p { font-size: 0.75rem; color: #554400; line-height: 1.6; max-width: 500px; }
+  .rule-display {
+    font-size: 0.8rem; color: #887700; background: #151200;
+    border: 1px solid #2a2200; border-radius: 4px; padding: 10px 16px; white-space: nowrap;
+  }
+  .rule-display span { color: #ccaa00; }
+  .reset-btn {
+    padding: 7px 16px; font-family: 'Courier New', monospace; font-size: 0.72rem; letter-spacing: 0.1em;
+    background: #1a1200; color: #665500; border: 1px solid #2a2000; border-radius: 4px;
+    cursor: pointer; transition: all 0.15s; margin-top: 2px;
+  }
+  .reset-btn:hover { background: #221800; color: #998840; border-color: #443300; }
+</style>
+</head>
+<body>
+
+<h1>THE BLACK BOX ORACLE</h1>
+<p class="subtitle">REALISM AND THE PARTICLE PHYSICIST'S DILEMMA</p>
+
+<div class="layout">
+
+  <!-- Query Panel -->
+  <div class="panel query-panel">
+    <h2>Query Interface</h2>
+    <div class="input-row">
+      <label>a</label>
+      <input type="number" id="input-a" value="0" min="0" max="19">
+      <span style="color:#444; font-size:0.8rem;">integer, 0–19</span>
+    </div>
+    <div class="input-row">
+      <label>b</label>
+      <input type="number" id="input-b" value="0" min="0" max="19">
+      <span style="color:#444; font-size:0.8rem;">integer, 0–19</span>
+    </div>
+    <div class="mode-row">
+      <button class="mode-btn active" id="btn-observe" onclick="setMode('observe')">OBSERVE</button>
+      <div class="mode-divider"></div>
+      <button class="mode-btn" id="btn-intervene" onclick="setMode('intervene')">INTERVENE ⟩</button>
+    </div>
+    <div id="intervention-row">
+      <label>Force output:</label>
+      <select id="force-select">
+        <option value="signal">SIGNAL</option>
+        <option value="silence">SILENCE</option>
+      </select>
+    </div>
+    <button id="query-btn" onclick="query()">QUERY ORACLE</button>
+    <div class="output-box silence" id="output-box">
+      <div id="output-label">—</div>
+      <div id="output-sub">awaiting query</div>
+    </div>
+    <div id="intervention-notice">
+      INTERVENTION MODE ACTIVE — you are setting the output.<br>
+      Does this change what you believe about the rule?
+    </div>
+  </div>
+
+  <!-- Grid Panel -->
+  <div class="panel grid-panel">
+    <h2>Query Space — 20 × 20 Grid (a horizontal, b vertical)</h2>
+    <div class="grid-legend">
+      <span><span class="legend-dot" style="background:#1a3d1a;"></span>SIGNAL</span>
+      <span><span class="legend-dot" style="background:#2a2a2a; border:1px solid #444;"></span>SILENCE</span>
+      <span><span class="legend-dot" style="background:#141414; border:1px solid #222;"></span>unqueried</span>
+      <span><span class="legend-dot" style="background:#3d3500;"></span>intervened</span>
+    </div>
+    <div class="grid-container">
+      <table id="oracle-grid"></table>
+    </div>
+    <div class="grid-stats">Queries: <span id="stats-text">0 total · 0 SIGNAL · 0 SILENCE</span></div>
+  </div>
+
+  <!-- Log Panel -->
+  <div class="panel log-panel">
+    <h2>Query Log</h2>
+    <div id="log"><span id="log-empty">no queries yet</span></div>
+  </div>
+
+  <!-- Instructor Panel -->
+  <div class="panel instructor-panel">
+    <div class="instructor-header" id="inst-header">
+      <span class="inst-chevron" id="inst-chevron">▶</span>
+      <h2>INSTRUCTOR VIEW</h2>
+      <div class="instructor-lock" onclick="event.stopPropagation()">
+        <input type="password" id="inst-password" placeholder="password"
+          onkeydown="if(event.key==='Enter') unlockInstructor()">
+        <span id="lock-error">incorrect</span>
+      </div>
+    </div>
+    <div class="instructor-body" id="inst-body">
+      <div class="instructor-inner">
+        <p>
+          The hidden rule is shown below. Students should not see this panel during the session.
+          Use Reset to clear between runs. To change the rule, edit the expression and click Apply — 
+          rule statistics update immediately.
+        </p>
+        <div>
+          <div class="rule-display" id="rule-stats">computing...</div>
+          <div style="margin-top:10px;">
+            <div style="font-size:0.7rem; color:#554400; margin-bottom:6px; letter-spacing:0.08em;">
+              EDIT RULE — <span style="color:#443300;">function(a, b) → boolean</span>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <code style="color:#665500; font-size:0.8rem;">return</code>
+              <input id="rule-input" type="text" value="(a * a + b * b) % 7 < 3"
+                style="flex:1; min-width:220px; background:#151200; border:1px solid #2a2200;
+                       color:#ccaa00; font-family:'Courier New',monospace; font-size:0.85rem;
+                       padding:6px 10px; border-radius:4px; outline:none;">
+              <button class="reset-btn" onclick="applyRule()">APPLY RULE</button>
+            </div>
+            <div id="rule-error" style="display:none; margin-top:6px; font-size:0.7rem;"></div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <button class="reset-btn" id="scan-btn" onclick="toggleScan()">RUN ALL QUERIES</button>
+          <button class="reset-btn" id="reset-btn" onclick="confirmReset()">RESET SESSION</button>
+          <button class="reset-btn" id="confirm-btn" onclick="resetAll()"
+            style="display:none; color:#cc4400; border-color:#cc4400;">CONFIRM RESET</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.layout -->
+
+<script>
+// ============================================================
+//  DO NOT READ
+// ============================================================
+let hiddenRule = function(a, b) {
+  return (a * a + b * b) % 7 < 3;
+};
+// ============================================================
+//  END OF DO NOT READ SECTION
+// ============================================================
+
+const N = 20;
+let gridState = {};
+let queryCount = 0, signalCount = 0, silenceCount = 0;
+let currentMode = 'observe';
+let scanTimer = null;
+const INST_PASSWORD = '123';
+let instUnlocked = false;
+
+// --- Grid ---
+function buildGrid() {
+  const tbl = document.getElementById('oracle-grid');
+  tbl.innerHTML = '';
+  const hrow = document.createElement('tr');
+  hrow.appendChild(document.createElement('td'));
+  for (let a = 0; a < N; a++) {
+    const th = document.createElement('td');
+    th.className = 'axis-label-col';
+    th.textContent = a;
+    hrow.appendChild(th);
+  }
+  tbl.appendChild(hrow);
+  for (let b = 0; b < N; b++) {
+    const row = document.createElement('tr');
+    const lbl = document.createElement('td');
+    lbl.className = 'axis-label-row';
+    lbl.textContent = b;
+    row.appendChild(lbl);
+    for (let a = 0; a < N; a++) {
+      const td = document.createElement('td');
+      td.id = `cell-${a}-${b}`;
+      td.className = 'cell-unqueried';
+      td.title = `a=${a}, b=${b}`;
+      td.onclick = () => {
+        document.getElementById('input-a').value = a;
+        document.getElementById('input-b').value = b;
+      };
+      row.appendChild(td);
+    }
+    tbl.appendChild(row);
+  }
+}
+
+function updateCell(a, b, result, intervened) {
+  const td = document.getElementById(`cell-${a}-${b}`);
+  if (!td) return;
+  if (intervened) {
+    td.className = result === 'signal' ? 'cell-intervened-signal' : 'cell-intervened-silence';
+    td.textContent = result === 'signal' ? '✦' : '·';
+  } else {
+    td.className = result === 'signal' ? 'cell-signal' : 'cell-silence';
+    td.textContent = result === 'signal' ? '●' : '·';
+  }
+}
+
+// --- Mode ---
+function setMode(m) {
+  currentMode = m;
+  document.getElementById('btn-observe').classList.toggle('active', m === 'observe');
+  document.getElementById('btn-intervene').classList.toggle('active', m === 'intervene');
+  document.getElementById('intervention-row').style.display = m === 'intervene' ? 'flex' : 'none';
+  document.getElementById('intervention-notice').style.display = m === 'intervene' ? 'block' : 'none';
+  document.getElementById('query-btn').textContent = m === 'intervene' ? 'SET OUTPUT' : 'QUERY ORACLE';
+}
+
+// --- Query ---
+function query() {
+  const a = parseInt(document.getElementById('input-a').value);
+  const b = parseInt(document.getElementById('input-b').value);
+  if (isNaN(a) || isNaN(b) || a < 0 || a >= N || b < 0 || b >= N) {
+    document.getElementById('output-label').textContent = 'RANGE ERROR';
+    document.getElementById('output-sub').textContent = 'enter integers 0–19';
+    return;
+  }
+  let result, intervened;
+  if (currentMode === 'intervene') {
+    result = document.getElementById('force-select').value;
+    intervened = true;
+  } else {
+    result = hiddenRule(a, b) ? 'signal' : 'silence';
+    intervened = false;
+  }
+  const key = `${a},${b}`;
+  const isNew = !gridState[key];
+  gridState[key] = { result, intervened };
+  if (!intervened && isNew) {
+    queryCount++;
+    if (result === 'signal') signalCount++; else silenceCount++;
+  }
+  updateCell(a, b, result, intervened);
+  updateStats();
+  addLogEntry(a, b, result, intervened);
+  const box = document.getElementById('output-box');
+  const lbl = document.getElementById('output-label');
+  box.className = 'output-box ' + (result === 'signal' ? 'signal' : 'silence');
+  lbl.textContent = result === 'signal' ? 'SIGNAL' : 'SILENCE';
+  lbl.style.color = intervened ? '#998840' : '';
+  document.getElementById('output-sub').textContent = `a=${a}, b=${b}`;
+}
+
+function addLogEntry(a, b, result, intervened) {
+  const log = document.getElementById('log');
+  const empty = document.getElementById('log-empty');
+  if (empty) empty.remove();
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML =
+    `<span class="coords">a=${String(a).padStart(2)}, b=${String(b).padStart(2)}</span>` +
+    `<span class="${result === 'signal' ? 'res-signal' : 'res-silence'}">${result.toUpperCase()}</span>` +
+    (intervened ? `<span class="intervened">[forced]</span>` : '');
+  log.insertBefore(entry, log.firstChild);
+}
+
+function updateStats() {
+  document.getElementById('stats-text').textContent =
+    `${queryCount} total · ${signalCount} SIGNAL · ${silenceCount} SILENCE`;
+}
+
+// --- Instructor lock ---
+function unlockInstructor() {
+  const val = document.getElementById('inst-password').value;
+  const errEl = document.getElementById('lock-error');
+  if (val === INST_PASSWORD) {
+    instUnlocked = true;
+    errEl.style.display = 'none';
+    document.getElementById('inst-password').style.display = 'none';
+    document.getElementById('inst-body').style.display = 'block';
+    document.getElementById('inst-chevron').classList.add('open');
+    document.getElementById('inst-header').onclick = toggleInstructor;
+  } else {
+    errEl.style.display = 'inline';
+    document.getElementById('inst-password').value = '';
+  }
+}
+
+function toggleInstructor() {
+  if (!instUnlocked) return;
+  const body = document.getElementById('inst-body');
+  const chevron = document.getElementById('inst-chevron');
+  const isOpen = body.style.display === 'block';
+  body.style.display = 'none';
+  chevron.classList.remove('open');
+  if (isOpen) {
+    // Lock again on close
+    instUnlocked = false;
+    document.getElementById('inst-password').value = '';
+    document.getElementById('inst-password').style.display = 'inline-block';
+    document.getElementById('lock-error').style.display = 'none';
+    document.getElementById('inst-header').onclick = null;
+  }
+}
+
+// --- Rule editor ---
+function applyRule() {
+  const expr = document.getElementById('rule-input').value.trim();
+  const errEl = document.getElementById('rule-error');
+  try {
+    const candidate = new Function('a', 'b', `return !!(${expr});`);
+    candidate(3, 4); // test run
+    hiddenRule = candidate;
+    errEl.style.display = 'none';
+    computeRuleStats();
+    if (queryCount > 0) {
+      errEl.textContent = '⚠ Rule updated — existing queries reflect the old rule. Consider resetting.';
+      errEl.style.color = '#998840';
+      errEl.style.display = 'block';
+    }
+  } catch(e) {
+    errEl.textContent = '✗ Error: ' + e.message;
+    errEl.style.color = '#cc4400';
+    errEl.style.display = 'block';
+  }
+}
+
+// --- Rule stats ---
+function computeRuleStats() {
+  let total = 0;
+  for (let a = 0; a < N; a++)
+    for (let b = 0; b < N; b++)
+      if (hiddenRule(a, b)) total++;
+  const pct = (total / (N * N) * 100).toFixed(1);
+  document.getElementById('rule-stats').innerHTML =
+    `Rule coverage: <span>${total} / ${N*N} cells = ${pct}% SIGNAL</span>`;
+}
+
+// --- Scan ---
+function stopScan() {
+  if (scanTimer) { clearTimeout(scanTimer); scanTimer = null; }
+  document.getElementById('scan-btn').textContent = 'RUN ALL QUERIES';
+}
+
+function toggleScan() {
+  if (scanTimer) { stopScan(); return; }
+  const cells = [];
+  for (let b = 0; b < N; b++)
+    for (let a = 0; a < N; a++)
+      cells.push([a, b]);
+  let i = 0;
+  document.getElementById('scan-btn').textContent = 'STOP SCAN';
+  function step() {
+    if (i >= cells.length) { stopScan(); return; }
+    const [a, b] = cells[i++];
+    const key = `${a},${b}`;
+    if (!gridState[key]) {
+      const result = hiddenRule(a, b) ? 'signal' : 'silence';
+      gridState[key] = { result, intervened: false };
+      queryCount++;
+      if (result === 'signal') signalCount++; else silenceCount++;
+      updateCell(a, b, result, false);
+      updateStats();
+      const lbl = document.getElementById('output-label');
+      document.getElementById('output-box').className = 'output-box ' + (result === 'signal' ? 'signal' : 'silence');
+      lbl.textContent = result === 'signal' ? 'SIGNAL' : 'SILENCE';
+      lbl.style.color = '';
+      document.getElementById('output-sub').textContent = `a=${a}, b=${b}`;
+    }
+    scanTimer = setTimeout(step, 40);
+  }
+  step();
+}
+
+// --- Reset ---
+function confirmReset() {
+  const btn = document.getElementById('confirm-btn');
+  btn.style.display = 'block';
+  setTimeout(() => { btn.style.display = 'none'; }, 4000);
+}
+
+function resetAll() {
+  document.getElementById('confirm-btn').style.display = 'none';
+  stopScan();
+  gridState = {};
+  queryCount = 0; signalCount = 0; silenceCount = 0;
+  buildGrid();
+  document.getElementById('stats-text').textContent = '0 total · 0 SIGNAL · 0 SILENCE';
+  document.getElementById('log').innerHTML = '<span id="log-empty">no queries yet</span>';
+  document.getElementById('output-box').className = 'output-box silence';
+  document.getElementById('output-label').textContent = '—';
+  document.getElementById('output-label').style.color = '';
+  document.getElementById('output-sub').textContent = 'awaiting query';
+  setMode('observe');
+}
+
+// --- Keyboard ---
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement.tagName;
+  const id = document.activeElement.id;
+  if (e.key === 'Enter' && !['BUTTON','SELECT'].includes(tag) && id !== 'inst-password') query();
+});
+
+// --- Init ---
+buildGrid();
+computeRuleStats();
+</script>
+</body>
+</html>
+
+
+
+							<script>
+                            	
+// ============================================================
+//  DO NOT READ
+// ============================================================
+let hiddenRule = function(a, b) {
+  return (a * a + b * b) % 7 < 3;
+};
+// ============================================================
+//  END OF DO NOT READ SECTION
+// ============================================================
+
+const N = 20;
+let gridState = {};
+let queryCount = 0, signalCount = 0, silenceCount = 0;
+let currentMode = 'observe';
+let scanTimer = null;
+const INST_PASSWORD = '123';
+let instUnlocked = false;
+
+// --- Grid ---
+function buildGrid() {
+  const tbl = document.getElementById('oracle-grid');
+  tbl.innerHTML = '';
+  const hrow = document.createElement('tr');
+  hrow.appendChild(document.createElement('td'));
+  for (let a = 0; a < N; a++) {
+    const th = document.createElement('td');
+    th.className = 'axis-label-col';
+    th.textContent = a;
+    hrow.appendChild(th);
+  }
+  tbl.appendChild(hrow);
+  for (let b = 0; b < N; b++) {
+    const row = document.createElement('tr');
+    const lbl = document.createElement('td');
+    lbl.className = 'axis-label-row';
+    lbl.textContent = b;
+    row.appendChild(lbl);
+    for (let a = 0; a < N; a++) {
+      const td = document.createElement('td');
+      td.id = `cell-${a}-${b}`;
+      td.className = 'cell-unqueried';
+      td.title = `a=${a}, b=${b}`;
+      td.onclick = () => {
+        document.getElementById('input-a').value = a;
+        document.getElementById('input-b').value = b;
+      };
+      row.appendChild(td);
+    }
+    tbl.appendChild(row);
+  }
+}
+
+function updateCell(a, b, result, intervened) {
+  const td = document.getElementById(`cell-${a}-${b}`);
+  if (!td) return;
+  if (intervened) {
+    td.className = result === 'signal' ? 'cell-intervened-signal' : 'cell-intervened-silence';
+    td.textContent = result === 'signal' ? '✦' : '·';
+  } else {
+    td.className = result === 'signal' ? 'cell-signal' : 'cell-silence';
+    td.textContent = result === 'signal' ? '●' : '·';
+  }
+}
+
+// --- Mode ---
+function setMode(m) {
+  currentMode = m;
+  document.getElementById('btn-observe').classList.toggle('active', m === 'observe');
+  document.getElementById('btn-intervene').classList.toggle('active', m === 'intervene');
+  document.getElementById('intervention-row').style.display = m === 'intervene' ? 'flex' : 'none';
+  document.getElementById('intervention-notice').style.display = m === 'intervene' ? 'block' : 'none';
+  document.getElementById('query-btn').textContent = m === 'intervene' ? 'SET OUTPUT' : 'QUERY ORACLE';
+}
+
+// --- Query ---
+function query() {
+  const a = parseInt(document.getElementById('input-a').value);
+  const b = parseInt(document.getElementById('input-b').value);
+  if (isNaN(a) || isNaN(b) || a < 0 || a >= N || b < 0 || b >= N) {
+    document.getElementById('output-label').textContent = 'RANGE ERROR';
+    document.getElementById('output-sub').textContent = 'enter integers 0–19';
+    return;
+  }
+  let result, intervened;
+  if (currentMode === 'intervene') {
+    result = document.getElementById('force-select').value;
+    intervened = true;
+  } else {
+    result = hiddenRule(a, b) ? 'signal' : 'silence';
+    intervened = false;
+  }
+  const key = `${a},${b}`;
+  const isNew = !gridState[key];
+  gridState[key] = { result, intervened };
+  if (!intervened && isNew) {
+    queryCount++;
+    if (result === 'signal') signalCount++; else silenceCount++;
+  }
+  updateCell(a, b, result, intervened);
+  updateStats();
+  addLogEntry(a, b, result, intervened);
+  const box = document.getElementById('output-box');
+  const lbl = document.getElementById('output-label');
+  box.className = 'output-box ' + (result === 'signal' ? 'signal' : 'silence');
+  lbl.textContent = result === 'signal' ? 'SIGNAL' : 'SILENCE';
+  lbl.style.color = intervened ? '#998840' : '';
+  document.getElementById('output-sub').textContent = `a=${a}, b=${b}`;
+}
+
+function addLogEntry(a, b, result, intervened) {
+  const log = document.getElementById('log');
+  const empty = document.getElementById('log-empty');
+  if (empty) empty.remove();
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML =
+    `<span class="coords">a=${String(a).padStart(2)}, b=${String(b).padStart(2)}</span>` +
+    `<span class="${result === 'signal' ? 'res-signal' : 'res-silence'}">${result.toUpperCase()}</span>` +
+    (intervened ? `<span class="intervened">[forced]</span>` : '');
+  log.insertBefore(entry, log.firstChild);
+}
+
+function updateStats() {
+  document.getElementById('stats-text').textContent =
+    `${queryCount} total · ${signalCount} SIGNAL · ${silenceCount} SILENCE`;
+}
+
+// --- Instructor lock ---
+function unlockInstructor() {
+  const val = document.getElementById('inst-password').value;
+  const errEl = document.getElementById('lock-error');
+  if (val === INST_PASSWORD) {
+    instUnlocked = true;
+    errEl.style.display = 'none';
+    document.getElementById('inst-password').style.display = 'none';
+    document.getElementById('inst-body').style.display = 'block';
+    document.getElementById('inst-chevron').classList.add('open');
+    document.getElementById('inst-header').onclick = toggleInstructor;
+  } else {
+    errEl.style.display = 'inline';
+    document.getElementById('inst-password').value = '';
+  }
+}
+
+function toggleInstructor() {
+  if (!instUnlocked) return;
+  const body = document.getElementById('inst-body');
+  const chevron = document.getElementById('inst-chevron');
+  const isOpen = body.style.display === 'block';
+  body.style.display = 'none';
+  chevron.classList.remove('open');
+  if (isOpen) {
+    // Lock again on close
+    instUnlocked = false;
+    document.getElementById('inst-password').value = '';
+    document.getElementById('inst-password').style.display = 'inline-block';
+    document.getElementById('lock-error').style.display = 'none';
+    document.getElementById('inst-header').onclick = null;
+  }
+}
+
+// --- Rule editor ---
+function applyRule() {
+  const expr = document.getElementById('rule-input').value.trim();
+  const errEl = document.getElementById('rule-error');
+  try {
+    const candidate = new Function('a', 'b', `return !!(${expr});`);
+    candidate(3, 4); // test run
+    hiddenRule = candidate;
+    errEl.style.display = 'none';
+    computeRuleStats();
+    if (queryCount > 0) {
+      errEl.textContent = '⚠ Rule updated — existing queries reflect the old rule. Consider resetting.';
+      errEl.style.color = '#998840';
+      errEl.style.display = 'block';
+    }
+  } catch(e) {
+    errEl.textContent = '✗ Error: ' + e.message;
+    errEl.style.color = '#cc4400';
+    errEl.style.display = 'block';
+  }
+}
+
+// --- Rule stats ---
+function computeRuleStats() {
+  let total = 0;
+  for (let a = 0; a < N; a++)
+    for (let b = 0; b < N; b++)
+      if (hiddenRule(a, b)) total++;
+  const pct = (total / (N * N) * 100).toFixed(1);
+  document.getElementById('rule-stats').innerHTML =
+    `Rule coverage: <span>${total} / ${N*N} cells = ${pct}% SIGNAL</span>`;
+}
+
+// --- Scan ---
+function stopScan() {
+  if (scanTimer) { clearTimeout(scanTimer); scanTimer = null; }
+  document.getElementById('scan-btn').textContent = 'RUN ALL QUERIES';
+}
+
+function toggleScan() {
+  if (scanTimer) { stopScan(); return; }
+  const cells = [];
+  for (let b = 0; b < N; b++)
+    for (let a = 0; a < N; a++)
+      cells.push([a, b]);
+  let i = 0;
+  document.getElementById('scan-btn').textContent = 'STOP SCAN';
+  function step() {
+    if (i >= cells.length) { stopScan(); return; }
+    const [a, b] = cells[i++];
+    const key = `${a},${b}`;
+    if (!gridState[key]) {
+      const result = hiddenRule(a, b) ? 'signal' : 'silence';
+      gridState[key] = { result, intervened: false };
+      queryCount++;
+      if (result === 'signal') signalCount++; else silenceCount++;
+      updateCell(a, b, result, false);
+      updateStats();
+      const lbl = document.getElementById('output-label');
+      document.getElementById('output-box').className = 'output-box ' + (result === 'signal' ? 'signal' : 'silence');
+      lbl.textContent = result === 'signal' ? 'SIGNAL' : 'SILENCE';
+      lbl.style.color = '';
+      document.getElementById('output-sub').textContent = `a=${a}, b=${b}`;
+    }
+    scanTimer = setTimeout(step, 40);
+  }
+  step();
+}
+
+// --- Reset ---
+function confirmReset() {
+  const btn = document.getElementById('confirm-btn');
+  btn.style.display = 'block';
+  setTimeout(() => { btn.style.display = 'none'; }, 4000);
+}
+
+function resetAll() {
+  document.getElementById('confirm-btn').style.display = 'none';
+  stopScan();
+  gridState = {};
+  queryCount = 0; signalCount = 0; silenceCount = 0;
+  buildGrid();
+  document.getElementById('stats-text').textContent = '0 total · 0 SIGNAL · 0 SILENCE';
+  document.getElementById('log').innerHTML = '<span id="log-empty">no queries yet</span>';
+  document.getElementById('output-box').className = 'output-box silence';
+  document.getElementById('output-label').textContent = '—';
+  document.getElementById('output-label').style.color = '';
+  document.getElementById('output-sub').textContent = 'awaiting query';
+  setMode('observe');
+}
+
+// --- Keyboard ---
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement.tagName;
+  const id = document.activeElement.id;
+  if (e.key === 'Enter' && !['BUTTON','SELECT'].includes(tag) && id !== 'inst-password') query();
+});
+
+// --- Init ---
+buildGrid();
+computeRuleStats();
+
+
+							</script>
+                        </body>
+                        </html>
+                    
