@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radiation2D - Shintake Method Simulation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #050505; color: #e5e5e5; overflow: hidden; }
+        canvas { cursor: crosshair; image-rendering: antialiased; }
+        .control-panel { background: rgba(20, 20, 20, 0.9); backdrop-filter: blur(8px); }
+        input[type=range] { accent-color: #6366f1; }
+    </style>
+</head>
+<body class="flex h-screen w-screen font-sans">
+
+    <!-- Sidebar Controls -->
+    <div class="control-panel w-72 h-full p-6 border-r border-gray-800 flex flex-col gap-6 z-10">
+        <div>
+            <h1 class="text-xl font-bold text-indigo-400">Radiation2D</h1>
+            <p class="text-xs text-gray-400">Shintake Method Simulation</p>
+        </div>
+
+        <button id="playPauseBtn" class="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md font-medium transition-colors">
+            PAUSE
+        </button>
+
+        <div class="flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-300">Trajectory</label>
+            <select id="trajectorySelect" class="bg-gray-900 border border-gray-700 text-white text-sm rounded-md p-2 focus:ring-indigo-500 outline-none">
+                <option value="synchrotron">Synchrotron (Circular)</option>
+                <option value="dipole">Dipole (Linear Oscillation)</option>
+                <option value="undulator">Undulator (Wiggler)</option>
+                <option value="freeform" selected>Freeform (Inertial Drag)</option>
+            </select>
+        </div>
+
+        <div class="flex flex-col gap-2">
+            <div class="flex justify-between">
+                <label class="text-sm font-semibold text-gray-300">Number of Lines</label>
+                <span id="linesVal" class="text-xs text-indigo-300">90</span>
+            </div>
+            <input type="range" id="linesRange" min="20" max="200" value="90" class="w-full h-2 rounded-lg cursor-pointer">
+        </div>
+
+        <div class="flex flex-col gap-2">
+            <div class="flex justify-between">
+                <label class="text-sm font-semibold text-gray-300">Animation Speed</label>
+                <span id="speedVal" class="text-xs text-indigo-300">3.0x</span>
+            </div>
+            <input type="range" id="speedRange" min="0.5" max="10.0" step="0.5" value="3.0" class="w-full h-2 rounded-lg cursor-pointer">
+        </div>
+
+        <div class="flex flex-col gap-2">
+            <div class="flex justify-between">
+                <label class="text-sm font-semibold text-gray-300">History Length</label>
+                <span id="historyVal" class="text-xs text-indigo-300">1500</span>
+            </div>
+            <input type="range" id="historyRange" min="100" max="5000" value="1500" class="w-full h-2 rounded-lg cursor-pointer">
+        </div>
+
+        <div class="mt-auto pt-6 border-t border-gray-800">
+            <p class="text-[10px] text-gray-500 leading-tight">
+                <b>Selective Stability:</b> Force clamping and velocity smoothing are active in <b>Freeform</b> only. 
+                <br><br>
+                <b>Presets:</b> Synchrotron, Dipole, and Undulator use raw instantaneous physics for mathematical accuracy.
+            </p>
+        </div>
+    </div>
+
+    <div class="flex-1 relative bg-black flex items-center justify-center">
+        <canvas id="simCanvas"></canvas>
+    </div>
+
+    <script>
+        const c = 1.0;
+        const dt_standard = 0.01; 
+        const subSteps = 15; 
+        const dt_sub = dt_standard / subSteps; 
+        
+        let numLines = 90;
+        let historyBase = 1500;
+        let isRunning = true;
+        let activeTrajectory = 'freeform';
+        let globalTime = 0;
+
+        let lastTimestamp = performance.now();
+        let accumulator = 0;
+        let simSpeedMultiplier = 3.0; 
+
+        let mouseWorld = { x: 0, y: 0 };
+        let chargePos = [0, 0];
+        let chargeVel = [0, 0]; 
+        let chargeBeta = [0, 0]; 
+        let smoothedBeta = [0, 0]; 
+        let isDragging = false;
+        
+        const mass = 3.0;         
+        const springK = 150.0;    
+        const dragCoeff = 5.0;    
+        const maxForce = 50.0;    
+
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const trajectorySelect = document.getElementById('trajectorySelect');
+        const historyRange = document.getElementById('historyRange');
+        const historyVal = document.getElementById('historyVal');
+        const speedRange = document.getElementById('speedRange');
+        const speedVal = document.getElementById('speedVal');
+        const linesRange = document.getElementById('linesRange');
+        const linesVal = document.getElementById('linesVal');
+
+        let fieldlines = [];
+        
+        function initFieldLines() {
+            fieldlines = [];
+            for (let i = 0; i < numLines; i++) {
+                const theta = (i / numLines) * 2 * Math.PI;
+                fieldlines.push({
+                    theta: theta,
+                    positions: [], 
+                    vectors: []   
+                });
+            }
+        }
+        initFieldLines();
+
+        function aberration(theta, betaVec) {
+            const bx = betaVec[0];
+            const by = betaVec[1];
+            const betaSq = bx * bx + by * by;
+            const beta = Math.sqrt(betaSq);
+
+            const safeBeta = Math.min(beta, 0.995); 
+            const gamma = 1.0 / Math.sqrt(1.0 - safeBeta * safeBeta);
+
+            if (beta < 1e-10) {
+                return [Math.cos(theta), Math.sin(theta)];
+            }
+
+            const vAngle = Math.atan2(by, bx);
+            const thetaRel = theta - vAngle;
+
+            const ct = Math.cos(thetaRel);
+            const st = Math.sin(thetaRel);
+            const denom = 1.0 + safeBeta * ct;
+
+            const kParallel = (ct + safeBeta) / denom;
+            const kPerp = (st / gamma) / denom;
+
+            const ux = bx / beta;
+            const uy = by / beta;
+            const px = -uy;
+            const py = ux;
+
+            const kx = kParallel * ux + kPerp * px;
+            const ky = kParallel * uy + kPerp * py;
+
+            const mag = Math.sqrt(kx * kx + ky * ky);
+            return [kx / mag, ky / mag];
+        }
+
+        const trajectories = {
+            dipole: (t) => {
+                const A = 2.5, omega = 0.28;
+                return { pos: [0, A * Math.sin(omega * t)], beta: [0, (A * omega * Math.cos(omega * t))/c] };
+            },
+            synchrotron: (t) => {
+                const R = 4.0, omega = 0.18;
+                return { 
+                    pos: [R * Math.cos(omega * t), R * Math.sin(omega * t)], 
+                    beta: [(-R * omega * Math.sin(omega * t))/c, (R * omega * Math.cos(omega * t))/c] 
+                };
+            },
+            undulator: (t) => {
+                const vx = 0.92, ku = 0.9, A = 0.7;
+                const x = vx * t - 10;
+                const vy = A * ku * vx * Math.cos(ku * (vx * t));
+                let bx = vx, by = vy;
+                const mag = Math.sqrt(bx*bx + by*by);
+                if (mag >= 0.995) { bx *= 0.995 / mag; by *= 0.995 / mag; }
+                return { pos: [x, A * Math.sin(ku * (vx * t))], beta: [bx/c, by/c] };
+            }
+        };
+
+        function runFreeformPhysicsSubsteps(totalDt) {
+            let dt = totalDt / subSteps;
+            
+            for (let i = 0; i < subSteps; i++) {
+                let fx = 0, fy = 0;
+                if (isDragging) {
+                    let dx = mouseWorld.x - chargePos[0];
+                    let dy = mouseWorld.y - chargePos[1];
+                    
+                    // Clamping only happens in Freeform mode
+                    fx = dx * springK;
+                    fy = dy * springK;
+                    let fMag = Math.sqrt(fx*fx + fy*fy);
+                    if (fMag > maxForce) {
+                        fx *= maxForce / fMag;
+                        fy *= maxForce / fMag;
+                    }
+                }
+                fx -= chargeVel[0] * dragCoeff;
+                fy -= chargeVel[1] * dragCoeff;
+
+                chargeVel[0] += (fx / mass) * dt;
+                chargeVel[1] += (fy / mass) * dt;
+
+                const speed = Math.sqrt(chargeVel[0]**2 + chargeVel[1]**2);
+                const maxSpeed = 0.995 * c;
+                if (speed > maxSpeed) {
+                    chargeVel[0] *= maxSpeed / speed;
+                    chargeVel[1] *= maxSpeed / speed;
+                }
+
+                chargePos[0] += chargeVel[0] * dt;
+                chargePos[1] += chargeVel[1] * dt;
+            }
+            chargeBeta = [chargeVel[0] / c, chargeVel[1] / c];
+            
+            // Smoothing only happens in Freeform mode
+            const alpha = 0.2; 
+            smoothedBeta[0] = smoothedBeta[0] * (1 - alpha) + chargeBeta[0] * alpha;
+            smoothedBeta[1] = smoothedBeta[1] * (1 - alpha) + chargeBeta[1] * alpha;
+        }
+
+        function physicsStep() {
+            let pPos, bVec;
+
+            if (activeTrajectory === 'freeform') {
+                runFreeformPhysicsSubsteps(dt_standard);
+                globalTime += dt_standard;
+                pPos = [...chargePos];
+                bVec = [...smoothedBeta]; 
+            } else {
+                globalTime += dt_standard;
+                const traj = trajectories[activeTrajectory](globalTime);
+                pPos = traj.pos;
+                bVec = traj.beta; // Raw velocity for presets
+            }
+
+            for (const fl of fieldlines) {
+                for (let i = 0; i < fl.positions.length; i++) {
+                    fl.positions[i][0] += c * dt_standard * fl.vectors[i][0];
+                    fl.positions[i][1] += c * dt_standard * fl.vectors[i][1];
+                }
+
+                const newK = aberration(fl.theta, bVec);
+                fl.positions.unshift([...pPos]);
+                fl.vectors.unshift(newK);
+
+                if (fl.positions.length > historyBase) {
+                    fl.positions.pop();
+                    fl.vectors.pop();
+                }
+            }
+        }
+
+        function draw() {
+            if (canvas.width !== canvas.parentElement.clientWidth || canvas.height !== canvas.parentElement.clientHeight) {
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+            }
+
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const zoomFactor = historyBase > 1000 ? 10000 / historyBase : 10.0;
+            const baseCoordScale = Math.min(canvas.width, canvas.height) / 11;
+            const scale = (baseCoordScale / 10.0) * zoomFactor; 
+            
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.scale(scale, -scale);
+
+            ctx.strokeStyle = 'rgba(100, 150, 255, 0.4)';
+            ctx.lineWidth = 1.2 / scale; 
+
+            for (const fl of fieldlines) {
+                if (fl.positions.length < 2) continue;
+                ctx.beginPath();
+                ctx.moveTo(fl.positions[0][0], fl.positions[0][1]);
+                for (let i = 1; i < fl.positions.length; i++) {
+                    ctx.lineTo(fl.positions[i][0], fl.positions[i][1]);
+                }
+                ctx.stroke();
+            }
+
+            const currentPos = activeTrajectory === 'freeform' ? chargePos : (trajectories[activeTrajectory] ? trajectories[activeTrajectory](globalTime).pos : [0,0]);
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(currentPos[0], currentPos[1], 4.0 / scale, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function mainLoop(timestamp) {
+            const frameDelta = (timestamp - lastTimestamp) / 1000;
+            lastTimestamp = timestamp;
+
+            if (isRunning) {
+                accumulator += frameDelta * simSpeedMultiplier;
+                if (accumulator > 0.1) accumulator = 0.1;
+                while (accumulator >= dt_standard) {
+                    physicsStep();
+                    accumulator -= dt_standard;
+                }
+            }
+            draw();
+            requestAnimationFrame(mainLoop);
+        }
+
+        function updateMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const rawX = e.clientX - rect.left;
+            const rawY = e.clientY - rect.top;
+            const zoomFactor = historyBase > 1000 ? 10000 / historyBase : 10.0;
+            const baseCoordScale = Math.min(canvas.width, canvas.height) / 11;
+            const scale = (baseCoordScale / 10.0) * zoomFactor;
+
+            mouseWorld.x = (rawX - canvas.width / 2) / scale;
+            mouseWorld.y = (canvas.height / 2 - rawY) / scale;
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            updateMousePos(e);
+            if (activeTrajectory === 'freeform') isDragging = true;
+        });
+        window.addEventListener('mousemove', updateMousePos);
+        window.addEventListener('mouseup', () => { isDragging = false; });
+
+        playPauseBtn.addEventListener('click', () => {
+            isRunning = !isRunning;
+            playPauseBtn.textContent = isRunning ? 'PAUSE' : 'RUN';
+            playPauseBtn.classList.toggle('bg-indigo-600', isRunning);
+            playPauseBtn.classList.toggle('bg-green-600', !isRunning);
+        });
+
+        trajectorySelect.addEventListener('change', (e) => {
+            activeTrajectory = e.target.value;
+            initFieldLines();
+            globalTime = 0;
+            chargePos = [0, 0]; chargeVel = [0, 0]; chargeBeta = [0, 0]; smoothedBeta = [0,0];
+            accumulator = 0;
+        });
+
+        historyRange.addEventListener('input', (e) => {
+            historyBase = parseInt(e.target.value);
+            historyVal.textContent = historyBase;
+        });
+
+        speedRange.addEventListener('input', (e) => {
+            simSpeedMultiplier = parseFloat(e.target.value);
+            speedVal.textContent = simSpeedMultiplier.toFixed(1) + 'x';
+        });
+
+        linesRange.addEventListener('input', (e) => {
+            numLines = parseInt(e.target.value);
+            linesVal.textContent = numLines;
+            initFieldLines();
+        });
+
+        requestAnimationFrame(mainLoop);
+    </script>
+</body>
+</html>
