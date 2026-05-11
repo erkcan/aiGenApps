@@ -1,0 +1,1989 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistical Methods Suite</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:wght@400;700&family=IBM+Plex+Sans:wght@300;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════
+   THEME VARIABLES
+═══════════════════════════════════════════════════ */
+:root {
+  --transition-theme: background 0.3s, color 0.3s, border-color 0.3s;
+}
+
+[data-theme="dark"] {
+  --bg:       #0d0f14;
+  --surface:  #151820;
+  --surface2: #1c2030;
+  --border:   #2a2f45;
+  --accent:   #e8c96d;
+  --accent2:  #6dbfe8;
+  --accent3:  #e86d8a;
+  --text:     #d8dce8;
+  --muted:    #6b7194;
+  --tab-active-bg: #1c2030;
+  --tab-inactive-bg: #0d0f14;
+  --tab-active-text: #e8c96d;
+  --tab-inactive-text: #6b7194;
+  --tab-border: #2a2f45;
+  --toggle-bg: #2a2f45;
+  --toggle-knob: #e8c96d;
+  --header-border: #2a2f45;
+  --run-btn-bg: #e8c96d;
+  --run-btn-text: #0d0f14;
+  --run-btn-hover: #d4ae50;
+  --seismo-bg: #000;
+  --badge-in-bg: rgba(109,191,232,0.15);
+  --badge-out-bg: rgba(232,109,138,0.15);
+  --canvas-bg: #1c2030;
+  --mc-canvas-bg: #1c2030;
+}
+
+[data-theme="light"] {
+  --bg:       #f5f2eb;
+  --surface:  #ffffff;
+  --surface2: #f0ece2;
+  --border:   #d8d0be;
+  --accent:   #c0392b;
+  --accent2:  #1a6b8a;
+  --accent3:  #2c7a3a;
+  --text:     #1a1612;
+  --muted:    #7a7060;
+  --tab-active-bg: #ffffff;
+  --tab-inactive-bg: #f0ece2;
+  --tab-active-text: #c0392b;
+  --tab-inactive-text: #7a7060;
+  --tab-border: #d8d0be;
+  --toggle-bg: #d8d0be;
+  --toggle-knob: #1a1612;
+  --header-border: #1a1612;
+  --run-btn-bg: #1a1612;
+  --run-btn-text: #f5f2eb;
+  --run-btn-hover: #c0392b;
+  --seismo-bg: #0a0a0a;
+  --badge-in-bg: rgba(26,107,138,0.12);
+  --badge-out-bg: rgba(192,57,43,0.12);
+  --canvas-bg: #f0ece2;
+  --mc-canvas-bg: #f0ece2;
+}
+
+/* ═══════════════════════════════════════════════════
+   GLOBAL RESET & BASE
+═══════════════════════════════════════════════════ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  min-height: 100vh;
+  transition: var(--transition-theme);
+}
+
+/* ═══════════════════════════════════════════════════
+   TOP BAR
+═══════════════════════════════════════════════════ */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 2rem 0;
+  max-width: 1180px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.suite-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+.suite-title span { color: var(--accent); }
+
+/* ── Theme toggle ── */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.68rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+}
+
+.theme-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+}
+.theme-switch input { opacity: 0; width: 0; height: 0; }
+.theme-track {
+  position: absolute;
+  inset: 0;
+  background: var(--toggle-bg);
+  border-radius: 24px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.theme-track::before {
+  content: '';
+  position: absolute;
+  left: 4px; top: 4px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--toggle-knob);
+  transition: transform 0.25s, background 0.3s;
+}
+.theme-switch input:checked + .theme-track::before { transform: translateX(20px); }
+
+/* ═══════════════════════════════════════════════════
+   TAB NAV
+═══════════════════════════════════════════════════ */
+.tab-nav {
+  max-width: 1180px;
+  margin: 1.2rem auto 0;
+  padding: 0 2rem;
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--tab-border);
+}
+
+.tab-btn {
+  background: var(--tab-inactive-bg);
+  color: var(--tab-inactive-text);
+  border: 1px solid var(--tab-border);
+  border-bottom: none;
+  padding: 0.65rem 1.4rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  border-radius: 6px 6px 0 0;
+  margin-right: 4px;
+  position: relative;
+  bottom: -2px;
+}
+
+.tab-btn.active {
+  background: var(--tab-active-bg);
+  color: var(--tab-active-text);
+  border-color: var(--tab-border);
+  border-bottom: 2px solid var(--tab-active-bg);
+  font-weight: 500;
+}
+
+.tab-btn:not(.active):hover {
+  color: var(--text);
+  background: var(--surface);
+}
+
+/* ═══════════════════════════════════════════════════
+   TAB PANELS
+═══════════════════════════════════════════════════ */
+.tab-panel {
+  display: none;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1.5rem 2rem 3rem;
+}
+.tab-panel.active { display: block; }
+
+/* ═══════════════════════════════════════════════════
+   SHARED PANEL / CARD
+═══════════════════════════════════════════════════ */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.3rem;
+  transition: var(--transition-theme);
+}
+
+.panel-title {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 1.1rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.65rem;
+}
+
+/* ═══════════════════════════════════════════════════
+   SHARED CONTROLS
+═══════════════════════════════════════════════════ */
+.ctrl-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px; height: 15px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+  transition: var(--transition-theme);
+}
+
+.val-big {
+  font-size: 1.35rem;
+  font-weight: 500;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+.val-note {
+  font-size: 0.66rem;
+  color: var(--muted);
+}
+.val-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.3rem;
+}
+.val-display {
+  font-size: 1.05rem;
+  color: var(--accent);
+}
+
+/* Toggle switch (shared) */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.toggle-label {
+  font-size: 0.70rem;
+  color: var(--text);
+  cursor: pointer;
+}
+.toggle {
+  position: relative;
+  width: 36px; height: 20px;
+  flex-shrink: 0;
+}
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--border);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle input:checked + .toggle-track { background: var(--accent2); }
+.toggle-track::before {
+  content: '';
+  position: absolute;
+  left: 3px; top: 3px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.2s;
+}
+.toggle input:checked + .toggle-track::before { transform: translateX(16px); }
+
+/* Run / action buttons */
+.run-btn {
+  background: var(--run-btn-bg);
+  color: var(--run-btn-text);
+  border: none;
+  border-radius: 6px;
+  padding: 0.7rem;
+  width: 100%;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: center;
+}
+.run-btn:hover { background: var(--run-btn-hover); color: var(--surface); }
+
+.btn {
+  width: 100%;
+  padding: 0.65rem;
+  border: none;
+  border-radius: 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  margin-bottom: 0.4rem;
+}
+.btn:active { transform: scale(0.97); }
+.btn:hover { opacity: 0.85; }
+.btn-primary {
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 500;
+}
+.btn-secondary {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+/* Progress bar */
+.progress-track {
+  width: 100%;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.05s linear;
+}
+.status-bar {
+  font-size: 0.63rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  min-height: 1.2em;
+  text-align: center;
+  margin-top: 0.4rem;
+}
+
+/* Divider */
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0.6rem 0;
+}
+
+/* Canvas */
+canvas { display: block; border-radius: 6px; width: 100%; }
+
+/* Legend */
+.legend {
+  display: flex;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  font-size: 0.64rem;
+  color: var(--muted);
+  padding: 0.5rem 0 0.2rem;
+  letter-spacing: 0.04em;
+}
+.legend-item { display: flex; align-items: center; gap: 0.4rem; }
+.legend-line { width: 24px; height: 3px; border-radius: 2px; }
+.legend-dash { width: 24px; height: 0; border-top: 2px dashed; }
+
+/* Algo note */
+.algo-note {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent2);
+  border-radius: 6px;
+  padding: 1rem 1.2rem;
+  font-size: 0.71rem;
+  line-height: 1.75;
+  color: var(--muted);
+  transition: var(--transition-theme);
+}
+.algo-note strong { color: var(--text); font-weight: 500; }
+.algo-note code {
+  background: var(--surface2);
+  padding: 0.1em 0.35em;
+  border-radius: 2px;
+  font-size: 0.9em;
+  color: var(--accent2);
+}
+
+/* ═══════════════════════════════════════════════════
+   TAB 1 — RANDOM PROCESS SIMULATOR
+═══════════════════════════════════════════════════ */
+#tab1 .layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.2rem;
+}
+
+.t1-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 1rem;
+  align-items: end;
+}
+@media (max-width: 700px) {
+  .t1-controls { grid-template-columns: 1fr 1fr; }
+}
+
+.t1-ctrl-group { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.t1-ctrl-group input[type=number] {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.45rem 0.6rem;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.82rem;
+  outline: none;
+  width: 100%;
+  transition: var(--transition-theme);
+}
+.t1-ctrl-group input[type=number]:focus { border-color: var(--accent); }
+
+.t1-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+.t1-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.70rem;
+  cursor: pointer;
+  color: var(--text);
+}
+.t1-toggle-label input[type=checkbox] { accent-color: var(--accent); }
+
+.t1-action-btns {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-end;
+}
+
+.t1-sim-btn {
+  background: var(--accent2);
+  color: var(--bg);
+  border: none;
+  border-radius: 7px;
+  padding: 0.55rem 1.2rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+.t1-sim-btn:hover { opacity: 0.85; }
+.t1-sim-btn.stop { background: var(--accent3); }
+
+.t1-reset-btn {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 0.55rem 1rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+.t1-reset-btn:hover { opacity: 0.75; }
+
+.t1-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+}
+@media (max-width: 700px) {
+  .t1-charts { grid-template-columns: 1fr; }
+}
+
+.t1-chart-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  height: 400px;
+  position: relative;
+}
+.t1-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+.t1-chart-title { font-size: 0.68rem; color: var(--accent2); letter-spacing: 0.07em; text-transform: uppercase; }
+.t1-hit-indicator {
+  font-size: 0.65rem;
+  font-family: 'DM Mono', monospace;
+  background: var(--surface2);
+  color: var(--muted);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+#t1-seismo-container {
+  flex-grow: 1;
+  position: relative;
+  background: var(--seismo-bg);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+#t1-seismo-canvas { width: 100%; height: 100%; }
+
+.t1-freq-wrapper {
+  flex-grow: 1;
+  position: relative;
+  background: var(--seismo-bg);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  padding: 0.8rem;
+}
+#t1-freq-container {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: 0.8rem;
+  gap: 1px;
+  z-index: 0;
+}
+#t1-fit-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+.t1-fit-line { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+#t1-empty-msg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 0.75rem;
+  pointer-events: none;
+  z-index: 5;
+}
+#t1-fit-stats-overlay {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  pointer-events: none;
+  width: 11rem;
+}
+.t1-stat-badge {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.65rem;
+  opacity: 0.95;
+}
+
+.t1-stats-footer {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.8rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.4rem;
+  text-align: center;
+}
+@media (max-width: 500px) { .t1-stats-footer { grid-template-columns: 1fr 1fr; } }
+
+.t1-stat-item .lbl { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.t1-stat-item .val { font-size: 1.1rem; font-weight: 500; margin-top: 0.1rem; }
+
+@keyframes seismo-flash {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+#t1-flash-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(34, 197, 94, 0.32);
+  border-radius: 6px;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 5;
+}
+#t1-flash-overlay.active {
+  animation: seismo-flash 0.35s ease-out forwards;
+}
+
+/* ═══════════════════════════════════════════════════
+   TAB 2 — CP VIA MONTE CARLO HEATMAP
+═══════════════════════════════════════════════════ */
+#tab2 .layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 1.4rem;
+  align-items: start;
+}
+@media (max-width: 740px) { #tab2 .layout { grid-template-columns: 1fr; } }
+
+#tab2 .controls {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: sticky;
+  top: 1rem;
+  transition: var(--transition-theme);
+}
+
+.ctrl-section { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.right-panel { display: flex; flex-direction: column; gap: 1rem; }
+
+.canvas-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1rem 0.8rem;
+  transition: var(--transition-theme);
+}
+.canvas-title {
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+
+/* ═══════════════════════════════════════════════════
+   TAB 3 — CLOPPER–PEARSON INTERACTIVE
+═══════════════════════════════════════════════════ */
+#tab3 .layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 1.4rem;
+  align-items: start;
+}
+@media (max-width: 780px) { #tab3 .layout { grid-template-columns: 1fr; } }
+
+#tab3 .left-col { display: flex; flex-direction: column; gap: 1rem; }
+
+.control-row { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.9rem; }
+
+label { font-size: 0.71rem; color: var(--muted); letter-spacing: 0.06em; }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin-top: 0.8rem;
+}
+.stat-cell {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  transition: var(--transition-theme);
+}
+.stat-cell .lbl { font-size: 0.60rem; color: var(--muted); letter-spacing: 0.08em; }
+.stat-cell .val { font-size: 1.05rem; letter-spacing: 0.04em; }
+.val-heads { color: var(--accent); }
+.val-tails { color: var(--accent2); }
+.val-ci    { color: var(--accent); }
+
+.formula-box {
+  margin-top: 0.8rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.85rem;
+  font-size: 0.70rem;
+  line-height: 1.7;
+  color: var(--muted);
+  transition: var(--transition-theme);
+}
+.formula-box .formula { color: var(--accent2); font-size: 0.76rem; margin: 0.35rem 0; }
+
+.coin-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-height: 56px;
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 0.65rem;
+  margin-top: 0.7rem;
+  align-content: flex-start;
+  transition: var(--transition-theme);
+}
+.coin {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.58rem;
+  font-weight: 500;
+  animation: popIn 0.2s ease;
+  flex-shrink: 0;
+}
+@keyframes popIn {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+.coin-H { background: var(--accent); color: var(--bg); }
+.coin-T { background: var(--surface); color: var(--accent2); border: 1px solid var(--accent2); }
+
+.chart-wrap-t3 { display: flex; flex-direction: column; gap: 1rem; }
+
+.ci-readout {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.85rem 1.1rem;
+  display: flex;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  align-items: center;
+  transition: var(--transition-theme);
+}
+.ci-readout .lbl { font-size: 0.62rem; color: var(--muted); letter-spacing: 0.08em; }
+.ci-readout .big { font-size: 1.1rem; color: var(--accent); letter-spacing: 0.04em; }
+
+.in-out-badge {
+  display: inline-block;
+  padding: 0.22rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.70rem;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+}
+.badge-in  { background: var(--badge-in-bg);  color: var(--accent2); border: 1px solid var(--accent2); }
+.badge-out { background: var(--badge-out-bg); color: var(--accent3); border: 1px solid var(--accent3); }
+
+.explanation {
+  font-size: 0.70rem;
+  color: var(--muted);
+  line-height: 1.75;
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 0.85rem 1.1rem;
+  border-left: 3px solid var(--accent);
+  transition: var(--transition-theme);
+}
+.explanation strong { color: var(--text); }
+
+/* ═══════════════════════════════════════════════════
+   TAB HEADERS
+═══════════════════════════════════════════════════ */
+.tab-header {
+  margin-bottom: 1.4rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+.tab-header h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.2rem, 3vw, 1.7rem);
+  font-weight: 700;
+  color: var(--text);
+}
+.tab-header h2 span { color: var(--accent); }
+.tab-header p {
+  font-size: 0.70rem;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  margin-top: 0.3rem;
+  text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+
+<!-- ── TOP BAR ── -->
+<div class="top-bar">
+  <div class="suite-title">Statistical <span>Methods</span> Suite</div>
+  <label class="theme-toggle">
+    <span id="theme-label">LIGHT</span>
+    <label class="theme-switch">
+      <input type="checkbox" id="theme-toggle-input">
+      <div class="theme-track"></div>
+    </label>
+    <span>DARK</span>
+  </label>
+</div>
+
+<!-- ── TAB NAV ── -->
+<nav class="tab-nav">
+  <button class="tab-btn active" data-tab="tab1">Random Process</button>
+  <button class="tab-btn" data-tab="tab2">CP via Monte Carlo</button>
+  <button class="tab-btn" data-tab="tab3">CP Interval</button>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════
+     TAB 1 — RANDOM PROCESS SIMULATOR
+══════════════════════════════════════════════════════════ -->
+<div id="tab1" class="tab-panel active">
+  <div class="tab-header">
+    <h2>Random Process <span>Simulator</span></h2>
+    <p>Bernoulli trials · distribution fitting · p-value analysis</p>
+  </div>
+
+  <div class="layout">
+    <!-- Controls row -->
+    <div class="panel" style="padding:1rem 1.2rem;">
+      <div style="display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-end;justify-content:space-between;">
+        <div style="display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-end;">
+          <div class="t1-ctrl-group">
+            <div class="ctrl-label">Prob (p)</div>
+            <input type="number" id="t1-probInput" value="0.2" step="0.01" min="0" max="1">
+          </div>
+          <div class="t1-ctrl-group">
+            <div class="ctrl-label">Delta t (ms)</div>
+            <input type="number" id="t1-dtInput" value="30" min="5" max="2000">
+          </div>
+          <div class="t1-ctrl-group">
+            <div class="ctrl-label">Block Size (n)</div>
+            <input type="number" id="t1-blockInput" value="20" min="1" max="500">
+          </div>
+          <div class="t1-toggles">
+            <label class="t1-toggle-label"><input type="checkbox" id="t1-fitBinomial" checked> Binomial</label>
+            <label class="t1-toggle-label"><input type="checkbox" id="t1-fitPoisson"> Poisson</label>
+            <label class="t1-toggle-label"><input type="checkbox" id="t1-fitGaussian"> Gaussian</label>
+            <label class="t1-toggle-label" style="margin-top:0.3rem;padding-top:0.3rem;border-top:1px solid var(--border)"><input type="checkbox" id="t1-flashToggle" checked> Hit flash</label>
+          </div>
+        </div>
+        <div style="display:flex;gap:0.6rem;">
+          <button class="t1-sim-btn" id="t1-startBtn">▶ Start</button>
+          <button class="t1-reset-btn" id="t1-resetBtn">↺ Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="t1-charts">
+      <!-- Seismograph -->
+      <div class="t1-chart-box">
+        <div class="t1-chart-header">
+          <span class="t1-chart-title">Seismograph</span>
+          <span class="t1-hit-indicator" id="t1-hitIndicator">IDLE</span>
+        </div>
+        <div id="t1-seismo-container">
+          <canvas id="t1-seismo-canvas"></canvas>
+          <div id="t1-flash-overlay"></div>
+        </div>
+      </div>
+
+      <!-- Histogram -->
+      <div class="t1-chart-box">
+        <div class="t1-chart-header">
+          <span class="t1-chart-title" style="color:var(--accent3)">Frequency Distribution</span>
+          <span class="t1-hit-indicator" id="t1-statsLabel">0 blocks</span>
+        </div>
+        <div class="t1-freq-wrapper">
+          <div id="t1-fit-stats-overlay"></div>
+          <div id="t1-freq-container"></div>
+          <svg id="t1-fit-svg" preserveAspectRatio="none">
+            <path id="t1-pathBinomial" class="t1-fit-line" style="stroke:#e8c96d;opacity:0"/>
+            <path id="t1-pathPoisson"  class="t1-fit-line" style="stroke:#6dbfe8;opacity:0"/>
+            <path id="t1-pathGaussian" class="t1-fit-line" style="stroke:#e86d8a;opacity:0"/>
+          </svg>
+          <div id="t1-empty-msg">Waiting for data…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats footer -->
+    <div class="t1-stats-footer">
+      <div class="t1-stat-item">
+        <div class="lbl">Samples</div>
+        <div class="val" id="t1-statSamples">0</div>
+      </div>
+      <div class="t1-stat-item">
+        <div class="lbl">Total Hits</div>
+        <div class="val" style="color:var(--accent3)" id="t1-statHits">0</div>
+      </div>
+      <div class="t1-stat-item">
+        <div class="lbl">Current Block</div>
+        <div class="val" style="color:var(--accent)" id="t1-statBlockProgress">0/0</div>
+      </div>
+      <div class="t1-stat-item">
+        <div class="lbl">Global P(obs)</div>
+        <div class="val" style="color:var(--accent2)" id="t1-statMean">0.0000</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     TAB 2 — CP VIA MONTE CARLO HEATMAP
+══════════════════════════════════════════════════════════ -->
+<div id="tab2" class="tab-panel">
+  <div class="tab-header">
+    <h2>Clopper–Pearson via <span>Monte Carlo</span></h2>
+    <p>n = 14 flips · building the heatmap from simulation</p>
+  </div>
+
+  <div class="layout">
+    <!-- Controls -->
+    <div class="controls">
+      <div class="ctrl-section">
+        <div class="ctrl-label">Experiments per p-value (N)</div>
+        <div class="val-row">
+          <span class="val-big" id="t2-nSimVal">1 000</span>
+          <span class="val-note" id="t2-nSimNote">coarse</span>
+        </div>
+        <input type="range" id="t2-nSimSlider" min="0" max="6" step="1" value="2">
+        <div style="display:flex;justify-content:space-between;font-size:0.56rem;color:var(--muted);margin-top:2px;">
+          <span>100</span><span>1k</span><span>10k</span><span>100k</span>
+        </div>
+      </div>
+
+      <div class="ctrl-section">
+        <div class="ctrl-label">p-axis grid steps</div>
+        <div class="val-row">
+          <span class="val-big" id="t2-pStepsVal">50</span>
+          <span class="val-note">rows</span>
+        </div>
+        <input type="range" id="t2-pStepsSlider" min="10" max="200" step="10" value="50">
+      </div>
+
+      <div class="ctrl-section">
+        <div class="ctrl-label">Confidence level</div>
+        <div class="val-row">
+          <span class="val-big" id="t2-confVal">95%</span>
+        </div>
+        <input type="range" id="t2-confSlider" min="68" max="99" step="1" value="95">
+      </div>
+
+      <hr class="divider">
+
+      <div class="ctrl-section">
+        <div class="toggle-row">
+          <span class="toggle-label">Show exact CP lines</span>
+          <label class="toggle">
+            <input type="checkbox" id="t2-toggleExact">
+            <div class="toggle-track"></div>
+          </label>
+        </div>
+        <div class="toggle-row" style="margin-top:0.4rem;">
+          <span class="toggle-label">Show MC boundary lines</span>
+          <label class="toggle">
+            <input type="checkbox" id="t2-toggleMcLines" checked>
+            <div class="toggle-track"></div>
+          </label>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <button class="run-btn" id="t2-runBtn">▶  RUN SIMULATION</button>
+      <div class="progress-track"><div class="progress-fill" id="t2-progressFill"></div></div>
+      <div class="status-bar" id="t2-statusBar">press Run to begin</div>
+    </div>
+
+    <!-- Right panel -->
+    <div class="right-panel">
+      <div class="canvas-wrap">
+        <div class="canvas-title">P(X = k | p, n=14) — simulated heatmap</div>
+        <canvas id="t2-heatCanvas"></canvas>
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-line" style="background:var(--accent)"></div>
+            <span>MC boundary (simulation)</span>
+          </div>
+          <div class="legend-item" id="t2-legendExact" style="display:none">
+            <div class="legend-dash" style="border-color:var(--accent2)"></div>
+            <span>Exact Clopper–Pearson</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background:linear-gradient(to right,#08306b,#2171b5,#6baed6,#fee090,#fc8d59,#d73027);height:8px;width:40px;border-radius:2px"></div>
+            <span>low → high probability</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="algo-note">
+        <strong>How this heatmap is built — pure Monte Carlo, no Beta function.</strong><br><br>
+        For each of the <strong id="t2-an_psteps">50</strong> values of p on the y-axis, we run
+        <strong id="t2-an_nsim">1 000</strong> independent experiments of 14 coin flips.
+        The fraction of experiments yielding exactly k heads fills each cell of column k —
+        giving an empirical estimate of <code>P(X=k | p)</code>.<br><br>
+        <strong>CI boundary lines</strong> are found by: for each p-row, sort the simulated k outcomes
+        and cut the lowest <strong id="t2-an_alpha_lo">2.5%</strong> and highest <strong id="t2-an_alpha_hi">2.5%</strong> tails.
+        Then for each k, scan over p to find where k first enters / last exits that central band.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     TAB 3 — CLOPPER–PEARSON CONFIDENCE INTERVAL
+══════════════════════════════════════════════════════════ -->
+<div id="tab3" class="tab-panel">
+  <div class="tab-header">
+    <h2>The <span>Clopper–Pearson</span> Confidence Interval</h2>
+    <p>exact binomial interval · coin-flip simulator</p>
+  </div>
+
+  <div class="layout">
+    <!-- Left column -->
+    <div class="left-col">
+      <div class="panel">
+        <div class="panel-title">Experiment Setup</div>
+
+        <div class="control-row">
+          <label>NUMBER OF FLIPS &nbsp;<span class="val-display" id="t3-nVal">14</span></label>
+          <input type="range" id="t3-nFlips" min="1" max="100" value="14">
+        </div>
+        <div class="control-row">
+          <label>HEADS OBSERVED &nbsp;<span class="val-display" id="t3-kVal">10</span></label>
+          <input type="range" id="t3-kHeads" min="0" max="14" value="10">
+        </div>
+        <div class="control-row">
+          <label>CONFIDENCE LEVEL</label>
+          <select id="t3-confLevel">
+            <option value="0.68">68%</option>
+            <option value="0.90">90%</option>
+            <option value="0.95" selected>95%</option>
+            <option value="0.99">99%</option>
+          </select>
+        </div>
+        <div class="control-row" style="margin-top:0.8rem;">
+          <label>TRUE p (for simulation) &nbsp;<span style="font-size:0.78rem;color:var(--accent2)" id="t3-truePVal">p = 0.50</span></label>
+          <input type="range" id="t3-trueP" min="0.01" max="0.99" step="0.01" value="0.5">
+        </div>
+
+        <button class="btn btn-primary" id="t3-flipBtn">▶  FLIP COINS</button>
+        <button class="btn btn-secondary" id="t3-resetBtn">↺  RESET</button>
+
+        <div class="coin-area" id="t3-coinArea"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Results</div>
+        <div class="stats-grid">
+          <div class="stat-cell">
+            <span class="lbl">FLIPS (n)</span>
+            <span class="val val-heads" id="t3-rN">14</span>
+          </div>
+          <div class="stat-cell">
+            <span class="lbl">HEADS (k)</span>
+            <span class="val val-heads" id="t3-rK">10</span>
+          </div>
+          <div class="stat-cell">
+            <span class="lbl">p̂ = k/n</span>
+            <span class="val val-ci" id="t3-rPhat">0.714</span>
+          </div>
+          <div class="stat-cell">
+            <span class="lbl">TRUE p</span>
+            <span class="val val-tails" id="t3-rTrueP">0.50</span>
+          </div>
+        </div>
+
+        <div class="formula-box">
+          <div><strong style="color:var(--text)">Clopper–Pearson exact CI</strong></div>
+          <div class="formula">p_lo = Beta(α/2 ; k, n−k+1)</div>
+          <div class="formula">p_hi = Beta(1−α/2 ; k+1, n−k)</div>
+          <div style="margin-top:0.5rem">Uses the <em>inverse</em> of the Beta CDF — no normal approximation needed. Exact coverage guaranteed for all n.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="chart-wrap-t3">
+      <div class="panel" style="padding:1.1rem;">
+        <div class="panel-title">Probability Mass · P(X=k | p, n) — heatmap</div>
+        <canvas id="t3-rootCanvas"></canvas>
+      </div>
+
+      <div class="ci-readout">
+        <div>
+          <div class="lbl">LOWER BOUND</div>
+          <div class="big" id="t3-ciLo">–</div>
+        </div>
+        <div>
+          <div class="lbl">UPPER BOUND</div>
+          <div class="big" id="t3-ciHi">–</div>
+        </div>
+        <div>
+          <div class="lbl">INTERVAL WIDTH</div>
+          <div class="big" id="t3-ciWidth">–</div>
+        </div>
+        <div>
+          <div class="lbl">TRUE p CAPTURED?</div>
+          <div id="t3-captureStatus">–</div>
+        </div>
+      </div>
+
+      <div class="explanation" id="t3-explanation">
+        Adjust <strong>n</strong> and <strong>k</strong> above (or simulate a flip) to see the exact Clopper–Pearson interval.
+      </div>
+
+      <div class="panel" style="padding:1.1rem;">
+        <div class="panel-title">Monte Carlo Coverage Check &nbsp;<span style="color:var(--muted);font-size:0.63rem">(run many experiments)</span></div>
+        <div style="display:flex;gap:0.7rem;align-items:center;flex-wrap:wrap;margin-bottom:0.7rem;">
+          <button class="btn btn-secondary" style="width:auto;padding:0.45rem 0.9rem;" id="t3-mcBtn">Run 1000 experiments</button>
+          <span style="font-size:0.70rem;color:var(--muted)" id="t3-mcStatus">–</span>
+        </div>
+        <canvas id="t3-mcCanvas"></canvas>
+        <p style="font-size:0.65rem;color:var(--muted);margin-top:0.7rem;line-height:1.6;">The Clopper–Pearson interval is conservative by construction — because the binomial is discrete, actual coverage always meets or exceeds the nominal level, with the gap shrinking as n grows.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════════ -->
+<script>
+// ─── Theme toggle ──────────────────────────────────────────────────────────
+const html = document.documentElement;
+const themeInput = document.getElementById('theme-toggle-input');
+
+// Start dark
+html.setAttribute('data-theme', 'dark');
+themeInput.checked = true;
+
+themeInput.addEventListener('change', () => {
+  html.setAttribute('data-theme', themeInput.checked ? 'dark' : 'light');
+  // Redraw canvases when theme changes
+  if (t2SimData) t2Redraw();
+  t3Update();
+  if (t3McResults.length > 0) t3DrawMC();
+  t1InitCanvas();
+});
+
+// ─── Tab switching ─────────────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+    // Resize canvases on tab switch
+    if (btn.dataset.tab === 'tab2' && t2SimData) setTimeout(t2Redraw, 50);
+    if (btn.dataset.tab === 'tab3') setTimeout(() => { t3Update(); t3DrawMC(); }, 50);
+    if (btn.dataset.tab === 'tab1') setTimeout(t1InitCanvas, 50);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TAB 1 — RANDOM PROCESS SIMULATOR
+// ═══════════════════════════════════════════════════════════════════════════
+(function() {
+  const startBtn       = document.getElementById('t1-startBtn');
+  const resetBtn       = document.getElementById('t1-resetBtn');
+  const seismoCanvas   = document.getElementById('t1-seismo-canvas');
+  const freqContainer  = document.getElementById('t1-freq-container');
+  const fitStatsOverlay= document.getElementById('t1-fit-stats-overlay');
+  const emptyMsg       = document.getElementById('t1-empty-msg');
+  const probInput      = document.getElementById('t1-probInput');
+  const dtInput        = document.getElementById('t1-dtInput');
+  const blockInput     = document.getElementById('t1-blockInput');
+  const fitBinomial    = document.getElementById('t1-fitBinomial');
+  const fitPoisson     = document.getElementById('t1-fitPoisson');
+  const fitGaussian    = document.getElementById('t1-fitGaussian');
+  const flashToggle    = document.getElementById('t1-flashToggle');
+  const statSamples    = document.getElementById('t1-statSamples');
+  const statHits       = document.getElementById('t1-statHits');
+  const statMean       = document.getElementById('t1-statMean');
+  const statBlockProgress = document.getElementById('t1-statBlockProgress');
+  const statsLabel     = document.getElementById('t1-statsLabel');
+  const container      = document.getElementById('t1-seismo-container');
+
+  let isRunning = false, timer = null, samples = 0, hits = 0;
+  let currentBlockHits = 0, stepInBlock = 0;
+  let distribution = {}, totalBlocks = 0;
+  let canvasCtx;
+  const scrollSpeed = 3;
+
+  function logGamma(z) {
+    const c = [76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];
+    let x=z,y=z,tmp=x+5.5;
+    tmp-=(x+0.5)*Math.log(tmp);
+    let ser=1.000000000190015;
+    for(let i=0;i<6;i++) ser+=c[i]/++y;
+    return -tmp+Math.log(2.5066282746310005*ser/x);
+  }
+  function regularizedIncompleteGamma(a,x) {
+    if(x<0) return 0;
+    if(x<a+1){
+      let sum=1/a,term=sum;
+      for(let n=1;n<100;n++){term*=x/(a+n);sum+=term;if(term<sum*1e-14)break;}
+      return Math.exp(a*Math.log(x)-x-logGamma(a))*sum;
+    } else {
+      let b=x+1-a,c=1/1e-30,d=1/b,h=d;
+      for(let i=1;i<100;i++){
+        let an=-i*(i-a);b+=2;d=an*d+b;if(Math.abs(d)<1e-30)d=1e-30;
+        c=b+an/c;if(Math.abs(c)<1e-30)c=1e-30;d=1/d;let del=d*c;h*=del;
+        if(Math.abs(del-1)<1e-14)break;
+      }
+      return 1-Math.exp(a*Math.log(x)-x-logGamma(a))*h;
+    }
+  }
+  function chi2PValue(chi2,df){
+    if(df<=0||chi2<=0) return 1;
+    return 1-regularizedIncompleteGamma(df/2,chi2/2);
+  }
+
+  function triggerFlash() {
+    if (!flashToggle.checked) return;
+    const overlay = document.getElementById('t1-flash-overlay');
+    overlay.classList.remove('active');
+    void overlay.offsetWidth; // reflow to restart animation
+    overlay.classList.add('active');
+  }
+
+  function t1InitCanvas() {
+    seismoCanvas.width  = container.clientWidth  || 400;
+    seismoCanvas.height = container.clientHeight || 300;
+    canvasCtx = seismoCanvas.getContext('2d');
+    canvasCtx.fillStyle = '#000';
+    canvasCtx.fillRect(0,0,seismoCanvas.width,seismoCanvas.height);
+  }
+  window.t1InitCanvas = t1InitCanvas;
+
+  function drawBaseline() {
+    canvasCtx.strokeStyle='#1e293b';
+    canvasCtx.setLineDash([5,5]);
+    canvasCtx.beginPath();
+    canvasCtx.moveTo(0,seismoCanvas.height/2);
+    canvasCtx.lineTo(seismoCanvas.width,seismoCanvas.height/2);
+    canvasCtx.stroke();
+    canvasCtx.setLineDash([]);
+  }
+
+  window.addEventListener('resize', () => { if(document.getElementById('tab1').classList.contains('active')) t1InitCanvas(); });
+  t1InitCanvas();
+
+  const hitIndicator = document.getElementById('t1-hitIndicator');
+  let hitIndicatorTimer = null;
+
+  function updateHitIndicator(isHit) {
+    if (isHit) {
+      hitIndicator.textContent = 'HIT';
+      hitIndicator.style.background = 'rgba(34,197,94,0.25)';
+      hitIndicator.style.color = '#22c55e';
+      hitIndicator.style.borderColor = '#22c55e';
+      clearTimeout(hitIndicatorTimer);
+      hitIndicatorTimer = setTimeout(() => {
+        hitIndicator.textContent = 'IDLE';
+        hitIndicator.style.background = '';
+        hitIndicator.style.color = '';
+        hitIndicator.style.borderColor = '';
+      }, 300);
+    }
+  }
+
+  function tick() {
+    const p=parseFloat(probInput.value)||0;
+    const n=parseInt(blockInput.value)||20;
+    const isHit=Math.random()<p;
+    samples++; stepInBlock++;
+    if(isHit){hits++;currentBlockHits++;triggerFlash();}
+    updateHitIndicator(isHit);
+    updateSeismo(isHit,stepInBlock,n);
+    if(stepInBlock>=n){
+      distribution[currentBlockHits]=(distribution[currentBlockHits]||0)+1;
+      totalBlocks++;currentBlockHits=0;stepInBlock=0;
+      emptyMsg.style.display='none';
+      renderHistogram();
+    }
+    updateUI();
+  }
+
+  function updateSeismo(isHit,currentStep,n) {
+    const h=seismoCanvas.height,w=seismoCanvas.width,centerY=h/2,x=w-scrollSpeed;
+    const imageData=canvasCtx.getImageData(scrollSpeed,0,w-scrollSpeed,h);
+    canvasCtx.clearRect(0,0,w,h);
+    canvasCtx.fillStyle='black';
+    canvasCtx.fillRect(0,0,w,h);
+    canvasCtx.putImageData(imageData,0,0);
+    drawBaseline();
+    canvasCtx.lineWidth=1;
+    canvasCtx.strokeStyle='#e8c96d';
+    if(currentStep===1||currentStep===n){
+      canvasCtx.beginPath();
+      canvasCtx.moveTo(x,centerY-60);canvasCtx.lineTo(x,centerY-50);
+      canvasCtx.moveTo(x,centerY+50);canvasCtx.lineTo(x,centerY+60);
+      canvasCtx.stroke();
+    } else {
+      canvasCtx.beginPath();
+      canvasCtx.moveTo(x-scrollSpeed,centerY-55);canvasCtx.lineTo(x,centerY-55);
+      canvasCtx.moveTo(x-scrollSpeed,centerY+55);canvasCtx.lineTo(x,centerY+55);
+      canvasCtx.stroke();
+    }
+    canvasCtx.beginPath();
+    canvasCtx.strokeStyle=isHit?'#22c55e':'#3b82f6';
+    canvasCtx.lineWidth=isHit?3:2;
+    if(isHit){canvasCtx.moveTo(x,centerY-40);canvasCtx.lineTo(x,centerY+40);}
+    else{canvasCtx.moveTo(x-scrollSpeed,centerY);canvasCtx.lineTo(x,centerY);}
+    canvasCtx.stroke();
+  }
+
+  function nCr(n,r){
+    if(r<0||r>n)return 0;if(r===0||r===n)return 1;
+    if(r>n/2)r=n-r;let res=1;
+    for(let i=1;i<=r;i++)res=res*(n-i+1)/i;return res;
+  }
+  function factorial(n){if(n===0)return 1;let r=1;for(let i=2;i<=n;i++)r*=i;return r;}
+
+  function renderHistogram() {
+    freqContainer.innerHTML='';
+    const counts=Object.keys(distribution).map(Number).sort((a,b)=>a-b);
+    if(counts.length===0)return;
+    const n=parseInt(blockInput.value)||20;
+    const pObserved=hits/samples;
+    const theoreticalMean=n*pObserved;
+    const theoreticalStd=Math.sqrt(n*pObserved*(1-pObserved));
+    const maxHitsObserved=Math.max(...counts);
+    const rangeMax=Math.max(maxHitsObserved,Math.ceil(theoreticalMean+4*theoreticalStd),5);
+    const maxFreq=Math.max(...Object.values(distribution));
+    for(let i=0;i<=Math.min(n,rangeMax);i++){
+      const freq=distribution[i]||0;
+      const hPct=(freq/maxFreq)*85;
+      const wrapper=document.createElement('div');
+      wrapper.style.cssText='flex-grow:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative;';
+      const bar=document.createElement('div');
+      bar.style.cssText=`width:100%;border-radius:2px 2px 0 0;transition:height 0.3s;height:${hPct}%;`;
+      bar.style.background=freq>0?'rgba(109,191,232,0.45)':'rgba(100,100,120,0.2)';
+      if(freq>0)bar.style.borderTop='1px solid rgba(109,191,232,0.7)';
+      const label=document.createElement('div');
+      label.style.cssText='font-size:9px;color:var(--muted);margin-top:2px;font-family:DM Mono,monospace;';
+      label.textContent=i;
+      wrapper.appendChild(bar);wrapper.appendChild(label);
+      freqContainer.appendChild(wrapper);
+    }
+    statsLabel.textContent=`${totalBlocks} blocks`;
+    updateFitsAndStats(n,pObserved,maxFreq);
+  }
+
+  function calculateChiSquareMetrics(actualMap,expectedFn,numBins,paramsEstimated){
+    let chi2=0,validBins=0;
+    for(let k=0;k<numBins;k++){
+      const observed=actualMap[k]||0;
+      const expected=expectedFn(k)*totalBlocks;
+      if(expected>0.001){chi2+=Math.pow(observed-expected,2)/expected;validBins++;}
+    }
+    const df=validBins-1-paramsEstimated;
+    return{chi2,df,pVal:chi2PValue(chi2,df)};
+  }
+
+  function updateFitsAndStats(n,p,maxFreq){
+    const rect=freqContainer.getBoundingClientRect();
+    const w=rect.width,h=rect.height;
+    const numBins=freqContainer.children.length;
+    if(numBins===0)return;
+    const stepX=w/numBins;
+    const lambda=n*p;
+    const sigma=Math.sqrt(n*p*(1-p));
+    const probToY=(prob)=>{
+      const abs=prob*totalBlocks;
+      const norm=(abs/maxFreq)*0.85;
+      return h-(norm*h)-15;
+    };
+    const generatePath=(fn)=>{
+      let d='';
+      for(let i=0;i<numBins;i++){
+        const py=probToY(fn(i));
+        const px=(i+0.5)*stepX;
+        d+=(i===0?'M':'L')+`${px},${py} `;
+      }
+      return d;
+    };
+    const binomFn=(k)=>nCr(n,k)*Math.pow(p,k)*Math.pow(1-p,n-k);
+    const poissonFn=(k)=>(Math.pow(lambda,k)*Math.exp(-lambda))/factorial(k);
+    const gaussianFn=(x)=>(1/(sigma*Math.sqrt(2*Math.PI)))*Math.exp(-0.5*Math.pow((x-lambda)/sigma,2));
+    const pBin=document.getElementById('t1-pathBinomial');
+    const pPoi=document.getElementById('t1-pathPoisson');
+    const pGau=document.getElementById('t1-pathGaussian');
+    fitStatsOverlay.innerHTML='';
+    const createStatCard=(title,color,params,metrics)=>{
+      const card=document.createElement('div');
+      card.className='t1-stat-badge';
+      card.style.borderLeft=`3px solid ${color}`;
+      const pColor=metrics.pVal<0.05?'color:#e86d8a':'color:#6dbfe8';
+      card.innerHTML=`<div style="font-size:0.65rem;display:flex;justify-content:space-between;"><span style="color:${color};font-weight:500">${title}</span><div style="text-align:right"><div style="color:var(--muted)">χ²: ${metrics.chi2.toFixed(1)}</div><div style="${pColor};font-weight:500">p: ${metrics.pVal.toFixed(3)}</div></div></div><div style="font-size:0.60rem;color:var(--muted);margin-top:0.2rem;font-family:DM Mono,monospace">${params}</div>`;
+      fitStatsOverlay.appendChild(card);
+    };
+    if(fitBinomial.checked&&totalBlocks>2){
+      pBin.setAttribute('d',generatePath(binomFn));pBin.style.opacity=0.85;
+      createStatCard('Binomial','#e8c96d',`n=${n} p=${p.toFixed(3)}`,calculateChiSquareMetrics(distribution,binomFn,numBins,1));
+    } else pBin.style.opacity=0;
+    if(fitPoisson.checked&&totalBlocks>2){
+      pPoi.setAttribute('d',generatePath(poissonFn));pPoi.style.opacity=0.85;
+      createStatCard('Poisson','#6dbfe8',`λ=${lambda.toFixed(2)}`,calculateChiSquareMetrics(distribution,poissonFn,numBins,1));
+    } else pPoi.style.opacity=0;
+    if(fitGaussian.checked&&totalBlocks>2){
+      pGau.setAttribute('d',generatePath(gaussianFn));pGau.style.opacity=0.85;
+      createStatCard('Gaussian','#e86d8a',`μ=${lambda.toFixed(1)} σ=${sigma.toFixed(2)}`,calculateChiSquareMetrics(distribution,gaussianFn,numBins,2));
+    } else pGau.style.opacity=0;
+  }
+
+  function updateUI(){
+    const n=parseInt(blockInput.value)||20;
+    statSamples.textContent=samples.toLocaleString();
+    statHits.textContent=hits.toLocaleString();
+    statBlockProgress.textContent=`${stepInBlock}/${n}`;
+    statMean.textContent=samples>0?(hits/samples).toFixed(4):'0.0000';
+  }
+
+  startBtn.addEventListener('click',()=>{
+    if(isRunning){
+      isRunning=false;startBtn.textContent='▶ Start';startBtn.classList.remove('stop');clearInterval(timer);
+    } else {
+      isRunning=true;startBtn.textContent='⏹ Stop';startBtn.classList.add('stop');
+      timer=setInterval(tick,parseInt(dtInput.value)||50);
+    }
+  });
+
+  resetBtn.addEventListener('click',()=>{
+    isRunning=false;clearInterval(timer);samples=0;hits=0;currentBlockHits=0;stepInBlock=0;distribution={};totalBlocks=0;
+    startBtn.textContent='▶ Start';startBtn.classList.remove('stop');
+    emptyMsg.style.display='flex';fitStatsOverlay.innerHTML='';
+    hitIndicator.textContent='IDLE';hitIndicator.style.background='';hitIndicator.style.color='';hitIndicator.style.borderColor='';
+    t1InitCanvas();renderHistogram();updateUI();
+    freqContainer.innerHTML='';
+    const pBin=document.getElementById('t1-pathBinomial');
+    const pPoi=document.getElementById('t1-pathPoisson');
+    const pGau=document.getElementById('t1-pathGaussian');
+    if(pBin)pBin.style.opacity=0;if(pPoi)pPoi.style.opacity=0;if(pGau)pGau.style.opacity=0;
+  });
+
+  [fitBinomial,fitPoisson,fitGaussian].forEach(el=>el.addEventListener('change',renderHistogram));
+})();
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TAB 2 — CP VIA MONTE CARLO HEATMAP
+// ═══════════════════════════════════════════════════════════════════════════
+let t2SimData=null, t2McBounds=null;
+
+(function(){
+  const N_FLIPS=14;
+  const nSimSteps=[100,300,1000,3000,10000,30000,100000];
+  const nSimLabels=['100','300','1 000','3 000','10 000','30 000','100 000'];
+  const nSimNotes=['very coarse','coarse','coarse','medium','fine','very fine','ultra fine'];
+  let nSimIdx=2, pSteps=50, conf=0.95, showExact=false, showMcLines=true, running=false;
+
+  const nSimSlider   = document.getElementById('t2-nSimSlider');
+  const pStepsSlider = document.getElementById('t2-pStepsSlider');
+  const confSlider   = document.getElementById('t2-confSlider');
+  const nSimValEl    = document.getElementById('t2-nSimVal');
+  const nSimNoteEl   = document.getElementById('t2-nSimNote');
+  const pStepsValEl  = document.getElementById('t2-pStepsVal');
+  const confValEl    = document.getElementById('t2-confVal');
+  const toggleExact  = document.getElementById('t2-toggleExact');
+  const toggleMcLines= document.getElementById('t2-toggleMcLines');
+  const runBtn       = document.getElementById('t2-runBtn');
+  const progressFill = document.getElementById('t2-progressFill');
+  const statusBar    = document.getElementById('t2-statusBar');
+  const heatCanvas   = document.getElementById('t2-heatCanvas');
+  const legendExact  = document.getElementById('t2-legendExact');
+  const an_psteps    = document.getElementById('t2-an_psteps');
+  const an_nsim      = document.getElementById('t2-an_nsim');
+  const an_alpha_lo  = document.getElementById('t2-an_alpha_lo');
+  const an_alpha_hi  = document.getElementById('t2-an_alpha_hi');
+
+  function lgamma(x){
+    const g=7,c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+    if(x<0.5)return Math.log(Math.PI/Math.sin(Math.PI*x))-lgamma(1-x);
+    x-=1;let a=c[0];const t=x+g+0.5;
+    for(let i=1;i<g+2;i++)a+=c[i]/(x+i);
+    return 0.5*Math.log(2*Math.PI)+(x+0.5)*Math.log(t)-t+Math.log(a);
+  }
+  function lbeta(a,b){return lgamma(a)+lgamma(b)-lgamma(a+b);}
+  function ibeta(x,a,b){
+    if(x<=0)return 0;if(x>=1)return 1;
+    const lbx=a*Math.log(x)+b*Math.log(1-x)-lbeta(a,b);
+    function cf(x,a,b){
+      const MAXIT=200,EPS=3e-7,FPMIN=1e-30;
+      let qab=a+b,qap=a+1,qam=a-1,c=1,d=1-qab*x/qap;
+      if(Math.abs(d)<FPMIN)d=FPMIN;d=1/d;let h=d;
+      for(let m=1;m<=MAXIT;m++){
+        let m2=2*m,aa=m*(b-m)*x/((qam+m2)*(a+m2));
+        d=1+aa*d;if(Math.abs(d)<FPMIN)d=FPMIN;c=1+aa/c;if(Math.abs(c)<FPMIN)c=FPMIN;
+        d=1/d;h*=d*c;aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));
+        d=1+aa*d;if(Math.abs(d)<FPMIN)d=FPMIN;c=1+aa/c;if(Math.abs(c)<FPMIN)c=FPMIN;
+        d=1/d;let del=d*c;h*=del;if(Math.abs(del-1)<EPS)break;
+      }
+      return h;
+    }
+    if(x<(a+1)/(a+b+2))return Math.exp(lbx)*cf(x,a,b)/a;
+    else return 1-Math.exp(lbx)*cf(1-x,b,a)/b;
+  }
+  function ibetaInv(p,a,b){
+    if(p<=0)return 0;if(p>=1)return 1;
+    let lo=0,hi=1,mid;
+    for(let i=0;i<64;i++){mid=(lo+hi)/2;if(ibeta(mid,a,b)<p)lo=mid;else hi=mid;}
+    return(lo+hi)/2;
+  }
+  function cpExact(k,n,conf){
+    const alpha=1-conf;
+    return{lo:k===0?0:ibetaInv(alpha/2,k,n-k+1),hi:k===n?1:ibetaInv(1-alpha/2,k+1,n-k)};
+  }
+  function jet(t){
+    t=Math.max(0,Math.min(1,t));
+    let r,g,b;
+    if(t<0.125){r=0;g=0;b=4*t+0.5;}
+    else if(t<0.375){r=0;g=4*t-0.5;b=1;}
+    else if(t<0.625){r=4*t-1.5;g=1;b=-4*t+2.5;}
+    else if(t<0.875){r=1;g=-4*t+3.5;b=0;}
+    else{r=-4*t+4.5;g=0;b=0;}
+    return[Math.round(r*255),Math.round(g*255),Math.round(b*255)];
+  }
+
+  nSimSlider.addEventListener('input',()=>{nSimIdx=+nSimSlider.value;nSimValEl.textContent=nSimLabels[nSimIdx];nSimNoteEl.textContent=nSimNotes[nSimIdx];updateAlgoNote();});
+  pStepsSlider.addEventListener('input',()=>{pSteps=+pStepsSlider.value;pStepsValEl.textContent=pSteps;updateAlgoNote();});
+  confSlider.addEventListener('input',()=>{conf=+confSlider.value/100;confValEl.textContent=confSlider.value+'%';updateAlgoNote();if(t2SimData){computeMCBounds();t2Redraw();}});
+  toggleExact.addEventListener('change',()=>{showExact=toggleExact.checked;legendExact.style.display=showExact?'':'none';if(t2SimData)t2Redraw();});
+  toggleMcLines.addEventListener('change',()=>{showMcLines=toggleMcLines.checked;if(t2SimData)t2Redraw();});
+
+  function updateAlgoNote(){
+    an_psteps.textContent=pSteps;an_nsim.textContent=nSimLabels[nSimIdx];
+    const alpha=(1-conf)/2*100;an_alpha_lo.textContent=alpha.toFixed(1)+'%';an_alpha_hi.textContent=alpha.toFixed(1)+'%';
+  }
+  updateAlgoNote();
+
+  runBtn.addEventListener('click',()=>{if(!running)runSimulation();});
+
+  async function runSimulation(){
+    running=true;runBtn.textContent='⏳ running…';runBtn.style.opacity='0.6';
+    t2SimData=[];t2McBounds=null;
+    const N=nSimSteps[nSimIdx];
+    const CHUNK=Math.max(1,Math.floor(pSteps/20));
+    for(let pi=0;pi<pSteps;pi++){
+      const p=(pi+0.5)/pSteps;
+      const freq=new Float64Array(N_FLIPS+1);
+      for(let exp=0;exp<N;exp++){
+        let heads=0;
+        for(let f=0;f<N_FLIPS;f++)if(Math.random()<p)heads++;
+        freq[heads]++;
+      }
+      for(let k=0;k<=N_FLIPS;k++)freq[k]/=N;
+      t2SimData.push(freq);
+      if((pi+1)%CHUNK===0||pi===pSteps-1){
+        progressFill.style.width=Math.round((pi+1)/pSteps*100)+'%';
+        statusBar.textContent=`simulating p-row ${pi+1} / ${pSteps}  (N=${N} each)`;
+        await new Promise(r=>setTimeout(r,0));
+      }
+    }
+    computeMCBounds();t2Redraw();
+    statusBar.textContent=`done — ${pSteps} × ${N} = ${(pSteps*N).toLocaleString()} total experiments`;
+    runBtn.textContent='▶  RUN SIMULATION';runBtn.style.opacity='';running=false;
+  }
+
+  function computeMCBounds(){
+    if(!t2SimData)return;
+    const alpha=1-conf;
+    const k_lo_grid=new Int32Array(pSteps);
+    const k_hi_grid=new Int32Array(pSteps);
+    for(let pi=0;pi<pSteps;pi++){
+      const freq=t2SimData[pi];let cum=0,lo=0;
+      for(let k=0;k<=N_FLIPS;k++){cum+=freq[k];if(cum>=alpha/2){lo=k;break;}lo=k;}
+      cum=0;let hi=N_FLIPS;
+      for(let k=N_FLIPS;k>=0;k--){cum+=freq[k];if(cum>=alpha/2){hi=k;break;}hi=k;}
+      k_lo_grid[pi]=lo;k_hi_grid[pi]=hi;
+    }
+    const loP=new Float64Array(N_FLIPS+1);const hiP=new Float64Array(N_FLIPS+1);
+    for(let k=0;k<=N_FLIPS;k++){
+      let found=false;
+      for(let pi=0;pi<pSteps;pi++){if(k_lo_grid[pi]<=k&&k<=k_hi_grid[pi]){loP[k]=(pi+0.5)/pSteps;found=true;break;}}
+      if(!found)loP[k]=0;
+      found=false;
+      for(let pi=pSteps-1;pi>=0;pi--){if(k_lo_grid[pi]<=k&&k<=k_hi_grid[pi]){hiP[k]=(pi+0.5)/pSteps;found=true;break;}}
+      if(!found)hiP[k]=1;
+    }
+    t2McBounds={loP,hiP};
+  }
+
+  function t2Redraw(){
+    if(!t2SimData)return;
+    const dpr=window.devicePixelRatio||1;
+    const W=heatCanvas.clientWidth;
+    const H=Math.round(W*0.62);
+    heatCanvas.width=W*dpr;heatCanvas.height=H*dpr;
+    heatCanvas.style.height=H+'px';
+    const ctx=heatCanvas.getContext('2d');
+    ctx.scale(dpr,dpr);
+    const PAD={l:52,r:72,t:16,b:44};
+    const plotW=W-PAD.l-PAD.r,plotH=H-PAD.t-PAD.b;
+    const isDark=html.getAttribute('data-theme')==='dark';
+    ctx.fillStyle=isDark?'#151820':'#f0ece2';
+    ctx.fillRect(0,0,W,H);
+    const cellW=plotW/(N_FLIPS+1);
+    let maxFreq=0;
+    for(let pi=0;pi<pSteps;pi++)for(let k=0;k<=N_FLIPS;k++)if(t2SimData[pi][k]>maxFreq)maxFreq=t2SimData[pi][k];
+    const logMax=Math.log10(maxFreq+1e-12),logMin=logMax-3;
+    const imgData=ctx.createImageData(Math.round(plotW),Math.round(plotH));
+    const data=imgData.data;
+    for(let pi=0;pi<pSteps;pi++){
+      const freq=t2SimData[pi];
+      const yFrac0=(pSteps-1-pi)/pSteps,yFrac1=(pSteps-pi)/pSteps;
+      const py0=Math.round(yFrac0*plotH),py1=Math.round(yFrac1*plotH);
+      for(let k=0;k<=N_FLIPS;k++){
+        const px0=Math.round(k/(N_FLIPS+1)*plotW),px1=Math.round((k+1)/(N_FLIPS+1)*plotW);
+        const v=freq[k];
+        const logV=v>0?Math.log10(v):logMin-1;
+        const t=Math.max(0,Math.min(1,(logV-logMin)/(logMax-logMin)));
+        const[r,g,b]=jet(t);
+        for(let py=py0;py<py1;py++)for(let px=px0;px<px1;px++){
+          const idx=(py*Math.round(plotW)+px)*4;
+          data[idx]=r;data[idx+1]=g;data[idx+2]=b;data[idx+3]=255;
+        }
+      }
+    }
+    ctx.putImageData(imgData,PAD.l,PAD.t);
+    if(showMcLines&&t2McBounds){
+      const{loP,hiP}=t2McBounds;
+      function drawStep(pArr,color,lw){
+        ctx.strokeStyle=color;ctx.lineWidth=lw;ctx.lineJoin='miter';ctx.beginPath();
+        for(let k=0;k<=N_FLIPS;k++){
+          const x0=PAD.l+k*cellW,x1=x0+cellW,p=pArr[k],y=PAD.t+(1-p)*plotH;
+          if(k===0)ctx.moveTo(x0,y);
+          else{const pPrev=pArr[k-1],yPrev=PAD.t+(1-pPrev)*plotH;ctx.lineTo(x0,yPrev);ctx.lineTo(x0,y);}
+          ctx.lineTo(x1,y);
+        }
+        ctx.stroke();
+      }
+      const bc=isDark?'rgba(232,201,109,0.95)':'rgba(192,57,43,0.95)';
+      drawStep(loP,bc,2.5);drawStep(hiP,bc,2.5);
+    }
+    if(showExact){
+      ctx.setLineDash([6,4]);
+      ctx.strokeStyle=isDark?'rgba(109,191,232,0.9)':'rgba(26,107,138,0.9)';
+      ctx.lineWidth=2;ctx.lineJoin='miter';
+      ['lo','hi'].forEach(side=>{
+        ctx.beginPath();
+        for(let k=0;k<=N_FLIPS;k++){
+          const{lo,hi}=cpExact(k,N_FLIPS,conf);
+          const pv=side==='lo'?lo:hi;
+          const x0=PAD.l+k*cellW,x1=x0+cellW,y=PAD.t+(1-pv)*plotH;
+          if(k===0)ctx.moveTo(x0,y);
+          else{const prev=side==='lo'?cpExact(k-1,N_FLIPS,conf).lo:cpExact(k-1,N_FLIPS,conf).hi;ctx.lineTo(x0,PAD.t+(1-prev)*plotH);ctx.lineTo(x0,y);}
+          ctx.lineTo(x1,y);
+        }
+        ctx.stroke();
+      });
+      ctx.setLineDash([]);
+    }
+    const axCol=isDark?'#8892aa':'#5a5040';
+    ctx.fillStyle=axCol;ctx.font='11px DM Mono, monospace';ctx.textAlign='center';
+    for(let k=0;k<=N_FLIPS;k++)ctx.fillText(k,PAD.l+(k+0.5)*cellW,H-PAD.b+16);
+    ctx.fillText('k  (heads observed out of 14 flips)',PAD.l+plotW/2,H-5);
+    ctx.textAlign='right';
+    for(let t=0;t<=10;t++){
+      const pv=t/10,y=PAD.t+(1-pv)*plotH;
+      ctx.fillStyle=axCol;ctx.fillText(pv.toFixed(1),PAD.l-7,y+4);
+      ctx.strokeStyle=isDark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.06)';
+      ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(PAD.l+plotW,y);ctx.stroke();
+    }
+    ctx.save();ctx.translate(13,PAD.t+plotH/2);ctx.rotate(-Math.PI/2);
+    ctx.textAlign='center';ctx.fillStyle=axCol;ctx.fillText('p  (true probability of heads)',0,0);ctx.restore();
+    const cbX=W-PAD.r+14,cbY=PAD.t,cbW=14;
+    for(let i=0;i<plotH;i++){const t=1-i/plotH;const[r,g,b]=jet(t);ctx.fillStyle=`rgb(${r},${g},${b})`;ctx.fillRect(cbX,cbY+i,cbW,1);}
+    ctx.strokeStyle=isDark?'#2a2f45':'#ccc';ctx.lineWidth=1;ctx.strokeRect(cbX,cbY,cbW,plotH);
+    ctx.fillStyle=axCol;ctx.textAlign='left';ctx.font='10px DM Mono, monospace';
+    ctx.fillText('1',cbX+cbW+3,cbY+9);ctx.fillText('10⁻¹',cbX+cbW+3,cbY+plotH*0.33);
+    ctx.fillText('10⁻²',cbX+cbW+3,cbY+plotH*0.66);ctx.fillText('10⁻³',cbX+cbW+3,cbY+plotH-4);
+  }
+  window.t2Redraw = t2Redraw;
+  window.addEventListener('resize',()=>{if(t2SimData&&document.getElementById('tab2').classList.contains('active'))t2Redraw();});
+})();
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TAB 3 — CLOPPER–PEARSON CONFIDENCE INTERVAL
+// ═══════════════════════════════════════════════════════════════════════════
+let t3McResults = [];
+
+function t3Update() {
+  const{lo,hi}=t3CpInterval(t3k,t3n,t3conf);
+  const phat=t3n>0?t3k/t3n:0;
+  document.getElementById('t3-rN').textContent=t3n;
+  document.getElementById('t3-rK').textContent=t3k;
+  document.getElementById('t3-rPhat').textContent=phat.toFixed(3);
+  document.getElementById('t3-rTrueP').textContent=t3trueP.toFixed(2);
+  document.getElementById('t3-ciLo').textContent=lo.toFixed(4);
+  document.getElementById('t3-ciHi').textContent=hi.toFixed(4);
+  document.getElementById('t3-ciWidth').textContent=(hi-lo).toFixed(4);
+  const captured=t3trueP>=lo&&t3trueP<=hi;
+  document.getElementById('t3-captureStatus').innerHTML=captured
+    ?'<span class="in-out-badge badge-in">✓ YES</span>'
+    :'<span class="in-out-badge badge-out">✗ NO</span>';
+  document.getElementById('t3-explanation').innerHTML=
+    `With <strong>n = ${t3n}</strong> flips and <strong>k = ${t3k}</strong> heads observed, the <strong>${(t3conf*100).toFixed(0)}% Clopper–Pearson interval</strong> is <strong style="color:var(--accent)">[${lo.toFixed(4)}, ${hi.toFixed(4)}]</strong>. `+
+    `The point estimate is p̂ = ${phat.toFixed(3)}. `+
+    (captured?`The true p = ${t3trueP.toFixed(2)} <strong style="color:var(--accent2)">lies inside</strong> the interval.`:`The true p = ${t3trueP.toFixed(2)} <strong style="color:var(--accent3)">falls outside</strong> the interval — this can happen ~${(100*(1-t3conf)).toFixed(0)}% of the time.`);
+  t3DrawRoot(lo,hi);
+}
+window.t3Update = t3Update;
+
+function t3DrawMC() {
+  const canvas=document.getElementById('t3-mcCanvas');
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.clientWidth;
+  const H=160;
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const PAD={l:52,r:20,t:12,b:30};
+  const plotW=W-PAD.l-PAD.r,plotH=H-PAD.t-PAD.b;
+  const isDark=html.getAttribute('data-theme')==='dark';
+  ctx.fillStyle=isDark?'#1c2030':'#f0ece2';
+  ctx.fillRect(0,0,W,H);
+  if(t3McResults.length===0){
+    ctx.fillStyle=isDark?'#6b7194':'#7a7060';
+    ctx.font='12px DM Mono, monospace';ctx.textAlign='center';
+    ctx.fillText('Run the Monte Carlo to see coverage',W/2,H/2);return;
+  }
+  const show=Math.min(t3McResults.length,200);
+  const barW=Math.max(1,plotW/show-0.5);
+  for(let i=0;i<show;i++){
+    const res=t3McResults[t3McResults.length-show+i];
+    const x=PAD.l+i*(plotW/show);
+    const yLo=PAD.t+(1-res.hi)*plotH,yHi=PAD.t+(1-res.lo)*plotH;
+    ctx.fillStyle=res.cap?'rgba(109,191,232,0.55)':'rgba(232,109,138,0.75)';
+    ctx.fillRect(x,yLo,barW,yHi-yLo);
+  }
+  const yTrue=PAD.t+(1-t3trueP)*plotH;
+  ctx.strokeStyle=isDark?'#e8c96d':'#c0392b';
+  ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(PAD.l,yTrue);ctx.lineTo(PAD.l+plotW,yTrue);ctx.stroke();
+  const axCol=isDark?'#8892aa':'#5a5040';
+  ctx.fillStyle=axCol;ctx.font='10px DM Mono, monospace';ctx.textAlign='right';
+  for(let t=0;t<=4;t++){const pv=t/4,y=PAD.t+(1-pv)*plotH;ctx.fillText(pv.toFixed(2),PAD.l-5,y+3);}
+  ctx.textAlign='center';
+  ctx.fillText(`← each bar = one experiment of ${t3n} flips   (blue = CI captures p, red = misses)`,PAD.l+plotW/2,H-4);
+  ctx.save();ctx.translate(12,PAD.t+plotH/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.fillText('CI range',0,0);ctx.restore();
+}
+window.t3DrawMC = t3DrawMC;
+
+(function(){
+  function lgamma(x){
+    const g=7,c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+    if(x<0.5)return Math.log(Math.PI/Math.sin(Math.PI*x))-lgamma(1-x);
+    x-=1;let a=c[0];const t=x+g+0.5;
+    for(let i=1;i<g+2;i++)a+=c[i]/(x+i);
+    return 0.5*Math.log(2*Math.PI)+(x+0.5)*Math.log(t)-t+Math.log(a);
+  }
+  function lbeta(a,b){return lgamma(a)+lgamma(b)-lgamma(a+b);}
+  function ibeta(x,a,b){
+    if(x<=0)return 0;if(x>=1)return 1;
+    const lbx=a*Math.log(x)+b*Math.log(1-x)-lbeta(a,b);
+    function cf(x,a,b){
+      const MAXIT=200,EPS=3e-7,FPMIN=1e-30;
+      let qab=a+b,qap=a+1,qam=a-1,c=1,d=1-qab*x/qap;
+      if(Math.abs(d)<FPMIN)d=FPMIN;d=1/d;let h=d;
+      for(let m=1;m<=MAXIT;m++){
+        let m2=2*m,aa=m*(b-m)*x/((qam+m2)*(a+m2));
+        d=1+aa*d;if(Math.abs(d)<FPMIN)d=FPMIN;c=1+aa/c;if(Math.abs(c)<FPMIN)c=FPMIN;
+        d=1/d;h*=d*c;aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));
+        d=1+aa*d;if(Math.abs(d)<FPMIN)d=FPMIN;c=1+aa/c;if(Math.abs(c)<FPMIN)c=FPMIN;
+        d=1/d;let del=d*c;h*=del;if(Math.abs(del-1)<EPS)break;
+      }
+      return h;
+    }
+    if(x<(a+1)/(a+b+2))return Math.exp(lbx)*cf(x,a,b)/a;
+    else return 1-Math.exp(lbx)*cf(1-x,b,a)/b;
+  }
+  function ibetaInv(p,a,b){
+    if(p<=0)return 0;if(p>=1)return 1;
+    let lo=0,hi=1,mid;
+    for(let i=0;i<60;i++){mid=(lo+hi)/2;if(ibeta(mid,a,b)<p)lo=mid;else hi=mid;}
+    return(lo+hi)/2;
+  }
+  window.t3CpInterval=function(k,n,conf){
+    const alpha=1-conf;
+    return{lo:k===0?0:ibetaInv(alpha/2,k,n-k+1),hi:k===n?1:ibetaInv(1-alpha/2,k+1,n-k)};
+  };
+  function binomPMF(n,k,p){
+    if(k<0||k>n)return 0;if(p===0)return k===0?1:0;if(p===1)return k===n?1:0;
+    return Math.exp(lgamma(n+1)-lgamma(k+1)-lgamma(n-k+1)+k*Math.log(p)+(n-k)*Math.log(1-p));
+  }
+  function jet(t){
+    t=Math.max(0,Math.min(1,t));let r,g,b;
+    if(t<0.125){r=0;g=0;b=4*t+0.5;}else if(t<0.375){r=0;g=4*t-0.5;b=1;}
+    else if(t<0.625){r=4*t-1.5;g=1;b=-4*t+2.5;}else if(t<0.875){r=1;g=-4*t+3.5;b=0;}
+    else{r=-4*t+4.5;g=0;b=0;}
+    return`rgb(${Math.round(r*255)},${Math.round(g*255)},${Math.round(b*255)})`;
+  }
+
+  window.t3n=14;window.t3k=10;window.t3conf=0.95;window.t3trueP=0.5;
+  let coins=[];
+
+  const nSlider=document.getElementById('t3-nFlips');
+  const kSlider=document.getElementById('t3-kHeads');
+  const confSel=document.getElementById('t3-confLevel');
+  const truePSlider=document.getElementById('t3-trueP');
+  const flipBtn=document.getElementById('t3-flipBtn');
+  const resetBtn=document.getElementById('t3-resetBtn');
+  const mcBtn=document.getElementById('t3-mcBtn');
+  const coinArea=document.getElementById('t3-coinArea');
+  const rootCanvas=document.getElementById('t3-rootCanvas');
+
+  function syncK(){kSlider.max=t3n;if(t3k>t3n)t3k=t3n;kSlider.value=t3k;document.getElementById('t3-kVal').textContent=t3k;}
+
+  nSlider.addEventListener('input',()=>{t3n=+nSlider.value;document.getElementById('t3-nVal').textContent=t3n;syncK();t3Update();});
+  kSlider.addEventListener('input',()=>{t3k=+kSlider.value;document.getElementById('t3-kVal').textContent=t3k;t3Update();});
+  confSel.addEventListener('change',()=>{t3conf=+confSel.value;t3Update();});
+  truePSlider.addEventListener('input',()=>{t3trueP=+truePSlider.value;document.getElementById('t3-truePVal').textContent='p = '+t3trueP.toFixed(2);t3Update();});
+
+  flipBtn.addEventListener('click',()=>{
+    coins=[];
+    for(let i=0;i<t3n;i++)coins.push(Math.random()<t3trueP?'H':'T');
+    t3k=coins.filter(c=>c==='H').length;
+    kSlider.value=t3k;document.getElementById('t3-kVal').textContent=t3k;
+    renderCoins();t3Update();
+  });
+
+  resetBtn.addEventListener('click',()=>{coins=[];coinArea.innerHTML='';t3McResults=[];t3Update();t3DrawMC();});
+
+  function renderCoins(){
+    coinArea.innerHTML='';
+    coins.forEach(c=>{const d=document.createElement('div');d.className='coin coin-'+c;d.textContent=c;coinArea.appendChild(d);});
+  }
+
+  mcBtn.addEventListener('click',()=>{
+    const RUNS=1000;t3McResults=[];let captured=0;
+    for(let i=0;i<RUNS;i++){
+      let heads=0;
+      for(let j=0;j<t3n;j++)if(Math.random()<t3trueP)heads++;
+      const{lo,hi}=t3CpInterval(heads,t3n,t3conf);
+      const cap=t3trueP>=lo&&t3trueP<=hi;
+      if(cap)captured++;
+      t3McResults.push({lo,hi,cap,phat:heads/t3n});
+    }
+    const coverage=(captured/RUNS*100).toFixed(1);
+    document.getElementById('t3-mcStatus').textContent=`Coverage: ${captured}/${RUNS} = ${coverage}%  (nominal ${(t3conf*100).toFixed(0)}%)`;
+    t3DrawMC();
+  });
+
+  window.t3DrawRoot=function(ciLo,ciHi){
+    const dpr=window.devicePixelRatio||1;
+    const W=rootCanvas.clientWidth;
+    const H=Math.round(W*0.52);
+    rootCanvas.width=W*dpr;rootCanvas.height=H*dpr;
+    rootCanvas.style.height=H+'px';
+    const ctx=rootCanvas.getContext('2d');ctx.scale(dpr,dpr);
+    const PAD={l:52,r:70,t:20,b:42};
+    const plotW=W-PAD.l-PAD.r,plotH=H-PAD.t-PAD.b;
+    const isDark=html.getAttribute('data-theme')==='dark';
+    ctx.fillStyle=isDark?'#1c2030':'#f0ece2';
+    ctx.fillRect(0,0,W,H);
+    const pSteps2=100,nMax=t3n;
+    const cellW=plotW/(nMax+1),cellH=plotH/pSteps2;
+    let maxPMF=0;
+    for(let ki=0;ki<=nMax;ki++)for(let pi=0;pi<pSteps2;pi++){const v=binomPMF(nMax,ki,(pi+0.5)/pSteps2);if(v>maxPMF)maxPMF=v;}
+    for(let ki=0;ki<=nMax;ki++){
+      for(let pi=0;pi<pSteps2;pi++){
+        const pv=(pi+0.5)/pSteps2,v=binomPMF(nMax,ki,pv);
+        const logMax2=Math.log10(maxPMF),logMin2=logMax2-3;
+        const logV=v>0?Math.log10(v):logMin2-1;
+        const t=Math.max(0,Math.min(1,(logV-logMin2)/(logMax2-logMin2)));
+        ctx.fillStyle=jet(t);
+        ctx.fillRect(PAD.l+ki*cellW,PAD.t+(pSteps2-1-pi)*cellH,cellW+0.5,cellH+0.5);
+      }
+    }
+    // CI boundaries
+    ctx.strokeStyle=isDark?'rgba(232,201,109,0.9)':'rgba(0,0,0,0.75)';ctx.lineWidth=2;
+    ['lo','hi'].forEach(side=>{
+      ctx.beginPath();
+      for(let ki=0;ki<=nMax;ki++){
+        const{lo,hi}=t3CpInterval(ki,nMax,t3conf);
+        const pv=side==='lo'?lo:hi;
+        const x0=PAD.l+ki*cellW,x1=x0+cellW,y=PAD.t+(1-pv)*plotH;
+        if(ki===0)ctx.moveTo(x0,y);else ctx.lineTo(x0,y);ctx.lineTo(x1,y);
+      }
+      ctx.stroke();
+    });
+    // highlight current k
+    const hx=PAD.l+t3k*cellW;
+    ctx.strokeStyle=isDark?'rgba(255,255,255,0.6)':'rgba(0,0,0,0.4)';
+    ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+    ctx.beginPath();ctx.moveTo(hx+cellW/2,PAD.t);ctx.lineTo(hx+cellW/2,PAD.t+plotH);ctx.stroke();
+    ctx.setLineDash([]);
+    // CI marks on current column
+    const yLo=PAD.t+(1-ciLo)*plotH,yHi=PAD.t+(1-ciHi)*plotH;
+    ctx.strokeStyle=isDark?'#e8c96d':'#c0392b';ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(hx,yLo);ctx.lineTo(hx+cellW,yLo);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(hx,yHi);ctx.lineTo(hx+cellW,yHi);ctx.stroke();
+    // true p line
+    const yTrue=PAD.t+(1-t3trueP)*plotH;
+    ctx.strokeStyle=isDark?'rgba(109,191,232,0.85)':'rgba(26,107,138,0.85)';
+    ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+    ctx.beginPath();ctx.moveTo(PAD.l,yTrue);ctx.lineTo(PAD.l+plotW,yTrue);ctx.stroke();
+    ctx.setLineDash([]);
+    // axes
+    const axCol=isDark?'#8892aa':'#5a5040';
+    ctx.fillStyle=axCol;ctx.font='11px DM Mono, monospace';ctx.textAlign='center';
+    for(let ki=0;ki<=nMax;ki++){if(nMax>20&&ki%5!==0)continue;ctx.fillText(ki,PAD.l+(ki+0.5)*cellW,H-PAD.b+18);}
+    ctx.fillStyle=isDark?'#aab0c8':'#7a7060';
+    ctx.fillText('k  (heads observed)',PAD.l+plotW/2,H-6);
+    ctx.textAlign='right';
+    for(let t=0;t<=10;t++){
+      const pv=t/10,y=PAD.t+(1-pv)*plotH;
+      ctx.fillStyle=axCol;ctx.fillText(pv.toFixed(1),PAD.l-7,y+4);
+      ctx.strokeStyle=isDark?'rgba(255,255,255,0.04)':'rgba(0,0,0,0.06)';
+      ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(PAD.l+plotW,y);ctx.stroke();
+    }
+    ctx.save();ctx.translate(14,PAD.t+plotH/2);ctx.rotate(-Math.PI/2);
+    ctx.textAlign='center';ctx.fillStyle=isDark?'#aab0c8':'#7a7060';
+    ctx.fillText('p  (true probability)',0,0);ctx.restore();
+    // colorbar
+    const cbX=W-PAD.r+12,cbY=PAD.t,cbW=14,cbH=plotH;
+    for(let i=0;i<cbH;i++){const t=(1-i/cbH);ctx.fillStyle=jet(t);ctx.fillRect(cbX,cbY+i,cbW,1);}
+    ctx.strokeStyle=isDark?'#2a2f45':'#ccc';ctx.lineWidth=1;ctx.strokeRect(cbX,cbY,cbW,cbH);
+    ctx.fillStyle=axCol;ctx.textAlign='left';ctx.font='10px DM Mono, monospace';
+    ctx.fillText('1',cbX+cbW+3,cbY+10);ctx.fillText('10⁻¹',cbX+cbW+3,cbY+cbH*0.33);
+    ctx.fillText('10⁻²',cbX+cbW+3,cbY+cbH*0.66);ctx.fillText('10⁻³',cbX+cbW+3,cbY+cbH-4);
+  };
+
+  window.addEventListener('resize',()=>{if(document.getElementById('tab3').classList.contains('active')){t3Update();if(t3McResults.length>0)t3DrawMC();}});
+  t3Update();t3DrawMC();
+})();
+</script>
+</body>
+</html>
