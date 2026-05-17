@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Statistical Methods Suite</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:wght@400;700&family=IBM+Plex+Sans:wght@300;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:wght@400;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;1,8..60,300&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════
    THEME VARIABLES
@@ -30,15 +30,13 @@
   --tab-border: #2a2f45;
   --toggle-bg: #2a2f45;
   --toggle-knob: #e8c96d;
-  --header-border: #2a2f45;
   --run-btn-bg: #e8c96d;
   --run-btn-text: #0d0f14;
   --run-btn-hover: #d4ae50;
   --seismo-bg: #000;
+  --hist-bg: #1c2030;
   --badge-in-bg: rgba(109,191,232,0.15);
   --badge-out-bg: rgba(232,109,138,0.15);
-  --canvas-bg: #1c2030;
-  --mc-canvas-bg: #1c2030;
 }
 
 [data-theme="light"] {
@@ -58,15 +56,13 @@
   --tab-border: #d8d0be;
   --toggle-bg: #d8d0be;
   --toggle-knob: #1a1612;
-  --header-border: #1a1612;
   --run-btn-bg: #1a1612;
   --run-btn-text: #f5f2eb;
   --run-btn-hover: #c0392b;
-  --seismo-bg: #0a0a0a;
+  --seismo-bg: #f5f2eb;
+  --hist-bg: #f0ece2;
   --badge-in-bg: rgba(26,107,138,0.12);
   --badge-out-bg: rgba(192,57,43,0.12);
-  --canvas-bg: #f0ece2;
-  --mc-canvas-bg: #f0ece2;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -151,7 +147,6 @@ body {
   margin: 1.2rem auto 0;
   padding: 0 2rem;
   display: flex;
-  gap: 0;
   border-bottom: 2px solid var(--tab-border);
 }
 
@@ -568,7 +563,7 @@ canvas { display: block; border-radius: 6px; width: 100%; }
 .t1-freq-wrapper {
   flex-grow: 1;
   position: relative;
-  background: var(--seismo-bg);
+  background: var(--hist-bg);
   border-radius: 6px;
   border: 1px solid var(--border);
   overflow: hidden;
@@ -838,21 +833,340 @@ label { font-size: 0.71rem; color: var(--muted); letter-spacing: 0.06em; }
   margin-top: 0.3rem;
   text-transform: uppercase;
 }
+
+/* ═══════════════════════════════════════════════════
+   TAB 4 — INTERVALS AS BETS (scoped .iab styles)
+═══════════════════════════════════════════════════ */
+/* ── Scoped styles for Tab 4 — all prefixed with .iab ── */
+.iab {
+  --iab-bg: #0d0f14;
+  --iab-surface: #13161e;
+  --iab-surface2: #1a1e2a;
+  --iab-border: #252a38;
+  --iab-border2: #303650;
+  --iab-text: #c8cfe0;
+  --iab-text-dim: #5a6080;
+  --iab-text-muted: #3a4060;
+  --iab-heading: #e8eaf5;
+  --iab-freq: #e8a838;
+  --iab-freq-dim: rgba(232,168,56,0.15);
+  --iab-bayes: #38c8e8;
+  --iab-bayes-dim: rgba(56,200,232,0.15);
+  --iab-win: #4ecb8a;
+  --iab-lose: #e85050;
+  --iab-reveal: #c87ae8;
+  --iab-gold: #c8a838;
+  --iab-mono: 'DM Mono', monospace;
+  --iab-display: 'Playfair Display', Georgia, serif;
+  --iab-body: 'Source Serif 4', Georgia, serif;
+  --iab-pnl-col: 160px;
+  font-family: var(--iab-body);
+  font-size: inherit;
+  line-height: inherit;
+  color: var(--iab-text);
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  position: relative;
+}
+.iab.iab-pro-cols { --iab-pnl-col: 100px; }
+
+/* Light-mode overrides — triggered by [data-theme="light"] on <html> */
+[data-theme="light"] .iab {
+  --iab-bg:       #f5f2eb;
+  --iab-surface:  #ffffff;
+  --iab-surface2: #ede9df;
+  --iab-border:   #d4cfc4;
+  --iab-border2:  #b8b0a0;
+  --iab-text:     #1a1612;
+  --iab-text-dim: #6b6458;
+  --iab-text-muted: #9a9080;
+  --iab-heading:  #1a1612;
+  --iab-freq:     #b87010;
+  --iab-freq-dim: rgba(184,112,16,0.12);
+  --iab-bayes:    #0878a0;
+  --iab-bayes-dim: rgba(8,120,160,0.12);
+  --iab-win:      #1e7a46;
+  --iab-lose:     #c03030;
+  --iab-reveal:   #7a30b8;
+  --iab-gold:     #8a6a00;
+}
+
+/* Modal — CSS classes so colours can be variable-driven */
+.iab-modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.82);
+  z-index: 1000;
+  overflow-y: auto;
+  padding: 40px 20px;
+  /* carry dark-mode tokens so variables resolve inside the modal */
+  --iab-bg:       #0d0f14;
+  --iab-surface:  #13161e;
+  --iab-surface2: #1a1e2a;
+  --iab-border:   #252a38;
+  --iab-border2:  #303650;
+  --iab-text:     #c8cfe0;
+  --iab-text-dim: #5a6080;
+  --iab-text-muted: #3a4060;
+  --iab-freq:     #e8a838;
+  --iab-bayes:    #38c8e8;
+  --iab-win:      #4ecb8a;
+  --iab-lose:     #e85050;
+  --iab-reveal:   #c87ae8;
+  --iab-gold:     #c8a838;
+}
+[data-theme="light"] .iab-modal-backdrop {
+  background: rgba(80,70,60,0.65);
+  --iab-bg:       #f5f2eb;
+  --iab-surface:  #ffffff;
+  --iab-surface2: #ede9df;
+  --iab-border:   #d4cfc4;
+  --iab-border2:  #b8b0a0;
+  --iab-text:     #1a1612;
+  --iab-text-dim: #6b6458;
+  --iab-text-muted: #9a9080;
+  --iab-freq:     #b87010;
+  --iab-bayes:    #0878a0;
+  --iab-win:      #1e7a46;
+  --iab-lose:     #c03030;
+  --iab-reveal:   #7a30b8;
+  --iab-gold:     #8a6a00;
+}
+.iab-modal-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  background: var(--iab-surface);
+  border: 1px solid var(--iab-border2);
+  padding: 28px 32px;
+  font-family: 'DM Mono', monospace;
+  color: var(--iab-text);
+}
+.iab-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--iab-border);
+  padding-bottom: 14px;
+}
+.iab-modal-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--iab-text-muted);
+  margin-bottom: 4px;
+}
+.iab-modal-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  color: var(--iab-text);
+}
+.iab-modal-close {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border: 1px solid var(--iab-border2);
+  color: var(--iab-text-dim);
+  background: transparent;
+  cursor: pointer;
+  padding: 6px 14px;
+}
+.iab-modal-close:hover { color: var(--iab-text); border-color: var(--iab-text-dim); }
+.iab-modal-status {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--iab-text-muted);
+  margin-bottom: 6px;
+}
+.iab-modal-progress-track {
+  height: 2px;
+  background: var(--iab-border);
+  margin-bottom: 16px;
+}
+.iab-modal-progress-fill {
+  height: 100%;
+  background: var(--iab-gold);
+  width: 0%;
+  transition: width 0.2s;
+}
+.iab-modal-demo-row {
+  display: grid;
+  grid-template-columns: 24px 1fr 90px 90px 60px;
+  gap: 8px;
+  padding: 3px 8px;
+  border-bottom: 1px solid var(--iab-border);
+  font-size: 0.75rem;
+  color: var(--iab-text);
+}
+.iab-modal-hist-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 12px;
+}
+.iab-modal-hist-label {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.iab-modal-hist-canvas {
+  width: 100%;
+  height: 160px;
+  border: 1px solid var(--iab-border);
+  display: block;
+}
+.iab-modal-demo-intro {
+  font-size: 0.8rem;
+  color: var(--iab-text-dim);
+  margin-bottom: 12px;
+}
+.iab-modal-section-head {
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--iab-text-muted);
+  margin-bottom: 10px;
+}
+.iab-modal-demo-section {
+  border-top: 1px solid var(--iab-border);
+  padding-top: 18px;
+  margin-top: 4px;
+}
+
+/* (grid texture removed — tab 4 now uses the suite background) */
+.iab > * { position: relative; z-index: 1; }
+
+.iab-header { margin-bottom: 0; padding-bottom: 16px; }
+.iab-header-top { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+.iab h1 { font-family: var(--iab-display); font-size: 1.9rem; font-weight: 700; color: var(--iab-heading); letter-spacing: -0.01em; margin:0; }
+.iab-subtitle { font-family: var(--iab-mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--iab-text-dim); margin-top: 6px; }
+.iab-header-row2 { display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px; flex-wrap: wrap; gap: 8px; }
+.iab-phase { font-family: var(--iab-mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--iab-text-muted); border: 1px solid var(--iab-border); padding: 4px 12px; white-space: nowrap; }
+.iab-phase span { color: var(--iab-gold); }
+
+.iab-progress-bar { height: 2px; background: var(--iab-border); margin-bottom: 20px; }
+.iab-progress-fill { height: 100%; background: linear-gradient(90deg, var(--iab-freq), var(--iab-bayes)); transition: width 0.3s ease; }
+
+.iab-panel { background: var(--iab-surface); border: 1px solid var(--iab-border); padding: 20px 22px; margin-bottom: 20px; }
+.iab-panel-label { font-family: var(--iab-mono); font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--iab-text-muted); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.iab-panel-label::after { content: ''; flex: 1; height: 1px; background: var(--iab-border); }
+
+.iab-stats-row { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 18px; }
+.iab-stat { display: flex; flex-direction: column; gap: 2px; }
+.iab-stat-label { font-family: var(--iab-mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--iab-text-dim); }
+.iab-stat-value { font-family: var(--iab-mono); font-size: 1rem; font-weight: 500; color: var(--iab-heading); }
+.iab-stat-value.iab-freq { color: var(--iab-freq); }
+.iab-stat-value.iab-bayes { color: var(--iab-bayes); }
+
+.iab-nl-wrap { position: relative; height: 120px; margin: 8px 0 4px; }
+#iab-numberline { width: 100%; height: 120px; display: block; }
+
+.iab-theta-peek { font-family: var(--iab-mono); font-size: 1rem; font-weight: 500; color: var(--iab-reveal); cursor: pointer; filter: blur(4px); transition: filter 0.2s; user-select: none; }
+.iab-theta-peek:hover { filter: blur(0px); }
+.iab-theta-peek.iab-revealed { filter: blur(0px); cursor: default; }
+
+.iab-pro-toggle { font-family: var(--iab-mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; padding: 4px 12px; border: 1px solid var(--iab-text-muted); color: var(--iab-text-muted); cursor: pointer; transition: all 0.15s; background: transparent; }
+.iab-pro-toggle:hover { border-color: var(--iab-text-dim); color: var(--iab-text); }
+.iab-pro-toggle.iab-pro-active { border-color: var(--iab-reveal); color: var(--iab-reveal); background: rgba(200,122,232,0.08); }
+.iab-debug-btn { font-family: var(--iab-mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; padding: 4px 12px; border: 1px solid #4a5060; color: #4a5060; cursor: pointer; background: transparent; }
+
+.iab-prior-selector { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
+.iab-prior-selector-label { font-family: var(--iab-mono); font-size: 9px; color: var(--iab-text-muted); letter-spacing: 0.1em; text-transform: uppercase; }
+.iab-prior-btn { font-family: var(--iab-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 10px; border: 1px solid var(--iab-border2); color: var(--iab-text-dim); cursor: pointer; transition: all 0.15s; background: transparent; }
+.iab-prior-btn.iab-active { border-color: var(--iab-bayes); color: var(--iab-bayes); background: var(--iab-bayes-dim); }
+.iab-prior-btn:hover:not(.iab-active) { border-color: var(--iab-text-dim); color: var(--iab-text); }
+
+.iab-agents-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+@media (max-width: 600px) { .iab-agents-row { grid-template-columns: 1fr; } }
+.iab-agent-card { background: var(--iab-surface); border: 1px solid var(--iab-border); padding: 16px 18px; }
+.iab-agent-card.iab-freq-card { border-top: 2px solid var(--iab-freq); }
+.iab-agent-card.iab-bayes-card { border-top: 2px solid var(--iab-bayes); }
+.iab-agent-name { font-family: var(--iab-mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 6px; }
+.iab-agent-name.iab-freq { color: var(--iab-freq); }
+.iab-agent-name.iab-bayes { color: var(--iab-bayes); }
+.iab-agent-wallet { font-family: var(--iab-mono); font-size: 1.5rem; font-weight: 500; color: var(--iab-heading); margin-bottom: 4px; }
+.iab-agent-wallet.iab-positive { color: var(--iab-win); }
+.iab-agent-wallet.iab-negative { color: var(--iab-lose); }
+.iab-agent-logic { font-size: 0.78rem; color: var(--iab-text-dim); font-style: italic; line-height: 1.4; }
+
+.iab-bet-panel { background: var(--iab-surface); border: 1px solid var(--iab-border2); border-left: 3px solid var(--iab-gold); padding: 20px 22px; margin-bottom: 20px; }
+.iab-bet-question { font-family: var(--iab-display); font-style: italic; font-size: 1.1rem; color: var(--iab-heading); margin-bottom: 14px; line-height: 1.4; }
+.iab-bet-odds-row { display: flex; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+.iab-odds-chip { font-family: var(--iab-mono); font-size: 0.82rem; padding: 6px 14px; border: 1px solid; background: transparent; }
+.iab-odds-chip.iab-freq { border-color: var(--iab-freq); color: var(--iab-freq); }
+.iab-odds-chip.iab-bayes { border-color: var(--iab-bayes); color: var(--iab-bayes); }
+.iab-payout-expl { font-size: 0.82rem; color: var(--iab-text-dim); margin-bottom: 14px; }
+.iab-payout-expl em { font-style: italic; }
+.iab-bet-buttons { display: flex; gap: 10px; }
+
+.iab-btn { font-family: var(--iab-mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; padding: 10px 20px; border: 1px solid; cursor: pointer; transition: all 0.15s; background: transparent; }
+.iab-btn-accept { border-color: var(--iab-win); color: var(--iab-win); }
+.iab-btn-accept:hover { background: var(--iab-win); color: #0d0f14; }
+.iab-btn-skip { border-color: var(--iab-text-muted); color: var(--iab-text-muted); }
+.iab-btn-skip:hover { border-color: var(--iab-text-dim); color: var(--iab-text-dim); }
+.iab-btn-primary { border-color: var(--iab-gold); color: var(--iab-gold); }
+.iab-btn-primary:hover { background: var(--iab-gold); color: #0d0f14; }
+.iab-btn-sim { border-color: var(--iab-reveal); color: var(--iab-reveal); }
+.iab-btn-sim:hover { background: var(--iab-reveal); color: #0d0f14; }
+.iab-btn-reset { border-color: var(--iab-text-muted); color: var(--iab-text-muted); }
+.iab-btn-reset:hover { border-color: var(--iab-text); color: var(--iab-text); }
+
+.iab-log-wrap { margin-bottom: 20px; }
+.iab-log-header { display: grid; grid-template-columns: 24px 1fr var(--iab-pnl-col) var(--iab-pnl-col) 60px; gap: 10px; font-family: var(--iab-mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--iab-text-muted); padding: 4px 10px; border-bottom: 1px solid var(--iab-border); margin-bottom: 4px; }
+.iab-bet-log { display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto; }
+@keyframes iabFadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+.iab-bet-row { display: grid; grid-template-columns: 24px 1fr var(--iab-pnl-col) var(--iab-pnl-col) 60px; gap: 10px; align-items: center; font-family: var(--iab-mono); font-size: 0.75rem; padding: 6px 10px; background: var(--iab-surface); border: 1px solid var(--iab-border); animation: iabFadeIn 0.2s ease; }
+.iab-pnl-win { color: var(--iab-win); }
+.iab-pnl-lose { color: var(--iab-lose); }
+.iab-pnl-neutral { color: var(--iab-text-dim); }
+
+.iab-result-panel { background: var(--iab-surface); border: 1px solid var(--iab-border); border-top: 2px solid var(--iab-reveal); padding: 20px 22px; margin-bottom: 20px; display: none; }
+.iab-result-panel.iab-visible { display: block; }
+.iab-result-title { font-family: var(--iab-display); font-size: 1.2rem; color: var(--iab-reveal); margin-bottom: 12px; }
+.iab-result-summary { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 16px; }
+.iab-result-agent { flex: 1; min-width: 140px; }
+.iab-result-agent-name { font-family: var(--iab-mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 4px; }
+.iab-result-agent-pnl { font-family: var(--iab-mono); font-size: 1.6rem; font-weight: 500; }
+.iab-controls-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+
+.iab-sim-panel { background: var(--iab-surface); border: 1px solid var(--iab-border); padding: 20px 22px; margin-bottom: 20px; display: none; }
+.iab-sim-panel.iab-visible { display: block; }
+.iab-sim-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 14px 0; }
+@media (max-width: 600px) { .iab-sim-charts { grid-template-columns: 1fr; } }
+.iab-sim-chart-wrap { display: flex; flex-direction: column; gap: 6px; }
+.iab-sim-chart-title { font-family: var(--iab-mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; }
+.iab-sim-chart-title.iab-freq { color: var(--iab-freq); }
+.iab-sim-chart-title.iab-bayes { color: var(--iab-bayes); }
+.iab-sim-hist { width: 100%; height: 160px; display: block; border: 1px solid var(--iab-border); }
+.iab-sim-stats-row { display: flex; gap: 20px; flex-wrap: wrap; font-family: var(--iab-mono); font-size: 0.8rem; }
+.iab-sim-stat { display: flex; flex-direction: column; gap: 2px; }
+.iab-sim-stat-label { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--iab-text-muted); }
+
+.iab-annotation { background: var(--iab-surface2); border: 1px solid var(--iab-border); border-left: 3px solid var(--iab-text-dim); padding: 18px 20px; margin-bottom: 20px; font-size: 0.88rem; color: var(--iab-text-dim); line-height: 1.65; }
+.iab-annotation-title { font-family: var(--iab-mono); font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--iab-text-muted); margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; }
+.iab-annotation em { font-style: italic; color: var(--iab-text); }
+.iab-annotation strong { font-weight: 600; color: var(--iab-text); }
+.iab-legend { font-family: var(--iab-mono); font-size: 9px; color: var(--iab-text-muted); margin-top: 4px; display: flex; gap: 20px; flex-wrap: wrap; }
+.iab-hidden { display: none !important; }
 </style>
 </head>
 <body>
 
 <!-- ── TOP BAR ── -->
 <div class="top-bar">
-  <div class="suite-title">Statistical <span>Methods</span> Suite</div>
-  <label class="theme-toggle">
-    <span id="theme-label">LIGHT</span>
+  <div class="suite-title" id="suite-title">Statistical <span>Methods</span> Suite</div>
+  <div class="theme-toggle">
     <label class="theme-switch">
       <input type="checkbox" id="theme-toggle-input">
       <div class="theme-track"></div>
     </label>
-    <span>DARK</span>
-  </label>
+    <span id="theme-label">DARK</span>
+  </div>
 </div>
 
 <!-- ── TAB NAV ── -->
@@ -860,6 +1174,7 @@ label { font-size: 0.71rem; color: var(--muted); letter-spacing: 0.06em; }
   <button class="tab-btn active" data-tab="tab1">Random Process</button>
   <button class="tab-btn" data-tab="tab2">CP via Monte Carlo</button>
   <button class="tab-btn" data-tab="tab3">CP Interval</button>
+  <button class="tab-btn" data-tab="tab4">Intervals as Bets</button>
 </nav>
 
 <!-- ══════════════════════════════════════════════════════════
@@ -926,9 +1241,9 @@ label { font-size: 0.71rem; color: var(--muted); letter-spacing: 0.06em; }
           <div id="t1-fit-stats-overlay"></div>
           <div id="t1-freq-container"></div>
           <svg id="t1-fit-svg" preserveAspectRatio="none">
-            <path id="t1-pathBinomial" class="t1-fit-line" style="stroke:#e8c96d;opacity:0"/>
-            <path id="t1-pathPoisson"  class="t1-fit-line" style="stroke:#6dbfe8;opacity:0"/>
-            <path id="t1-pathGaussian" class="t1-fit-line" style="stroke:#e86d8a;opacity:0"/>
+            <path id="t1-pathBinomial" class="t1-fit-line" style="opacity:0"/>
+            <path id="t1-pathPoisson"  class="t1-fit-line" style="opacity:0"/>
+            <path id="t1-pathGaussian" class="t1-fit-line" style="opacity:0"/>
           </svg>
           <div id="t1-empty-msg">Waiting for data…</div>
         </div>
@@ -1186,15 +1501,60 @@ const themeInput = document.getElementById('theme-toggle-input');
 // Start dark
 html.setAttribute('data-theme', 'dark');
 themeInput.checked = true;
+document.getElementById('theme-label').textContent = 'DARK';
 
 themeInput.addEventListener('change', () => {
-  html.setAttribute('data-theme', themeInput.checked ? 'dark' : 'light');
+  const isDark = themeInput.checked;
+  html.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.getElementById('theme-label').textContent = isDark ? 'DARK' : 'LIGHT';
   // Redraw canvases when theme changes
   if (t2SimData) t2Redraw();
   t3Update();
   if (t3McResults.length > 0) t3DrawMC();
   t1InitCanvas();
+  if (window.t1RenderHistogram) t1RenderHistogram();
+  // Tab 4
+  if (iab_state.ci) iabDrawNL(iab_state.phase === 'done');
+  else iabDrawNL(false, true);
+  if (iab_simStore.freq.length > 0) {
+    const mean = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+    const median = arr => { const s=[...arr].sort((a,b)=>a-b),m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; };
+    iabDrawHist('iab-hist-freq', iab_simStore.freq, 'var(--iab-freq)', median(iab_simStore.freq));
+    iabDrawHist('iab-hist-bayes', iab_simStore.bayes, 'var(--iab-bayes)', median(iab_simStore.bayes));
+  }
 });
+
+
+// ─── Easter egg — click suite title 5 times rapidly ───────────────────────
+(function(){
+  let clicks = 0, timer = null, active = false;
+  const el = document.getElementById('suite-title');
+  el.style.cursor = 'default';
+
+  el.addEventListener('click', () => {
+    if (active) return;
+    clicks++;
+    clearTimeout(timer);
+    timer = setTimeout(() => { clicks = 0; }, 800);
+
+    if (clicks >= 5) {
+      clicks = 0;
+      active = true;
+      el.innerHTML = 'Stochastic <span>Chaos</span> Engine by ve&#246;';
+      el.style.transition = 'opacity 0.3s';
+      el.style.opacity = '0';
+      setTimeout(() => { el.style.opacity = '1'; }, 50);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => {
+          el.innerHTML = 'Statistical <span>Methods</span> Suite';
+          el.style.opacity = '1';
+          active = false;
+        }, 300);
+      }, 3000);
+    }
+  });
+})();
 
 // ─── Tab switching ─────────────────────────────────────────────────────────
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -1277,17 +1637,39 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     overlay.classList.add('active');
   }
 
+  function t1GetTheme() {
+    const cs = getComputedStyle(document.documentElement);
+    const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+    return {
+      bg:       cs.getPropertyValue('--seismo-bg').trim() || '#000',
+      histBg:   cs.getPropertyValue('--hist-bg').trim()   || '#1c2030',
+      baseline: isDark ? '#1e293b'  : '#b0a898',
+      marker:   isDark ? '#e8c96d'  : '#8a6800',
+      hit:      isDark ? '#22c55e'  : '#1a6b2a',
+      miss:     isDark ? '#3b82f6'  : '#1a50a0',
+      barFill:  isDark ? 'rgba(109,191,232,0.45)' : 'rgba(26,107,138,0.35)',
+      barBorder:isDark ? 'rgba(109,191,232,0.7)'  : 'rgba(26,107,138,0.6)',
+      barEmpty: isDark ? 'rgba(100,100,120,0.2)'  : 'rgba(160,150,130,0.2)',
+      pLow:     cs.getPropertyValue('--accent3').trim() || '#e86d8a',
+      pHigh:    cs.getPropertyValue('--accent2').trim() || '#6dbfe8',
+      accent:   cs.getPropertyValue('--accent').trim()  || '#e8c96d',
+      accent2:  cs.getPropertyValue('--accent2').trim() || '#6dbfe8',
+      accent3:  cs.getPropertyValue('--accent3').trim() || '#e86d8a',
+    };
+  }
+
   function t1InitCanvas() {
     seismoCanvas.width  = container.clientWidth  || 400;
     seismoCanvas.height = container.clientHeight || 300;
     canvasCtx = seismoCanvas.getContext('2d');
-    canvasCtx.fillStyle = '#000';
+    canvasCtx.fillStyle = t1GetTheme().bg;
     canvasCtx.fillRect(0,0,seismoCanvas.width,seismoCanvas.height);
   }
   window.t1InitCanvas = t1InitCanvas;
+  window.t1RenderHistogram = () => renderHistogram();
 
   function drawBaseline() {
-    canvasCtx.strokeStyle='#1e293b';
+    canvasCtx.strokeStyle=t1GetTheme().baseline;
     canvasCtx.setLineDash([5,5]);
     canvasCtx.beginPath();
     canvasCtx.moveTo(0,seismoCanvas.height/2);
@@ -1336,15 +1718,16 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   }
 
   function updateSeismo(isHit,currentStep,n) {
+    const theme=t1GetTheme();
     const h=seismoCanvas.height,w=seismoCanvas.width,centerY=h/2,x=w-scrollSpeed;
     const imageData=canvasCtx.getImageData(scrollSpeed,0,w-scrollSpeed,h);
     canvasCtx.clearRect(0,0,w,h);
-    canvasCtx.fillStyle='black';
+    canvasCtx.fillStyle=theme.bg;
     canvasCtx.fillRect(0,0,w,h);
     canvasCtx.putImageData(imageData,0,0);
     drawBaseline();
     canvasCtx.lineWidth=1;
-    canvasCtx.strokeStyle='#e8c96d';
+    canvasCtx.strokeStyle=theme.marker;
     if(currentStep===1||currentStep===n){
       canvasCtx.beginPath();
       canvasCtx.moveTo(x,centerY-60);canvasCtx.lineTo(x,centerY-50);
@@ -1357,7 +1740,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
       canvasCtx.stroke();
     }
     canvasCtx.beginPath();
-    canvasCtx.strokeStyle=isHit?'#22c55e':'#3b82f6';
+    canvasCtx.strokeStyle=isHit?theme.hit:theme.miss;
     canvasCtx.lineWidth=isHit?3:2;
     if(isHit){canvasCtx.moveTo(x,centerY-40);canvasCtx.lineTo(x,centerY+40);}
     else{canvasCtx.moveTo(x-scrollSpeed,centerY);canvasCtx.lineTo(x,centerY);}
@@ -1389,8 +1772,9 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
       wrapper.style.cssText='flex-grow:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative;';
       const bar=document.createElement('div');
       bar.style.cssText=`width:100%;border-radius:2px 2px 0 0;transition:height 0.3s;height:${hPct}%;`;
-      bar.style.background=freq>0?'rgba(109,191,232,0.45)':'rgba(100,100,120,0.2)';
-      if(freq>0)bar.style.borderTop='1px solid rgba(109,191,232,0.7)';
+      const theme=t1GetTheme();
+      bar.style.background=freq>0?theme.barFill:theme.barEmpty;
+      if(freq>0)bar.style.borderTop=`1px solid ${theme.barBorder}`;
       const label=document.createElement('div');
       label.style.cssText='font-size:9px;color:var(--muted);margin-top:2px;font-family:DM Mono,monospace;';
       label.textContent=i;
@@ -1442,24 +1826,29 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     const pGau=document.getElementById('t1-pathGaussian');
     fitStatsOverlay.innerHTML='';
     const createStatCard=(title,color,params,metrics)=>{
+      const theme=t1GetTheme();
       const card=document.createElement('div');
       card.className='t1-stat-badge';
       card.style.borderLeft=`3px solid ${color}`;
-      const pColor=metrics.pVal<0.05?'color:#e86d8a':'color:#6dbfe8';
+      const pColor=metrics.pVal<0.05?`color:${theme.pLow}`:`color:${theme.pHigh}`;
       card.innerHTML=`<div style="font-size:0.65rem;display:flex;justify-content:space-between;"><span style="color:${color};font-weight:500">${title}</span><div style="text-align:right"><div style="color:var(--muted)">χ²: ${metrics.chi2.toFixed(1)}</div><div style="${pColor};font-weight:500">p: ${metrics.pVal.toFixed(3)}</div></div></div><div style="font-size:0.60rem;color:var(--muted);margin-top:0.2rem;font-family:DM Mono,monospace">${params}</div>`;
       fitStatsOverlay.appendChild(card);
     };
+    const theme=t1GetTheme();
     if(fitBinomial.checked&&totalBlocks>2){
       pBin.setAttribute('d',generatePath(binomFn));pBin.style.opacity=0.85;
-      createStatCard('Binomial','#e8c96d',`n=${n} p=${p.toFixed(3)}`,calculateChiSquareMetrics(distribution,binomFn,numBins,1));
+      pBin.style.stroke=theme.accent;
+      createStatCard('Binomial',theme.accent,`n=${n} p=${p.toFixed(3)}`,calculateChiSquareMetrics(distribution,binomFn,numBins,1));
     } else pBin.style.opacity=0;
     if(fitPoisson.checked&&totalBlocks>2){
       pPoi.setAttribute('d',generatePath(poissonFn));pPoi.style.opacity=0.85;
-      createStatCard('Poisson','#6dbfe8',`λ=${lambda.toFixed(2)}`,calculateChiSquareMetrics(distribution,poissonFn,numBins,1));
+      pPoi.style.stroke=theme.accent2;
+      createStatCard('Poisson',theme.accent2,`λ=${lambda.toFixed(2)}`,calculateChiSquareMetrics(distribution,poissonFn,numBins,1));
     } else pPoi.style.opacity=0;
     if(fitGaussian.checked&&totalBlocks>2){
       pGau.setAttribute('d',generatePath(gaussianFn));pGau.style.opacity=0.85;
-      createStatCard('Gaussian','#e86d8a',`μ=${lambda.toFixed(1)} σ=${sigma.toFixed(2)}`,calculateChiSquareMetrics(distribution,gaussianFn,numBins,2));
+      pGau.style.stroke=theme.accent3;
+      createStatCard('Gaussian',theme.accent3,`μ=${lambda.toFixed(1)} σ=${sigma.toFixed(2)}`,calculateChiSquareMetrics(distribution,gaussianFn,numBins,2));
     } else pGau.style.opacity=0;
   }
 
@@ -1984,6 +2373,595 @@ window.t3DrawMC = t3DrawMC;
   window.addEventListener('resize',()=>{if(document.getElementById('tab3').classList.contains('active')){t3Update();if(t3McResults.length>0)t3DrawMC();}});
   t3Update();t3DrawMC();
 })();
+</script>
+
+
+<div id="tab4" class="tab-panel">
+  <div class="iab" id="iab-root">
+    <div class="tab-header" style="margin-bottom:0.8rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <h2>Intervals as <span>Bets</span></h2>
+        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+          <button id="iab-pro-toggle-btn" class="iab-pro-toggle" onclick="iabToggleProMode()">Pro Mode: OFF</button>
+          <button class="iab-debug-btn" onclick="iabRunDebugTest()" id="iab-debug-btn">[ DEBUG TEST ]</button>
+        </div>
+      </div>
+      <p>A game about what probability statements license · Forcing frequentists to the betting arena</p>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem;flex-wrap:wrap;gap:8px;">
+      <div class="iab-phase">Phase: <span id="iab-phase-label">Setup</span></div>
+      <div class="iab-progress-bar" style="flex:1;margin:0 0 0 1rem;"><div class="iab-progress-fill" id="iab-progress" style="width:0%"></div></div>
+    </div>
+
+    <div class="iab-panel">
+      <div class="iab-panel-label">This experiment</div>
+      <div class="iab-stats-row">
+        <div class="iab-stat"><div class="iab-stat-label">Sample size n</div><div class="iab-stat-value">25</div></div>
+        <div class="iab-stat"><div class="iab-stat-label">Known <span style="text-transform:none">σ</span></div><div class="iab-stat-value">10</div></div>
+        <div class="iab-stat"><div class="iab-stat-label">True θ (hover)</div><div class="iab-theta-peek" id="iab-stat-theta-peek">—</div></div>
+        <div class="iab-stat"><div class="iab-stat-label">Sample mean x̄</div><div class="iab-stat-value" id="iab-stat-xbar">—</div></div>
+        <div class="iab-stat"><div class="iab-stat-label" id="iab-label-ci">90% CI (Freq.)</div><div class="iab-stat-value iab-freq" id="iab-stat-ci">—</div></div>
+        <div class="iab-stat"><div class="iab-stat-label" id="iab-label-cri">90% CrI (Bayes)</div><div class="iab-stat-value iab-bayes" id="iab-stat-cri">—</div></div>
+      </div>
+      <div class="iab-nl-wrap"><canvas id="iab-numberline"></canvas></div>
+      <div class="iab-legend">
+        <span>· data points</span>
+        <span style="color:var(--iab-freq)" id="iab-legend-ci">■ 90% CI (Frequentist)</span>
+        <span style="color:var(--iab-bayes)" id="iab-legend-cri">■ 90% CrI (Bayesian)</span>
+        <span id="iab-theta-legend" style="color:var(--iab-reveal);display:none">✕ True θ</span>
+      </div>
+    </div>
+
+    <div class="iab-agents-row">
+      <div class="iab-agent-card iab-freq-card">
+        <div class="iab-agent-name iab-freq">The Frequentist</div>
+        <div class="iab-agent-wallet" id="iab-freq-wallet">$0.00</div>
+        <div class="iab-agent-logic" id="iab-freq-logic">"I know I shouldn't be betting at all…"</div>
+        <div class="iab-prior-selector">
+          <span class="iab-prior-selector-label">Strategy:</span>
+          <button class="iab-prior-btn iab-active" id="iab-freq-btn-simple"          onclick="iabSetFreq('simple')">Simple</button>
+          <button class="iab-prior-btn"             id="iab-freq-btn-sophisticated"   onclick="iabSetFreq('sophisticated')">Sophisticated</button>
+          <button class="iab-prior-btn"             id="iab-freq-btn-inversion"       onclick="iabSetFreq('inversion')">Test Inversion</button>
+          <button class="iab-prior-btn"             id="iab-freq-btn-confidence_dist" onclick="iabSetFreq('confidence_dist')">Confidence Dist.</button>
+        </div>
+      </div>
+      <div class="iab-agent-card iab-bayes-card">
+        <div class="iab-agent-name iab-bayes">The Bayesian</div>
+        <div class="iab-agent-wallet" id="iab-bayes-wallet">$0.00</div>
+        <div class="iab-agent-logic" id="iab-bayes-logic">"I use the posterior to price each bet."</div>
+        <div class="iab-prior-selector">
+          <span class="iab-prior-selector-label">Prior:</span>
+          <button class="iab-prior-btn iab-active" id="iab-prior-btn-flat"           onclick="iabSetPrior('flat')">Flat (uninformative)</button>
+          <button class="iab-prior-btn"             id="iab-prior-btn-informative_50" onclick="iabSetPrior('informative_50')">N(50, 10²)</button>
+          <button class="iab-prior-btn"             id="iab-prior-btn-informative_65" onclick="iabSetPrior('informative_65')">N(65, 12²)</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="iab-bet-area">
+      <div class="iab-bet-panel" id="iab-bet-panel">
+        <div class="iab-panel-label">Bet <span id="iab-bet-num">1</span> of 10</div>
+        <div class="iab-bet-question" id="iab-bet-question">Loading…</div>
+        <div class="iab-bet-odds-row">
+          <div class="iab-odds-chip iab-freq" id="iab-freq-odds">Freq. odds: —</div>
+          <div class="iab-odds-chip iab-bayes" id="iab-bayes-odds">Bayes odds: —</div>
+        </div>
+        <div class="iab-payout-expl" id="iab-payout-explanation"></div>
+        <div class="iab-bet-buttons">
+          <button class="iab-btn iab-btn-accept" onclick="iabPlaceBet()">Accept Both Bets →</button>
+          <button class="iab-btn iab-btn-skip"   onclick="iabSkipBet()">Skip</button>
+        </div>
+      </div>
+      <div id="iab-log-wrap" class="iab-log-wrap iab-hidden">
+        <div class="iab-log-header">
+          <span>#</span><span>Range</span>
+          <span style="color:var(--iab-freq)">Freq P&amp;L</span>
+          <span style="color:var(--iab-bayes)">Bayes P&amp;L</span>
+          <span>Outcome</span>
+        </div>
+        <div class="iab-bet-log" id="iab-bet-log"></div>
+      </div>
+    </div>
+
+    <div id="iab-start-area" style="display:flex;gap:10px;margin-bottom:20px;">
+      <button class="iab-btn iab-btn-primary" onclick="iabNewGame()">Run New Experiment →</button>
+    </div>
+
+    <div class="iab-result-panel" id="iab-result-panel">
+      <div class="iab-result-title">Round Complete — True θ = <span id="iab-result-theta-val">?</span> Revealed</div>
+      <div class="iab-result-summary">
+        <div class="iab-result-agent">
+          <div class="iab-result-agent-name" style="color:var(--iab-freq)">Frequentist P&amp;L</div>
+          <div class="iab-result-agent-pnl" id="iab-result-freq-pnl">—</div>
+        </div>
+        <div class="iab-result-agent">
+          <div class="iab-result-agent-name" style="color:var(--iab-bayes)">Bayesian P&amp;L</div>
+          <div class="iab-result-agent-pnl" id="iab-result-bayes-pnl">—</div>
+        </div>
+      </div>
+      <div class="iab-controls-row">
+        <button class="iab-btn iab-btn-primary" onclick="iabNewGame()">New Experiment →</button>
+        <button class="iab-btn iab-btn-sim"     onclick="iabRunSimulation()">Run 5,000 Simulations →</button>
+        <button class="iab-btn iab-btn-reset"   onclick="iabFullReset()">Full Reset</button>
+      </div>
+    </div>
+
+    <div class="iab-sim-panel" id="iab-sim-panel">
+      <div class="iab-panel-label" id="iab-sim-panel-label">Monte Carlo — 0 simulated rounds</div>
+      <div class="iab-sim-stats-row" id="iab-sim-stats-row" style="margin-bottom:12px;"></div>
+      <div class="iab-sim-charts">
+        <div class="iab-sim-chart-wrap">
+          <div class="iab-sim-chart-title iab-freq">Frequentist — cumulative P&amp;L distribution</div>
+          <canvas class="iab-sim-hist" id="iab-hist-freq"></canvas>
+        </div>
+        <div class="iab-sim-chart-wrap">
+          <div class="iab-sim-chart-title iab-bayes">Bayesian — cumulative P&amp;L distribution</div>
+          <canvas class="iab-sim-hist" id="iab-hist-bayes"></canvas>
+        </div>
+      </div>
+      <div style="font-family:var(--iab-mono);font-size:0.78rem;color:var(--iab-text-dim);margin-top:8px;">Each press adds 5,000 rounds. True θ ~ Uniform(40,60), samples ~ Normal(θ,10). Bet ranges: jittered near-partition of [x̄±4·SE] ordered centre-outward, plus [0,10] closer (excluded here). Calibration range [58,66] added per round to correct anchoring bias. Cleared by Full Reset or mode change.</div>
+    </div>
+
+    <div class="iab-annotation">
+      <div class="iab-annotation-title" onclick="iabToggleAnnotation()">
+        <span>The Dutch Book Argument</span>
+        <span id="iab-annotation-chevron" style="font-size:0.75rem;letter-spacing:0.1em;">▼ EXPAND</span>
+      </div>
+      <div id="iab-annotation-body" style="display:none;margin-top:14px;">
+        <p>A <strong>Dutch Book</strong> is a set of bets that guarantees the bettor a loss, regardless of the outcome — a sign of <em>incoherent</em> credences. De Finetti proved: an agent is immune to a Dutch Book if and only if their betting odds obey the probability axioms.</p>
+        <p style="margin-top:10px;"><strong>The Bayesian</strong> here is coherent by construction — odds follow the posterior directly. Over many bets, they should break even.</p>
+        <p style="margin-top:10px;" id="iab-annot-simple"></p>
+        <p style="margin-top:10px;"><strong>The Sophisticated Frequentist</strong> finds the highest CL α for which her α-CI fits inside [A,B], and bets at that α. Her prices are data-informed and vary by range. But in betting at α, she implicitly treats α as a probability that θ ∈ [A,B] — precisely what Frequentism forbids.</p>
+        <p style="margin-top:10px;"><strong>Test Inversion</strong> never refuses. She computes the <em>average</em> p-value of x̄ across all θ ∈ [A,B]. Her prices are continuous and data-informed, but she violates monotonicity: a wider range can get a <em>lower</em> price than a narrower one it contains. This incoherence is itself a lesson.</p>
+        <p style="margin-top:10px;"><strong>Confidence Distribution</strong> never refuses and satisfies monotonicity. Her prices are always coherent, continuous, and data-informed. But they are numerically identical to the Bayesian with a flat prior in every single bet — de Finetti's theorem made concrete.</p>
+        <p style="margin-top:10px;color:var(--iab-text-muted);font-size:0.83rem;"><em>Key question for seminar:</em> Does the Frequentist's refusal to price individual intervals protect them from a Dutch Book — or expose them to one?</p>
+        <p style="margin-top:14px;font-size:0.83rem;border-top:1px dashed var(--iab-border);padding-top:12px;"><strong>Caveats:</strong> The Dutch Book here is trained against Test Inversion's specific incoherence but offered to all agents — a pedagogical simplification. A true Dutch Book would be tailored to each agent's announced prices. The descriptions are not philosophically rigorous — the goal is to develop intuition.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- IAB Debug modal (fixed overlay) -->
+<div id="iab-debug-modal" class="iab-modal-backdrop">
+  <div class="iab-modal-inner">
+    <div class="iab-modal-header">
+      <div>
+        <div class="iab-modal-eyebrow">Debug Test Suite</div>
+        <div class="iab-modal-title">14 Combinations · 100k Rounds Each</div>
+      </div>
+      <button class="iab-modal-close" onclick="document.getElementById('iab-debug-modal').style.display='none'">X CLOSE</button>
+    </div>
+    <div class="iab-modal-status" id="iab-debug-status">Ready.</div>
+    <div class="iab-modal-progress-track">
+      <div class="iab-modal-progress-fill" id="iab-debug-progress-fill"></div>
+    </div>
+    <div id="iab-debug-table-wrap" style="margin-bottom:24px;overflow-x:auto;"></div>
+    <div id="iab-debug-demo-wrap"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// TAB 4 — INTERVALS AS BETS  (all globals prefixed iab_)
+// ═══════════════════════════════════════════════════════════
+const IAB_SIGMA = 10, IAB_N = 25, IAB_SE = IAB_SIGMA / Math.sqrt(IAB_N);
+const IAB_CONF_LEVEL = 0.90;
+const IAB_Z_CONF = (function(p){
+  const a=[2.515517,0.802853,0.010328], b=[1.432788,0.189269,0.001308];
+  const t=Math.sqrt(-2*Math.log(p<=0.5?p:1-p));
+  return (p>=0.5?1:-1)*(t-(a[0]+a[1]*t+a[2]*t*t)/(1+b[0]*t+b[1]*t*t+b[2]*t*t*t));
+})(1-(1-IAB_CONF_LEVEL)/2);
+const IAB_CONF_PRICE = IAB_CONF_LEVEL;
+
+function iabRandn(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function iabNormalCDF(x,mu,sigma){const z=(x-mu)/sigma,t=1/(1+0.2316419*Math.abs(z)),d=0.3989422820*Math.exp(-z*z/2),p=d*t*(0.3193815+t*(-0.3565638+t*(1.7814779+t*(-1.8212560+t*1.3302744))));return z>=0?1-p:p;}
+function iabPostProb(a,b,mu,sigma){return iabNormalCDF(b,mu,sigma)-iabNormalCDF(a,mu,sigma);}
+function iabBetPnl(p,outcome,stake=10){return iab_proMode?(outcome?stake*(1-p)/p:-stake):(outcome?stake-p*stake:-p*stake);}
+
+const IAB_PRIORS={
+  flat:{label:'Flat (uninformative)',voice:'I use a flat, uninformative prior — I let the data speak entirely. My posterior is Normal(x̄, SE), and I price each bet directly from that.',postMu:xb=>xb,postSigma:()=>IAB_SE},
+  informative_50:{label:'N(50, 10²)',voice:'I use a weakly informative prior N(50, 10²) — centred at the midpoint of the plausible range for θ. The data strongly dominate (25× the prior precision). The posterior is barely distinguishable from the flat case.',postMu:xb=>{const pP=1/100,dP=IAB_N/(IAB_SIGMA**2),tP=pP+dP;return(pP*50+dP*xb)/tP;},postSigma:()=>Math.sqrt(1/(1/100+IAB_N/(IAB_SIGMA**2)))},
+  informative_65:{label:'N(65, 12²)',voice:'I have a prior belief that θ is around 65, encoded as N(65, 12²). The data still dominate but my belief pulls the posterior noticeably above x̄. Watch the long-run simulation to see the damage.',postMu:xb=>{const pP=1/144,dP=IAB_N/(IAB_SIGMA**2),tP=pP+dP;return(pP*65+dP*xb)/tP;},postSigma:()=>Math.sqrt(1/(1/144+IAB_N/(IAB_SIGMA**2)))}
+};
+
+const IAB_FREQUENTISTS={
+  simple:{label:'Simple',voice:`I know I shouldn't be betting at all. But since you force me to: if your proposed range fully contains my ${Math.round(IAB_CONF_LEVEL*100)}% CI, I will bet at p = ${IAB_CONF_LEVEL}. If not, I refuse to play. That is the most honest I can be.`,price:(a,b,xb,ci)=>(a<=ci[0]&&ci[1]<=b)?IAB_CONF_PRICE:null},
+  sophisticated:{label:'Sophisticated',voice:'I ask: what is the highest confidence level α for which my α-CI fits entirely within [A,B]? I compute z* = min((x̄−A)/SE, (B−x̄)/SE) and convert to coverage. If x̄ lies outside [A,B], I refuse entirely.',price:(a,b,xb)=>{const z=Math.min((xb-a)/IAB_SE,(b-xb)/IAB_SE);if(z<1e-9)return null;return Math.min(0.999,Math.max(0.001,2*iabNormalCDF(z,0,1)-1));}},
+  inversion:{label:'Test Inversion',voice:'I never refuse. For any range [A,B], I compute the average p-value of my observed x̄ across all θ ∈ [A,B]: ∫_A^B 2(1−Φ(|x̄−θ|/SE)) dθ / (B−A). Wide ranges are penalised because most θ values in them are far from x̄.',price:(a,b,xb)=>{const F=t=>2*IAB_SE*(t*(1-iabNormalCDF(t,0,1))-Math.exp(-t*t/2)/Math.sqrt(2*Math.PI));const w=b-a;if(w<=0)return null;let num;if(xb>=a&&xb<=b){num=F((xb-a)/IAB_SE)+F((b-xb)/IAB_SE)-2*F(0);}else if(xb<a){num=F((b-xb)/IAB_SE)-F((a-xb)/IAB_SE);}else{num=F((xb-a)/IAB_SE)-F((xb-b)/IAB_SE);}return Math.min(0.999,Math.max(0.001,num/w));}},
+  confidence_dist:{label:'Confidence Distribution',voice:'I never refuse. I use H(θ)=Φ((θ−x̄)/SE) and price [A,B] as H(B)−H(A). This satisfies monotonicity and is continuous everywhere. But my prices are numerically identical to the Bayesian with a flat prior. I will let you decide what that means.',price:(a,b,xb)=>Math.min(0.999,Math.max(0.001,iabNormalCDF((b-xb)/IAB_SE,0,1)-iabNormalCDF((a-xb)/IAB_SE,0,1)))}
+};
+
+let iab_selectedPrior='flat', iab_selectedFreq='simple', iab_proMode=false;
+let iab_simStore={freq:[],bayes:[]};
+let iab_state={phase:'idle',trueTheta:null,xbar:null,samples:[],ci:null,cri:null,postMu:null,postSigma:null,betRanges:[],bets:[],betIndex:0,freqTotal:0,bayesTotal:0,currentBet:null};
+
+function iabToggleProMode(){
+  iab_proMode=!iab_proMode;
+  const btn=document.getElementById('iab-pro-toggle-btn');
+  btn.textContent=iab_proMode?'Pro Mode: ON':'Pro Mode: OFF';
+  btn.classList.toggle('iab-pro-active',iab_proMode);
+  document.getElementById('iab-root').classList.toggle('iab-pro-cols',iab_proMode);
+  iabUpdatePayoutExpl(); iabClearSimStore();
+  if(iab_state.phase==='betting'||iab_state.phase==='done')iabNewGame();
+}
+function iabUpdatePayoutExpl(){
+  document.getElementById('iab-payout-explanation').innerHTML=iab_proMode
+    ?'<em>Pro (odds-based):</em> each agent stakes $10. If correct, they win <em>$10 × (1−p)/p</em>; if wrong they forfeit $10.'
+    :'<em>Standard:</em> each agent bids <em>p × $10</em>. If θ is IN they receive $10 payout (net = $10 − bid); if OUT they lose their bid. You are the bookie.';
+}
+
+function iabSetFreq(key){
+  iab_selectedFreq=key;
+  Object.keys(IAB_FREQUENTISTS).forEach(k=>document.getElementById('iab-freq-btn-'+k).classList.toggle('iab-active',k===key));
+  document.getElementById('iab-freq-logic').textContent='"'+IAB_FREQUENTISTS[key].voice+'"';
+  iabClearSimStore();
+  if(iab_state.xbar!==null&&iab_state.phase==='betting')iabRenderBet();
+}
+function iabSetPrior(key){
+  iab_selectedPrior=key;
+  Object.keys(IAB_PRIORS).forEach(k=>document.getElementById('iab-prior-btn-'+k).classList.toggle('iab-active',k===key));
+  document.getElementById('iab-bayes-logic').textContent='"'+IAB_PRIORS[key].voice+'"';
+  iabClearSimStore();
+  if(iab_state.xbar!==null){
+    const p=IAB_PRIORS[key];iab_state.postMu=p.postMu(iab_state.xbar);iab_state.postSigma=p.postSigma();
+    iab_state.cri=[iab_state.postMu-IAB_Z_CONF*iab_state.postSigma,iab_state.postMu+IAB_Z_CONF*iab_state.postSigma];
+    iabUpdateStats();iabDrawNL(iab_state.phase==='done');
+    if(iab_state.phase==='betting')iabRenderBet();
+  }
+}
+
+function iabGenRanges(xb,tt){
+  const lo=xb-4*IAB_SE,hi=xb+4*IAB_SE,jit=()=>(Math.random()-0.5)*0.8*IAB_SE;
+  const raw=[];for(let i=1;i<=8;i++)raw.push(lo+i*(hi-lo)/9+jit());raw.sort((a,b)=>a-b);
+  const bdry=[lo,...raw,hi],pieces=[];for(let i=0;i<9;i++)pieces.push([bdry[i],bdry[i+1]]);
+  pieces.sort((a,b)=>Math.abs((a[0]+a[1])/2-xb)-Math.abs((b[0]+b[1])/2-xb));
+  const c7=pieces.slice(0,7).map(([a,b])=>{const ra=+a.toFixed(2),rb=+b.toFixed(2);return ra>=rb?[+(xb-IAB_SE).toFixed(2),+(xb+IAB_SE).toFixed(2)]:[ra,rb];});
+  const eL=Math.random()*0.3*IAB_SE,eR=Math.random()*0.3*IAB_SE;
+  return[...c7.slice(0,3),[+(xb-IAB_Z_CONF*IAB_SE-eL).toFixed(2),+(xb+IAB_Z_CONF*IAB_SE+eR).toFixed(2)],[+(xb-IAB_SE).toFixed(2),+(xb+IAB_SE).toFixed(2)],...c7.slice(3,7),[0,10]];
+}
+
+function iabNewGame(){
+  const tt=40+Math.random()*20;const smp=[];let sum=0;
+  for(let i=0;i<IAB_N;i++){const s=tt+IAB_SIGMA*iabRandn();smp.push(s);sum+=s;}
+  const xb=sum/IAB_N,ci=[xb-IAB_Z_CONF*IAB_SE,xb+IAB_Z_CONF*IAB_SE];
+  const p=IAB_PRIORS[iab_selectedPrior],pMu=p.postMu(xb),pSg=p.postSigma();
+  iab_state={phase:'betting',trueTheta:tt,xbar:xb,samples:smp,ci,cri:[pMu-IAB_Z_CONF*pSg,pMu+IAB_Z_CONF*pSg],postMu:pMu,postSigma:pSg,betRanges:iabGenRanges(xb,tt),bets:[],betIndex:0,freqTotal:0,bayesTotal:0,currentBet:null};
+  const pk=document.getElementById('iab-stat-theta-peek');pk.textContent=tt.toFixed(3);pk.classList.remove('iab-revealed');
+  iabUpdateStats();iabDrawNL(false);iabRenderBet();iabUpdateWallets();
+  document.getElementById('iab-log-wrap').classList.remove('iab-hidden');
+  document.getElementById('iab-bet-log').innerHTML='';
+  document.getElementById('iab-result-panel').classList.remove('iab-visible');
+  document.getElementById('iab-bet-panel').style.display='block';
+  document.getElementById('iab-start-area').style.display='none';
+  document.getElementById('iab-bet-area').style.display='block';
+  document.getElementById('iab-theta-legend').style.display='none';
+  document.getElementById('iab-phase-label').textContent='Betting';
+  iabSetProg(0);
+}
+
+function iabRenderBet(){
+  if(iab_state.betIndex>=10){iabFinish();return;}
+  const[a,b]=iab_state.betRanges[iab_state.betIndex];
+  const bp=Math.max(0.001,Math.min(0.999,iabPostProb(a,b,iab_state.postMu,iab_state.postSigma)));
+  const fp=IAB_FREQUENTISTS[iab_selectedFreq].price(a,b,iab_state.xbar,iab_state.ci);
+  iab_state.currentBet={a,b,freqP:fp,bayesP:bp};
+  document.getElementById('iab-bet-num').textContent=iab_state.betIndex+1;
+  document.getElementById('iab-bet-question').textContent=iab_state.betIndex===9
+    ?`Final bet — will the true θ lie between 0 and 10? x̄ = ${iab_state.xbar.toFixed(2)}.`
+    :`Will the true θ lie between ${a.toFixed(1)} and ${b.toFixed(1)}? Stake: $10 each.`;
+  document.getElementById('iab-freq-odds').innerHTML=fp===null?`<span style="color:var(--iab-lose)">REFUSES TO BET</span>`:(iab_proMode?`Freq: p = ${fp.toFixed(3)}`:`Freq bid: $${(fp*10).toFixed(2)}`);
+  document.getElementById('iab-bayes-odds').textContent=iab_proMode?`Bayes: p = ${bp.toFixed(3)}`:`Bayes bid: $${(bp*10).toFixed(2)}`;
+  iabSetProg((iab_state.betIndex/10)*100);
+}
+
+function iabPlaceBet(){
+  const{a,b,freqP:fp,bayesP:bp}=iab_state.currentBet;
+  const out=iab_state.trueTheta>=a&&iab_state.trueTheta<=b,ref=fp===null;
+  const fPnl=ref?null:iabBetPnl(fp,out),bPnl=iabBetPnl(bp,out);
+  if(!ref)iab_state.freqTotal+=fPnl;iab_state.bayesTotal+=bPnl;
+  iab_state.bets.push({a,b,freqP:fp,bayesP:bp,outcome:out,freqPnl:fPnl,bayesPnl:bPnl,freqRefused:ref});
+  iabAddRow(iab_state.betIndex+1,a,b,fPnl,bPnl,out,fp,bp,ref);
+  iab_state.betIndex++;iabUpdateWallets();iabRenderBet();
+}
+function iabSkipBet(){iab_state.betIndex++;iabRenderBet();}
+
+function iabFinish(){
+  iab_state.phase='done';
+  document.getElementById('iab-bet-panel').style.display='none';
+  document.getElementById('iab-theta-legend').style.display='';
+  document.getElementById('iab-phase-label').textContent='Revealed';
+  iabSetProg(100);
+  document.getElementById('iab-stat-theta-peek').classList.add('iab-revealed');
+  iabDrawNL(true);
+  const fp=iab_state.freqTotal,bp=iab_state.bayesTotal,fmt=v=>(v>=0?'+':'')+'$'+Math.abs(v).toFixed(2);
+  document.getElementById('iab-result-panel').classList.add('iab-visible');
+  document.getElementById('iab-result-theta-val').textContent=iab_state.trueTheta.toFixed(3);
+  const fe=document.getElementById('iab-result-freq-pnl'),be=document.getElementById('iab-result-bayes-pnl');
+  fe.textContent=fmt(fp);fe.style.color=fp>=0?'var(--iab-win)':'var(--iab-lose)';
+  be.textContent=fmt(bp);be.style.color=bp>=0?'var(--iab-win)':'var(--iab-lose)';
+}
+
+function iabFullReset(){
+  iab_state={phase:'idle',trueTheta:null,xbar:null,samples:[],ci:null,cri:null,postMu:null,postSigma:null,betRanges:[],bets:[],betIndex:0,freqTotal:0,bayesTotal:0,currentBet:null};
+  iabClearSimStore();
+  ['iab-result-panel'].forEach(id=>document.getElementById(id).classList.remove('iab-visible'));
+  document.getElementById('iab-bet-area').style.display='none';
+  document.getElementById('iab-log-wrap').classList.add('iab-hidden');
+  document.getElementById('iab-start-area').style.display='flex';
+  ['iab-stat-xbar','iab-stat-ci','iab-stat-cri'].forEach(id=>document.getElementById(id).textContent='—');
+  const pk=document.getElementById('iab-stat-theta-peek');pk.textContent='—';pk.classList.remove('iab-revealed');
+  document.getElementById('iab-phase-label').textContent='Setup';
+  document.getElementById('iab-freq-wallet').textContent='$0.00';document.getElementById('iab-freq-wallet').className='iab-agent-wallet';
+  document.getElementById('iab-bayes-wallet').textContent='$0.00';document.getElementById('iab-bayes-wallet').className='iab-agent-wallet';
+  iabSetProg(0);iabDrawNL(false,true);
+}
+
+function iabClearSimStore(){
+  iab_simStore={freq:[],bayes:[]};
+  document.getElementById('iab-sim-panel').classList.remove('iab-visible');
+  document.getElementById('iab-sim-panel-label').textContent='Monte Carlo — 0 simulated rounds';
+}
+
+function iabSimRound(){
+  const tt=40+Math.random()*20;let sum=0;
+  for(let i=0;i<IAB_N;i++)sum+=tt+IAB_SIGMA*iabRandn();
+  const xb=sum/IAB_N,ci=[xb-IAB_Z_CONF*IAB_SE,xb+IAB_Z_CONF*IAB_SE];
+  const p=IAB_PRIORS[iab_selectedPrior],pMu=p.postMu(xb),pSg=p.postSigma();
+  const ranges=iabGenRanges(xb,tt).slice(0,9);
+  ranges.push([58,66]);if(Math.random()<0.75)ranges.push([58.5,65.5]);
+  let fT=0,bT=0;
+  for(const[a,b]of ranges){
+    const out=tt>=a&&tt<=b;
+    const fp=IAB_FREQUENTISTS[iab_selectedFreq].price(a,b,xb,ci);if(fp!==null)fT+=iabBetPnl(fp,out);
+    bT+=iabBetPnl(Math.max(0.001,Math.min(0.999,iabPostProb(a,b,pMu,pSg))),out);
+  }
+  return{freqTotal:fT,bayesTotal:bT};
+}
+
+function iabRunSimulation(){
+  for(let i=0;i<5000;i++){const r=iabSimRound();iab_simStore.freq.push(r.freqTotal);iab_simStore.bayes.push(r.bayesTotal);}
+  const n=iab_simStore.freq.length;
+  const mean=arr=>arr.reduce((a,b)=>a+b,0)/arr.length;
+  const std=arr=>{const m=mean(arr);return Math.sqrt(arr.reduce((a,b)=>a+(b-m)**2,0)/arr.length);};
+  const median=arr=>{const s=[...arr].sort((a,b)=>a-b),m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;};
+  const fMn=mean(iab_simStore.freq),fSd=std(iab_simStore.freq),fMed=median(iab_simStore.freq);
+  const bMn=mean(iab_simStore.bayes),bSd=std(iab_simStore.bayes),bMed=median(iab_simStore.bayes);
+  document.getElementById('iab-sim-panel').classList.add('iab-visible');
+  document.getElementById('iab-phase-label').textContent='Simulation';
+  document.getElementById('iab-sim-panel-label').textContent=`Monte Carlo — ${n.toLocaleString()} rounds (${n/5000}× runs) · Freq: ${IAB_FREQUENTISTS[iab_selectedFreq].label} · Bayes: ${IAB_PRIORS[iab_selectedPrior].label}`;
+  const fmt=v=>(v>=0?'+':'')+'$'+Math.abs(v).toFixed(2),col=v=>v>=0?'var(--iab-win)':'var(--iab-lose)';
+  document.getElementById('iab-sim-stats-row').innerHTML=
+    `<div class="iab-sim-stat"><div class="iab-sim-stat-label" style="color:var(--iab-freq)">Freq Mean P&L</div><div style="font-family:var(--iab-mono);font-size:1rem;color:${col(fMn)}">${fmt(fMn)}</div></div>`+
+    `<div class="iab-sim-stat"><div class="iab-sim-stat-label" style="color:var(--iab-freq)">Freq Median P&L</div><div style="font-family:var(--iab-mono);font-size:1rem;color:${col(fMed)}">${fmt(fMed)}</div></div>`+
+    `<div class="iab-sim-stat"><div class="iab-sim-stat-label" style="color:var(--iab-freq)">Freq Std Dev</div><div style="font-family:var(--iab-mono);font-size:1rem;">$${fSd.toFixed(2)}</div></div>`+
+    `<div class="iab-sim-stat"><div class="iab-sim-stat-label" style="color:var(--iab-bayes)">Bayes Mean P&L</div><div style="font-family:var(--iab-mono);font-size:1rem;color:${col(bMn)}">${fmt(bMn)}</div></div>`+
+    `<div class="iab-sim-stat"><div class="iab-sim-stat-label" style="color:var(--iab-bayes)">Bayes Median P&L</div><div style="font-family:var(--iab-mono);font-size:1rem;color:${col(bMed)}">${fmt(bMed)}</div></div>`+
+    `<div class="iab-sim-stat"><div class="iab-sim-stat-label" style="color:var(--iab-bayes)">Bayes Std Dev</div><div style="font-family:var(--iab-mono);font-size:1rem;">$${bSd.toFixed(2)}</div></div>`+
+    `<div class="iab-sim-stat"><div class="iab-sim-stat-label">Rounds</div><div style="font-family:var(--iab-mono);font-size:1rem;color:var(--iab-text)">${n.toLocaleString()}</div></div>`;
+  iabDrawHist('iab-hist-freq',iab_simStore.freq,'var(--iab-freq)',fMed);
+  iabDrawHist('iab-hist-bayes',iab_simStore.bayes,'var(--iab-bayes)',bMed);
+  document.getElementById('iab-sim-panel').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function iabDrawNL(reveal=false,blank=false){
+  const c=document.getElementById('iab-numberline'),W=c.clientWidth,H=120;
+  c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;c.style.height=H+'px';
+  const ctx=c.getContext('2d');ctx.scale(devicePixelRatio,devicePixelRatio);
+  // Read theme tokens at draw time
+  const root=document.getElementById('iab-root');
+  const cs=getComputedStyle(root);
+  const cBg=cs.getPropertyValue('--iab-bg').trim()||'#13161e';
+  const cBorder=cs.getPropertyValue('--iab-border').trim()||'#252a38';
+  const cMuted=cs.getPropertyValue('--iab-text-muted').trim()||'#3a4060';
+  const cHeading=cs.getPropertyValue('--iab-heading').trim()||'#e8eaf5';
+  const cFreq=cs.getPropertyValue('--iab-freq').trim()||'#e8a838';
+  const cBayes=cs.getPropertyValue('--iab-bayes').trim()||'#38c8e8';
+  const cReveal=cs.getPropertyValue('--iab-reveal').trim()||'#c87ae8';
+  const cText=cs.getPropertyValue('--iab-text').trim()||'#c8cfe0';
+  const isDark=document.documentElement.getAttribute('data-theme')!=='light';
+  const cDotFill=isDark?'rgba(200,207,224,0.25)':'rgba(50,40,30,0.2)';
+  const cXbar=isDark?'rgba(232,234,245,0.5)':'rgba(30,20,10,0.4)';
+  const cFreqFill=isDark?'rgba(232,168,56,0.15)':'rgba(184,112,16,0.12)';
+  const cBayesFill=isDark?'rgba(56,200,232,0.12)':'rgba(8,120,160,0.10)';
+
+  ctx.fillStyle=cBg;ctx.fillRect(0,0,W,H);
+  if(blank||!iab_state.ci){ctx.strokeStyle=cBorder;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(20,88);ctx.lineTo(W-20,88);ctx.stroke();return;}
+  const ctr=iab_state.xbar,span=Math.max(6*IAB_SE,25);
+  let lo=ctr-span,hi=ctr+span;
+  if(reveal){lo=Math.min(lo,iab_state.trueTheta-3);hi=Math.max(hi,iab_state.trueTheta+3);}
+  const toX=v=>20+((v-lo)/(hi-lo))*(W-40),AY=88,DY=58;
+  ctx.fillStyle=cDotFill;
+  iab_state.samples.forEach((s,i)=>{const j=((i*37+13)%17-8)*1.2,px=toX(s);if(px<18||px>W-18)return;ctx.beginPath();ctx.arc(px,DY+j,2.5,0,2*Math.PI);ctx.fill();});
+  ctx.strokeStyle=cBorder;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(20,AY);ctx.lineTo(W-20,AY);ctx.stroke();
+  const ts=(hi-lo)>30?5:2;
+  for(let v=Math.ceil(lo/ts)*ts;v<=hi;v+=ts){const x=toX(v);ctx.strokeStyle=cBorder;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,AY-4);ctx.lineTo(x,AY+4);ctx.stroke();ctx.fillStyle=cMuted;ctx.font="9px 'DM Mono',monospace";ctx.textAlign='center';ctx.fillText(v%1===0?v:v.toFixed(0),x,AY+14);}
+  const[c0,c1]=[toX(iab_state.ci[0]),toX(iab_state.ci[1])];
+  ctx.fillStyle=cFreqFill;ctx.fillRect(c0,AY-22,c1-c0,10);ctx.strokeStyle=cFreq;ctx.lineWidth=1.5;ctx.strokeRect(c0,AY-22,c1-c0,10);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(c0,AY-24);ctx.lineTo(c0,AY-10);ctx.moveTo(c1,AY-24);ctx.lineTo(c1,AY-10);ctx.stroke();ctx.fillStyle=cFreq;ctx.font="bold 8px 'DM Mono',monospace";ctx.textAlign='center';ctx.fillText('CI',(c0+c1)/2,AY-14);
+  const[cr0,cr1]=[toX(iab_state.cri[0]),toX(iab_state.cri[1])];
+  ctx.fillStyle=cBayesFill;ctx.fillRect(cr0,AY-10,cr1-cr0,8);ctx.strokeStyle=cBayes;ctx.lineWidth=1.5;ctx.strokeRect(cr0,AY-10,cr1-cr0,8);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cr0,AY-12);ctx.lineTo(cr0,AY);ctx.moveTo(cr1,AY-12);ctx.lineTo(cr1,AY);ctx.stroke();ctx.fillStyle=cBayes;ctx.font="bold 8px 'DM Mono',monospace";ctx.fillText('CrI',(cr0+cr1)/2,AY-3);
+  const xX=toX(iab_state.xbar);ctx.strokeStyle=cXbar;ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(xX,38);ctx.lineTo(xX,AY);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=cHeading;ctx.font="8px 'DM Mono',monospace";ctx.textAlign='center';ctx.fillText('x̄='+iab_state.xbar.toFixed(1),xX,34);
+  if(reveal){const tX=toX(iab_state.trueTheta);ctx.strokeStyle=cReveal;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(tX,36);ctx.lineTo(tX,AY+8);ctx.stroke();const s=5;ctx.beginPath();ctx.moveTo(tX-s,AY-s);ctx.lineTo(tX+s,AY+s);ctx.moveTo(tX+s,AY-s);ctx.lineTo(tX-s,AY+s);ctx.stroke();ctx.fillStyle=cReveal;ctx.font="bold 8px 'DM Mono',monospace";ctx.textAlign='center';ctx.fillText('θ='+iab_state.trueTheta.toFixed(3),tX,112);}
+}
+
+function iabDrawHist(id,data,color,medV){
+  const c=document.getElementById(id),W=c.clientWidth,H=160;
+  c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;c.style.height=H+'px';
+  const ctx=c.getContext('2d');ctx.scale(devicePixelRatio,devicePixelRatio);
+  // Read theme tokens
+  const root=document.getElementById('iab-root')||document.querySelector('.iab');
+  const cs=getComputedStyle(root);
+  const cBg=cs.getPropertyValue('--iab-bg').trim()||'#13161e';
+  const cBorder=cs.getPropertyValue('--iab-border').trim()||'#252a38';
+  const cMuted=cs.getPropertyValue('--iab-text-muted').trim()||'#3a4060';
+  const cReveal=cs.getPropertyValue('--iab-reveal').trim()||'#c87ae8';
+  const cGold=cs.getPropertyValue('--iab-gold').trim()||'#c8a838';
+  const isDark=document.documentElement.getAttribute('data-theme')!=='light';
+  const cGrid=isDark?'rgba(37,42,56,0.9)':'rgba(200,195,185,0.9)';
+  const cZero=isDark?'rgba(232,234,245,0.4)':'rgba(30,20,10,0.3)';
+  const cBarPos=isDark?'rgba(78,203,138,0.7)':'rgba(30,122,70,0.65)';
+  const cBarNeg=isDark?'rgba(232,80,80,0.7)':'rgba(192,48,48,0.65)';
+
+  const pad={l:46,r:10,t:14,b:30},cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
+  ctx.fillStyle=cBg;ctx.fillRect(0,0,W,H);
+  const srt=[...data].sort((a,b)=>a-b);
+  const p01=srt[Math.floor(0.01*srt.length)],p99=srt[Math.min(srt.length-1,Math.ceil(0.99*srt.length))];
+  const uf=data.filter(v=>v<p01).length,of=data.filter(v=>v>p99).length;
+  const mg=(p99-p01)*0.02||1,minV=p01-mg,maxV=p99+mg,rng=maxV-minV||1;
+  const bins=30,bW=rng/bins,cnts=new Array(bins).fill(0);
+  for(const v of data){if(v<minV||v>maxV)continue;cnts[Math.min(bins-1,Math.floor((v-minV)/bW))]++;}
+  const mx=Math.max(...cnts,1),toX=v=>pad.l+((v-minV)/rng)*cW,toY=c=>pad.t+cH-(c/mx)*cH,zX=toX(0),mn=data.reduce((a,b)=>a+b,0)/data.length;
+  ctx.font="8px 'DM Mono',monospace";
+  for(let i=0;i<=4;i++){const cnt=Math.round((i/4)*mx),y=toY(cnt);ctx.strokeStyle=cGrid;ctx.lineWidth=1;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cW,y);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=cMuted;ctx.textAlign='right';ctx.fillText(cnt>=1000?(cnt/1000).toFixed(1)+'k':cnt.toString(),pad.l-4,y+3);}
+  ctx.strokeStyle=cBorder;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,pad.t+cH);ctx.stroke();
+  for(let i=0;i<bins;i++){const x=pad.l+1+(i/bins)*cW,bw=(cW-1)/bins-1,h=(cnts[i]/mx)*cH,ctr=minV+(i+0.5)*bW;ctx.fillStyle=ctr>=0?cBarPos:cBarNeg;ctx.fillRect(x,pad.t+cH-h,bw,h);}
+  if(zX>=pad.l&&zX<=pad.l+cW){ctx.strokeStyle=cZero;ctx.lineWidth=1;ctx.setLineDash([8,4]);ctx.beginPath();ctx.moveTo(zX,pad.t);ctx.lineTo(zX,pad.t+cH);ctx.stroke();ctx.setLineDash([]);}
+  const tri=(x,y,fc)=>{if(x<pad.l||x>pad.l+cW)return;const ts=5;ctx.fillStyle=fc;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-ts,y+ts*1.5);ctx.lineTo(x+ts,y+ts*1.5);ctx.closePath();ctx.fill();};
+  tri(toX(mn),pad.t+cH+1,cReveal);tri(toX(medV),pad.t+cH+1,cGold);
+  ctx.strokeStyle=cBorder;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad.l,pad.t+cH);ctx.lineTo(pad.l+cW,pad.t+cH);ctx.stroke();
+  ctx.fillStyle=cMuted;ctx.font="9px 'DM Mono',monospace";ctx.textAlign='center';
+  ctx.fillText(p01.toFixed(1),pad.l+cW*0.05,pad.t+cH+16);
+  if(zX>pad.l+cW*0.15&&zX<pad.l+cW*0.85)ctx.fillText('0',zX,pad.t+cH+16);
+  ctx.fillText(p99.toFixed(1),pad.l+cW*0.95,pad.t+cH+16);
+  ctx.textAlign='right';ctx.font="8px 'DM Mono',monospace";
+  ctx.fillStyle=cMuted;ctx.fillText('▼'+uf+'  ▲'+of,pad.l+cW,pad.t+9);
+  ctx.fillStyle=cReveal;ctx.fillText('μ='+(mn>=0?'+':'')+mn.toFixed(2),pad.l+cW,pad.t+20);
+  ctx.fillStyle=cGold;ctx.fillText('m='+(medV>=0?'+':'')+medV.toFixed(2),pad.l+cW,pad.t+31);
+}
+
+function iabUpdateStats(){
+  document.getElementById('iab-stat-xbar').textContent=iab_state.xbar.toFixed(2);
+  document.getElementById('iab-stat-ci').textContent=`[${iab_state.ci[0].toFixed(2)}, ${iab_state.ci[1].toFixed(2)}]`;
+  document.getElementById('iab-stat-cri').textContent=`[${iab_state.cri[0].toFixed(2)}, ${iab_state.cri[1].toFixed(2)}]`;
+}
+function iabUpdateWallets(){
+  const fmt=v=>(v>=0?'+':'-')+'$'+Math.abs(v).toFixed(2);
+  const fw=document.getElementById('iab-freq-wallet'),bw=document.getElementById('iab-bayes-wallet');
+  fw.textContent=fmt(iab_state.freqTotal);fw.className='iab-agent-wallet'+(iab_state.freqTotal>0?' iab-positive':iab_state.freqTotal<0?' iab-negative':'');
+  bw.textContent=fmt(iab_state.bayesTotal);bw.className='iab-agent-wallet'+(iab_state.bayesTotal>0?' iab-positive':iab_state.bayesTotal<0?' iab-negative':'');
+}
+function iabAddRow(num,a,b,fPnl,bPnl,out,fp,bp,ref){
+  const log=document.getElementById('iab-bet-log'),row=document.createElement('div');row.className='iab-bet-row';
+  const fmt=v=>(v>=0?'+':'')+'$'+Math.abs(v).toFixed(2);
+  const fCell=ref?`<span class="iab-pnl-neutral" style="color:var(--iab-lose);opacity:0.7;font-size:0.72rem">REFUSED</span>`:`<span class="${fPnl>=0?'iab-pnl-win':'iab-pnl-lose'}">${fmt(fPnl)}${iab_proMode?'':` <span style="color:var(--iab-text-muted);font-size:0.68rem">(bid $${(fp*10).toFixed(2)})</span>`}</span>`;
+  const bCell=`<span class="${bPnl>=0?'iab-pnl-win':'iab-pnl-lose'}">${fmt(bPnl)}${iab_proMode?'':` <span style="color:var(--iab-text-muted);font-size:0.68rem">(bid $${(bp*10).toFixed(2)})</span>`}</span>`;
+  row.innerHTML=`<span style="color:var(--iab-text-muted);text-align:right">${num}</span><span>[${a.toFixed(1)}, ${b.toFixed(1)}]</span>${fCell}${bCell}<span class="${out?'iab-pnl-win':'iab-pnl-lose'}">${out?'✓ IN':'✗ OUT'}</span>`;
+  log.appendChild(row);log.scrollTop=log.scrollHeight;
+}
+function iabSetProg(pct){document.getElementById('iab-progress').style.width=pct+'%';}
+function iabToggleAnnotation(){
+  const body=document.getElementById('iab-annotation-body'),chev=document.getElementById('iab-annotation-chevron');
+  const vis=body.style.display!=='none';body.style.display=vis?'none':'block';chev.textContent=vis?'▼ EXPAND':'▲ COLLAPSE';
+}
+
+// Init
+const IAB_CONF_PCT=Math.round(IAB_CONF_LEVEL*100)+'%';
+document.getElementById('iab-label-ci').textContent=IAB_CONF_PCT+' CI (Freq.)';
+document.getElementById('iab-label-cri').textContent=IAB_CONF_PCT+' CrI (Bayes)';
+document.getElementById('iab-legend-ci').textContent='■ '+IAB_CONF_PCT+' CI (Frequentist)';
+document.getElementById('iab-legend-cri').textContent='■ '+IAB_CONF_PCT+' CrI (Bayesian)';
+document.getElementById('iab-annot-simple').innerHTML=`<strong>The Simple Frequentist</strong> accepts only ranges that fully contain her ${IAB_CONF_PCT} CI, betting at p = ${IAB_CONF_PRICE} on those — and refuses everything else. She correctly breaks even on the CI itself (losing ${Math.round((1-IAB_CONF_LEVEL)*100)}% of the time as designed), but overprices any wider range and refuses any narrower one.`;
+document.getElementById('iab-freq-logic').textContent='"'+IAB_FREQUENTISTS['simple'].voice+'"';
+document.getElementById('iab-bayes-logic').textContent='"'+IAB_PRIORS['flat'].voice+'"';
+iabUpdatePayoutExpl();
+document.getElementById('iab-bet-area').style.display='none';
+iabDrawNL(false,true);
+
+window.addEventListener('resize',()=>{
+  if(document.getElementById('tab4').classList.contains('active')){
+    if(iab_state.ci)iabDrawNL(iab_state.phase==='done');else iabDrawNL(false,true);
+  }
+});
+
+// Debug test
+async function iabRunDebugTest(){
+  const modal=document.getElementById('iab-debug-modal'),stEl=document.getElementById('iab-debug-status'),pFill=document.getElementById('iab-debug-progress-fill'),tWrap=document.getElementById('iab-debug-table-wrap'),dWrap=document.getElementById('iab-debug-demo-wrap');
+  modal.style.display='block';tWrap.innerHTML='';dWrap.innerHTML='';document.getElementById('iab-debug-btn').disabled=true;
+  const fKeys=Object.keys(IAB_FREQUENTISTS),pKeys=Object.keys(IAB_PRIORS),SIM=100000,results=[];
+  function simCombo(type,key,isPro){
+    const pnls=[];
+    for(let r=0;r<SIM;r++){
+      const tt=40+Math.random()*20;let sum=0;for(let i=0;i<IAB_N;i++)sum+=tt+IAB_SIGMA*iabRandn();
+      const xb=sum/IAB_N,ci=[xb-IAB_Z_CONF*IAB_SE,xb+IAB_Z_CONF*IAB_SE];
+      const pr=type==='bayes'?IAB_PRIORS[key]:null,pMu=pr?pr.postMu(xb):xb,pSg=pr?pr.postSigma():IAB_SE;
+      const ranges=iabGenRanges(xb,tt).slice(0,9);ranges.push([58,66]);if(Math.random()<0.75)ranges.push([58.5,65.5]);
+      let tot=0;
+      for(const[a,b]of ranges){
+        const out=tt>=a&&tt<=b;let p=type==='freq'?IAB_FREQUENTISTS[key].price(a,b,xb,ci):Math.max(0.001,Math.min(0.999,iabPostProb(a,b,pMu,pSg)));
+        if(p===null)continue;tot+=isPro?(out?10*(1-p)/p:-10):(out?10-p*10:-p*10);
+      }
+      pnls.push(tot);
+    }
+    const mn=pnls.reduce((a,b)=>a+b,0)/pnls.length,s=[...pnls].sort((a,b)=>a-b),med=s.length%2?s[Math.floor(s.length/2)]:(s[s.length/2-1]+s[s.length/2])/2,sd=Math.sqrt(pnls.reduce((a,b)=>a+(b-mn)**2,0)/pnls.length);
+    return{mn,med,sd,pnls};
+  }
+  let ci=0;const total=2*(fKeys.length+pKeys.length);
+  for(const isPro of[false,true])for(const[type,keys]of[['freq',fKeys],['bayes',pKeys]])for(const key of keys){
+    const label=type==='freq'?IAB_FREQUENTISTS[key].label:IAB_PRIORS[key].label;
+    stEl.textContent=(isPro?'Pro':'Std')+' / '+label+' ('+(ci+1)+'/'+total+')...';pFill.style.width=((ci/total)*100)+'%';
+    await new Promise(r=>setTimeout(r,0));const res=simCombo(type,key,isPro);results.push({type,key,isPro,label,...res});ci++;
+  }
+  pFill.style.width='100%';stEl.textContent='Complete — '+total+' combinations × '+SIM.toLocaleString()+' rounds each';
+  const fmt=v=>(v>=0?'+':'')+'$'+Math.abs(v).toFixed(2),colFn=v=>v>=0?'var(--iab-win)':'var(--iab-lose)';
+  // Table — all colours via CSS variables
+  let html=`<table style="width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:0.78rem;">
+    <thead><tr style="border-bottom:2px solid var(--iab-border2);">
+      <th style="text-align:left;padding:6px 10px;color:var(--iab-text-muted);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;">Mode</th>
+      <th style="text-align:left;padding:6px 10px;color:var(--iab-text-muted);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;">Agent</th>
+      <th style="text-align:right;padding:6px 10px;color:var(--iab-reveal);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;">Mean</th>
+      <th style="text-align:right;padding:6px 10px;color:var(--iab-gold);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;">Median</th>
+      <th style="text-align:right;padding:6px 10px;color:var(--iab-text-muted);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;">Std Dev</th>
+    </tr></thead><tbody>`;
+  let lastPro=null;
+  for(let ri=0;ri<results.length;ri++){
+    const r=results[ri];
+    if(r.isPro!==lastPro){
+      html+=`<tr><td colspan="5" style="padding:8px 10px 4px;${ri>0?'border-top:2px solid var(--iab-border2);':''}color:var(--iab-gold);font-size:9px;letter-spacing:0.25em;text-transform:uppercase;">${r.isPro?'PRO MODE (ODDS-BASED)':'STANDARD MODE (FIXED PAYOUT)'}</td></tr>`;
+      lastPro=r.isPro;
+    }
+    const tc=r.type==='freq'?'var(--iab-freq)':'var(--iab-bayes)',bg=ri%2===0?'background:var(--iab-surface2)':'';
+    html+=`<tr style="${bg}">
+      <td style="padding:5px 10px;color:var(--iab-text-muted);font-size:9px;">${r.isPro?'Pro':'Std'}</td>
+      <td style="padding:5px 10px;color:${tc};">${r.label}</td>
+      <td style="padding:5px 10px;text-align:right;color:${colFn(r.mn)};font-weight:500;">${fmt(r.mn)}</td>
+      <td style="padding:5px 10px;text-align:right;color:${colFn(r.med)};">${fmt(r.med)}</td>
+      <td style="padding:5px 10px;text-align:right;color:var(--iab-text-dim);">$${r.sd.toFixed(2)}</td>
+    </tr>`;
+  }
+  html+=`</tbody></table>`;tWrap.innerHTML=html;
+
+  // Demo section — classes only, no hardcoded colours
+  const rFK=fKeys[Math.floor(Math.random()*fKeys.length)],rPK=pKeys[Math.floor(Math.random()*pKeys.length)],rPro=Math.random()<0.5;
+  const dSec=document.createElement('div');dSec.className='iab-modal-demo-section';
+  dSec.innerHTML=
+    `<div class="iab-modal-section-head">Random Demo Round — auto-playing 10 bets</div>`+
+    `<div class="iab-modal-demo-intro">Freq: <span style="color:var(--iab-freq)">${IAB_FREQUENTISTS[rFK].label}</span> &nbsp; Bayes: <span style="color:var(--iab-bayes)">${IAB_PRIORS[rPK].label}</span> &nbsp; Mode: <span style="color:var(--iab-gold)">${rPro?'Pro':'Standard'}</span></div>`+
+    `<div id="iab-debug-bet-log" style="margin-bottom:16px;"></div>`+
+    `<div class="iab-modal-hist-wrap">`+
+      `<div><div class="iab-modal-hist-label" style="color:var(--iab-freq)">Frequentist P&amp;L (100k sim)</div><canvas id="iab-dbg-hist-f" class="iab-modal-hist-canvas"></canvas></div>`+
+      `<div><div class="iab-modal-hist-label" style="color:var(--iab-bayes)">Bayesian P&amp;L (100k sim)</div><canvas id="iab-dbg-hist-b" class="iab-modal-hist-canvas"></canvas></div>`+
+    `</div>`;
+  dWrap.appendChild(dSec);
+
+  const prevPro=iab_proMode;iab_selectedFreq=rFK;iab_selectedPrior=rPK;iab_proMode=rPro;iabNewGame();await new Promise(r=>setTimeout(r,200));
+  const bLog=document.getElementById('iab-debug-bet-log');
+  for(let b=0;b<10;b++){
+    if(iab_state.betIndex>=10)break;iabPlaceBet();
+    const bet=iab_state.bets[iab_state.bets.length-1],fStr=bet.freqPnl===null?'REFUSED':(bet.freqPnl>=0?'+':'')+'$'+Math.abs(bet.freqPnl).toFixed(2),bStr=(bet.bayesPnl>=0?'+':'')+'$'+Math.abs(bet.bayesPnl).toFixed(2);
+    const row=document.createElement('div');row.className='iab-modal-demo-row';
+    row.innerHTML=
+      `<span style="color:var(--iab-text-muted)">${b+1}</span>`+
+      `<span>[${bet.a.toFixed(1)}, ${bet.b.toFixed(1)}]</span>`+
+      `<span style="color:${bet.freqPnl===null?'var(--iab-lose)':(bet.freqPnl>=0?'var(--iab-win)':'var(--iab-lose)')}">${fStr}</span>`+
+      `<span style="color:${bet.bayesPnl>=0?'var(--iab-win)':'var(--iab-lose)'}">${bStr}</span>`+
+      `<span style="color:${bet.outcome?'var(--iab-win)':'var(--iab-lose)'}">${bet.outcome?'IN':'OUT'}</span>`;
+    bLog.appendChild(row);await new Promise(r=>setTimeout(r,80));
+  }
+  iab_proMode=prevPro;
+  const fRes=results.find(r=>r.type==='freq'&&r.key===rFK&&r.isPro===rPro),bRes=results.find(r=>r.type==='bayes'&&r.key===rPK&&r.isPro===rPro);
+  if(fRes&&bRes){const fs=[...fRes.pnls].sort((a,b)=>a-b),bs=[...bRes.pnls].sort((a,b)=>a-b);iabDrawHist('iab-dbg-hist-f',fRes.pnls,'var(--iab-freq)',fs[Math.floor(fs.length/2)]);iabDrawHist('iab-dbg-hist-b',bRes.pnls,'var(--iab-bayes)',bs[Math.floor(bs.length/2)]);}
+  stEl.textContent='All done — '+total+' combinations / '+SIM.toLocaleString()+' rounds each';
+  document.getElementById('iab-debug-btn').disabled=false;
+}
 </script>
 </body>
 </html>
