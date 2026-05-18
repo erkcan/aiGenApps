@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecture on Cognitive Fallibility</title>
+    <style>
+        .vertical-text {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+        }
+        
+        .card-inner {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-selected {
+            transform: scale(1.05) translateY(-12px);
+            box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.6);
+            border-color: #3b82f6; /* Blue-500 */
+        }
+        
+        .card-unselected {
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.7);
+            border-color: transparent;
+        }
+
+        /* Prevent scroll bar visual clutter on projector screens */
+        body {
+            overflow-x: hidden;
+        }
+
+        /* Elegant custom slider styling for high contrast calibration scale */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #f59e0b; /* Amber 500 */
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.8);
+            transition: transform 0.1s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .hide-instructions .instruction-clue {
+            display: none !important;
+        }
+        .hide-instructions .lee-btn {
+            display: none !important;
+        }
+    </style>
+    <style id="tailwind-compiled">
+    *,:after,:before{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/*! tailwindcss v3.4.19 | MIT License | https://tailwindcss.com*/*,:after,:before{box-sizing:border-box;border:0 solid #e5e7eb}:after,:before{--tw-content:""}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;-o-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0}fieldset,legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::-moz-placeholder,textarea::-moz-placeholder{opacity:1;color:#9ca3af}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.\!container{width:100%!important}.container{width:100%}@media (min-width:640px){.\!container{max-width:640px!important}.container{max-width:640px}}@media (min-width:768px){.\!container{max-width:768px!important}.container{max-width:768px}}@media (min-width:1024px){.\!container{max-width:1024px!important}.container{max-width:1024px}}@media (min-width:1280px){.\!container{max-width:1280px!important}.container{max-width:1280px}}@media (min-width:1536px){.\!container{max-width:1536px!important}.container{max-width:1536px}}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}.fixed{position:fixed}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:0}.right-0{right:0}.top-0{top:0}.top-1\/2{top:50%}.isolate{isolation:isolate}.z-30{z-index:30}.z-40{z-index:40}.z-50{z-index:50}.mx-auto{margin-left:auto;margin-right:auto}.mb-1{margin-bottom:.25rem}.mb-10{margin-bottom:2.5rem}.mb-2{margin-bottom:.5rem}.mb-3{margin-bottom:.75rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.ml-2\.5{margin-left:.625rem}.mr-1{margin-right:.25rem}.mt-1{margin-top:.25rem}.mt-2{margin-top:.5rem}.mt-4{margin-top:1rem}.mt-6{margin-top:1.5rem}.mt-8{margin-top:2rem}.block{display:block}.inline-block{display:inline-block}.flex{display:flex}.inline-flex{display:inline-flex}.grid{display:grid}.hidden{display:none}.aspect-\[2\/1\]{aspect-ratio:2/1}.h-1\.5{height:.375rem}.h-2{height:.5rem}.h-2\.5{height:.625rem}.h-4{height:1rem}.h-5{height:1.25rem}.h-8{height:2rem}.h-\[60vw\]{height:60vw}.h-full{height:100%}.max-h-\[350px\]{max-height:350px}.max-h-\[90vh\]{max-height:90vh}.min-h-\[140px\]{min-height:140px}.min-h-\[300px\]{min-height:300px}.min-h-screen{min-height:100vh}.w-2\.5{width:.625rem}.w-24{width:6rem}.w-4{width:1rem}.w-5{width:1.25rem}.w-8{width:2rem}.w-9{width:2.25rem}.w-\[40vw\]{width:40vw}.w-full{width:100%}.max-w-2xl{max-width:42rem}.max-w-4xl{max-width:56rem}.max-w-5xl{max-width:64rem}.max-w-7xl{max-width:80rem}.max-w-\[250px\]{max-width:250px}.max-w-xl{max-width:36rem}.flex-shrink-0{flex-shrink:0}.flex-grow{flex-grow:1}.-translate-y-1\/2{--tw-translate-y:-50%}.-translate-y-1\/2,.scale-100{transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.scale-100{--tw-scale-x:1;--tw-scale-y:1}.scale-95{--tw-scale-x:.95;--tw-scale-y:.95}.scale-95,.transform{transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}@keyframes pulse{50%{opacity:.5}}.animate-pulse{animation:pulse 2s cubic-bezier(.4,0,.6,1) infinite}.cursor-crosshair{cursor:crosshair}.cursor-pointer{cursor:pointer}.select-none{-webkit-user-select:none;-moz-user-select:none;user-select:none}.resize{resize:both}.appearance-none{-webkit-appearance:none;-moz-appearance:none;appearance:none}.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-center{align-items:center}.justify-end{justify-content:flex-end}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1\.5{gap:.375rem}.gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}.gap-6{gap:1.5rem}.gap-8{gap:2rem}.space-x-3>:not([hidden])~:not([hidden]){--tw-space-x-reverse:0;margin-right:calc(.75rem*var(--tw-space-x-reverse));margin-left:calc(.75rem*(1 - var(--tw-space-x-reverse)))}.space-y-1>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.25rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.25rem*var(--tw-space-y-reverse))}.space-y-2>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.5rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.5rem*var(--tw-space-y-reverse))}.space-y-3>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.75rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.75rem*var(--tw-space-y-reverse))}.space-y-4>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem*var(--tw-space-y-reverse))}.space-y-5>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.25rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.25rem*var(--tw-space-y-reverse))}.space-y-6>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.5rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.5rem*var(--tw-space-y-reverse))}.space-y-8>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(2rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(2rem*var(--tw-space-y-reverse))}.overflow-hidden{overflow:hidden}.overflow-y-auto{overflow-y:auto}.break-words{overflow-wrap:break-word}.rounded{border-radius:.25rem}.rounded-2xl{border-radius:1rem}.rounded-3xl{border-radius:1.5rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:.5rem}.rounded-xl{border-radius:.75rem}.rounded-l-xl{border-top-left-radius:.75rem;border-bottom-left-radius:.75rem}.border{border-width:1px}.border-2{border-width:2px}.border-4{border-width:4px}.border-8{border-width:8px}.border-b{border-bottom-width:1px}.border-r-0{border-right-width:0}.border-t{border-top-width:1px}.border-amber-500{--tw-border-opacity:1;border-color:rgb(245 158 11/var(--tw-border-opacity,1))}.border-amber-800\/60{border-color:rgba(146,64,14,.6)}.border-blue-500{--tw-border-opacity:1;border-color:rgb(59 130 246/var(--tw-border-opacity,1))}.border-blue-800{--tw-border-opacity:1;border-color:rgb(30 64 175/var(--tw-border-opacity,1))}.border-blue-900{--tw-border-opacity:1;border-color:rgb(30 58 138/var(--tw-border-opacity,1))}.border-emerald-800{--tw-border-opacity:1;border-color:rgb(6 95 70/var(--tw-border-opacity,1))}.border-emerald-900{--tw-border-opacity:1;border-color:rgb(6 78 59/var(--tw-border-opacity,1))}.border-emerald-900\/60{border-color:rgba(6,78,59,.6)}.border-green-500{--tw-border-opacity:1;border-color:rgb(34 197 94/var(--tw-border-opacity,1))}.border-green-800{--tw-border-opacity:1;border-color:rgb(22 101 52/var(--tw-border-opacity,1))}.border-purple-800{--tw-border-opacity:1;border-color:rgb(107 33 168/var(--tw-border-opacity,1))}.border-purple-900{--tw-border-opacity:1;border-color:rgb(88 28 135/var(--tw-border-opacity,1))}.border-red-500{--tw-border-opacity:1;border-color:rgb(239 68 68/var(--tw-border-opacity,1))}.border-red-800{--tw-border-opacity:1;border-color:rgb(153 27 27/var(--tw-border-opacity,1))}.border-red-900{--tw-border-opacity:1;border-color:rgb(127 29 29/var(--tw-border-opacity,1))}.border-rose-900{--tw-border-opacity:1;border-color:rgb(136 19 55/var(--tw-border-opacity,1))}.border-slate-500{--tw-border-opacity:1;border-color:rgb(100 116 139/var(--tw-border-opacity,1))}.border-slate-600{--tw-border-opacity:1;border-color:rgb(71 85 105/var(--tw-border-opacity,1))}.border-slate-700{--tw-border-opacity:1;border-color:rgb(51 65 85/var(--tw-border-opacity,1))}.border-slate-700\/80{border-color:rgba(51,65,85,.8)}.border-slate-800{--tw-border-opacity:1;border-color:rgb(30 41 59/var(--tw-border-opacity,1))}.border-slate-800\/80{border-color:rgba(30,41,59,.8)}.border-slate-900{--tw-border-opacity:1;border-color:rgb(15 23 42/var(--tw-border-opacity,1))}.border-yellow-500{--tw-border-opacity:1;border-color:rgb(234 179 8/var(--tw-border-opacity,1))}.border-yellow-600{--tw-border-opacity:1;border-color:rgb(202 138 4/var(--tw-border-opacity,1))}.border-yellow-800{--tw-border-opacity:1;border-color:rgb(133 77 14/var(--tw-border-opacity,1))}.bg-amber-500{--tw-bg-opacity:1;background-color:rgb(245 158 11/var(--tw-bg-opacity,1))}.bg-amber-600{--tw-bg-opacity:1;background-color:rgb(217 119 6/var(--tw-bg-opacity,1))}.bg-amber-950\/20{background-color:rgba(69,26,3,.2)}.bg-amber-950\/40{background-color:rgba(69,26,3,.4)}.bg-black\/80{background-color:rgba(0,0,0,.8)}.bg-blue-600{--tw-bg-opacity:1;background-color:rgb(37 99 235/var(--tw-bg-opacity,1))}.bg-blue-950\/20{background-color:rgba(23,37,84,.2)}.bg-blue-950\/80{background-color:rgba(23,37,84,.8)}.bg-emerald-500{--tw-bg-opacity:1;background-color:rgb(16 185 129/var(--tw-bg-opacity,1))}.bg-emerald-600{--tw-bg-opacity:1;background-color:rgb(5 150 105/var(--tw-bg-opacity,1))}.bg-emerald-950\/30{background-color:rgba(2,44,34,.3)}.bg-emerald-950\/80{background-color:rgba(2,44,34,.8)}.bg-green-900{--tw-bg-opacity:1;background-color:rgb(20 83 45/var(--tw-bg-opacity,1))}.bg-green-950\/20{background-color:rgba(5,46,22,.2)}.bg-purple-900\/40{background-color:rgba(88,28,135,.4)}.bg-purple-950\/30{background-color:rgba(59,7,100,.3)}.bg-purple-950\/80{background-color:rgba(59,7,100,.8)}.bg-red-900{--tw-bg-opacity:1;background-color:rgb(127 29 29/var(--tw-bg-opacity,1))}.bg-red-950\/20{background-color:rgba(69,10,10,.2)}.bg-rose-500{--tw-bg-opacity:1;background-color:rgb(244 63 94/var(--tw-bg-opacity,1))}.bg-rose-950\/30{background-color:rgba(76,5,25,.3)}.bg-slate-700{--tw-bg-opacity:1;background-color:rgb(51 65 85/var(--tw-bg-opacity,1))}.bg-slate-800{--tw-bg-opacity:1;background-color:rgb(30 41 59/var(--tw-bg-opacity,1))}.bg-slate-800\/80{background-color:rgba(30,41,59,.8)}.bg-slate-900{--tw-bg-opacity:1;background-color:rgb(15 23 42/var(--tw-bg-opacity,1))}.bg-slate-900\/50{background-color:rgba(15,23,42,.5)}.bg-slate-900\/60{background-color:rgba(15,23,42,.6)}.bg-slate-900\/70{background-color:rgba(15,23,42,.7)}.bg-slate-900\/80{background-color:rgba(15,23,42,.8)}.bg-slate-950{--tw-bg-opacity:1;background-color:rgb(2 6 23/var(--tw-bg-opacity,1))}.bg-slate-950\/40{background-color:rgba(2,6,23,.4)}.bg-slate-950\/60{background-color:rgba(2,6,23,.6)}.bg-slate-950\/90{background-color:rgba(2,6,23,.9)}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1))}.bg-yellow-950\/80{background-color:rgba(66,32,6,.8)}.p-2{padding:.5rem}.p-3{padding:.75rem}.p-3\.5{padding:.875rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.p-6{padding:1.5rem}.p-8{padding:2rem}.px-2{padding-left:.5rem;padding-right:.5rem}.px-3{padding-left:.75rem;padding-right:.75rem}.px-3\.5{padding-left:.875rem;padding-right:.875rem}.px-4{padding-left:1rem;padding-right:1rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.px-8{padding-left:2rem;padding-right:2rem}.py-0\.5{padding-top:.125rem;padding-bottom:.125rem}.py-1{padding-top:.25rem;padding-bottom:.25rem}.py-1\.5{padding-top:.375rem;padding-bottom:.375rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}.py-2\.5{padding-top:.625rem;padding-bottom:.625rem}.py-3{padding-top:.75rem;padding-bottom:.75rem}.py-3\.5{padding-top:.875rem;padding-bottom:.875rem}.py-4{padding-top:1rem;padding-bottom:1rem}.py-6{padding-top:1.5rem;padding-bottom:1.5rem}.py-8{padding-top:2rem;padding-bottom:2rem}.pb-1\.5{padding-bottom:.375rem}.pb-2{padding-bottom:.5rem}.pb-4{padding-bottom:1rem}.pb-6{padding-bottom:1.5rem}.pr-2{padding-right:.5rem}.pt-1\.5{padding-top:.375rem}.pt-2{padding-top:.5rem}.pt-4{padding-top:1rem}.text-left{text-align:left}.text-center{text-align:center}.font-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace}.font-sans{font-family:ui-sans-serif,system-ui,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji}.text-2xl{font-size:1.5rem;line-height:2rem}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-4xl{font-size:2.25rem;line-height:2.5rem}.text-5xl{font-size:3rem;line-height:1}.text-\[10px\]{font-size:10px}.text-\[11px\]{font-size:11px}.text-\[120px\]{font-size:120px}.text-\[9px\]{font-size:9px}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:.75rem;line-height:1rem}.font-black{font-weight:900}.font-bold{font-weight:700}.font-extrabold{font-weight:800}.font-normal{font-weight:400}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.italic{font-style:italic}.leading-relaxed{line-height:1.625}.leading-tight{line-height:1.25}.tracking-wide{letter-spacing:.025em}.tracking-wider{letter-spacing:.05em}.tracking-widest{letter-spacing:.1em}.text-amber-400{--tw-text-opacity:1;color:rgb(251 191 36/var(--tw-text-opacity,1))}.text-amber-500{--tw-text-opacity:1;color:rgb(245 158 11/var(--tw-text-opacity,1))}.text-blue-400{--tw-text-opacity:1;color:rgb(96 165 250/var(--tw-text-opacity,1))}.text-blue-600{--tw-text-opacity:1;color:rgb(37 99 235/var(--tw-text-opacity,1))}.text-emerald-400{--tw-text-opacity:1;color:rgb(52 211 153/var(--tw-text-opacity,1))}.text-green-300{--tw-text-opacity:1;color:rgb(134 239 172/var(--tw-text-opacity,1))}.text-green-400{--tw-text-opacity:1;color:rgb(74 222 128/var(--tw-text-opacity,1))}.text-green-500{--tw-text-opacity:1;color:rgb(34 197 94/var(--tw-text-opacity,1))}.text-purple-300{--tw-text-opacity:1;color:rgb(216 180 254/var(--tw-text-opacity,1))}.text-purple-400{--tw-text-opacity:1;color:rgb(192 132 252/var(--tw-text-opacity,1))}.text-red-300{--tw-text-opacity:1;color:rgb(252 165 165/var(--tw-text-opacity,1))}.text-red-400{--tw-text-opacity:1;color:rgb(248 113 113/var(--tw-text-opacity,1))}.text-red-500{--tw-text-opacity:1;color:rgb(239 68 68/var(--tw-text-opacity,1))}.text-rose-400{--tw-text-opacity:1;color:rgb(251 113 133/var(--tw-text-opacity,1))}.text-slate-100{--tw-text-opacity:1;color:rgb(241 245 249/var(--tw-text-opacity,1))}.text-slate-200{--tw-text-opacity:1;color:rgb(226 232 240/var(--tw-text-opacity,1))}.text-slate-300{--tw-text-opacity:1;color:rgb(203 213 225/var(--tw-text-opacity,1))}.text-slate-400{--tw-text-opacity:1;color:rgb(148 163 184/var(--tw-text-opacity,1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139/var(--tw-text-opacity,1))}.text-slate-800{--tw-text-opacity:1;color:rgb(30 41 59/var(--tw-text-opacity,1))}.text-slate-950{--tw-text-opacity:1;color:rgb(2 6 23/var(--tw-text-opacity,1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.text-yellow-400{--tw-text-opacity:1;color:rgb(250 204 21/var(--tw-text-opacity,1))}.text-yellow-500{--tw-text-opacity:1;color:rgb(234 179 8/var(--tw-text-opacity,1))}.accent-amber-500{accent-color:#f59e0b}.accent-emerald-500{accent-color:#10b981}.accent-purple-500{accent-color:#a855f7}.accent-rose-500{accent-color:#f43f5e}.shadow{--tw-shadow:0 1px 3px 0 rgba(0,0,0,.1),0 1px 2px -1px rgba(0,0,0,.1);--tw-shadow-colored:0 1px 3px 0 var(--tw-shadow-color),0 1px 2px -1px var(--tw-shadow-color)}.shadow,.shadow-2xl{box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgba(0,0,0,.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color)}.shadow-inner{--tw-shadow:inset 0 2px 4px 0 rgba(0,0,0,.05);--tw-shadow-colored:inset 0 2px 4px 0 var(--tw-shadow-color)}.shadow-inner,.shadow-lg{box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.shadow-lg{--tw-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color),0 4px 6px -4px var(--tw-shadow-color)}.shadow-md{--tw-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color),0 2px 4px -2px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.shadow-blue-950\/50{--tw-shadow-color:rgba(23,37,84,.5);--tw-shadow:var(--tw-shadow-colored)}.backdrop-blur{--tw-backdrop-blur:blur(8px)}.backdrop-blur,.backdrop-blur-sm{-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.backdrop-blur-sm{--tw-backdrop-blur:blur(4px)}.transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,-webkit-backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter,-webkit-backdrop-filter;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.transition-colors{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.transition-opacity{transition-property:opacity;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.duration-300{transition-duration:.3s}.selection\:bg-blue-500 ::-moz-selection{--tw-bg-opacity:1;background-color:rgb(59 130 246/var(--tw-bg-opacity,1))}.selection\:bg-blue-500 ::selection{--tw-bg-opacity:1;background-color:rgb(59 130 246/var(--tw-bg-opacity,1))}.selection\:text-white ::-moz-selection{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.selection\:text-white ::selection{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.selection\:bg-blue-500::-moz-selection{--tw-bg-opacity:1;background-color:rgb(59 130 246/var(--tw-bg-opacity,1))}.selection\:bg-blue-500::selection{--tw-bg-opacity:1;background-color:rgb(59 130 246/var(--tw-bg-opacity,1))}.selection\:text-white::-moz-selection{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.selection\:text-white::selection{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.after\:absolute:after{content:var(--tw-content);position:absolute}.after\:left-\[2px\]:after{content:var(--tw-content);left:2px}.after\:top-\[2px\]:after{content:var(--tw-content);top:2px}.after\:h-4:after{content:var(--tw-content);height:1rem}.after\:w-4:after{content:var(--tw-content);width:1rem}.after\:rounded-full:after{content:var(--tw-content);border-radius:9999px}.after\:border:after{content:var(--tw-content);border-width:1px}.after\:border-slate-400:after{content:var(--tw-content);--tw-border-opacity:1;border-color:rgb(148 163 184/var(--tw-border-opacity,1))}.after\:bg-slate-400:after{content:var(--tw-content);--tw-bg-opacity:1;background-color:rgb(148 163 184/var(--tw-bg-opacity,1))}.after\:transition-all:after{content:var(--tw-content);transition-property:all;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.after\:content-\[\'\'\]:after{--tw-content:"";content:var(--tw-content)}.hover\:border-slate-600:hover{--tw-border-opacity:1;border-color:rgb(71 85 105/var(--tw-border-opacity,1))}.hover\:bg-amber-500:hover{--tw-bg-opacity:1;background-color:rgb(245 158 11/var(--tw-bg-opacity,1))}.hover\:bg-blue-500:hover{--tw-bg-opacity:1;background-color:rgb(59 130 246/var(--tw-bg-opacity,1))}.hover\:bg-emerald-500:hover{--tw-bg-opacity:1;background-color:rgb(16 185 129/var(--tw-bg-opacity,1))}.hover\:bg-slate-600:hover{--tw-bg-opacity:1;background-color:rgb(71 85 105/var(--tw-bg-opacity,1))}.hover\:bg-slate-700:hover{--tw-bg-opacity:1;background-color:rgb(51 65 85/var(--tw-bg-opacity,1))}.hover\:bg-slate-800:hover{--tw-bg-opacity:1;background-color:rgb(30 41 59/var(--tw-bg-opacity,1))}.hover\:text-slate-300:hover{--tw-text-opacity:1;color:rgb(203 213 225/var(--tw-text-opacity,1))}.hover\:text-white:hover{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.focus\:border-blue-500:focus{--tw-border-opacity:1;border-color:rgb(59 130 246/var(--tw-border-opacity,1))}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.focus\:ring-2:focus{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow,0 0 #0000)}.focus\:ring-amber-500:focus{--tw-ring-opacity:1;--tw-ring-color:rgb(245 158 11/var(--tw-ring-opacity,1))}.focus\:ring-blue-500:focus{--tw-ring-opacity:1;--tw-ring-color:rgb(59 130 246/var(--tw-ring-opacity,1))}.active\:scale-95:active{--tw-scale-x:.95;--tw-scale-y:.95;transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.disabled\:pointer-events-none:disabled{pointer-events:none}.disabled\:cursor-not-allowed:disabled{cursor:not-allowed}.disabled\:opacity-30:disabled{opacity:.3}.disabled\:opacity-50:disabled{opacity:.5}.group:hover .group-hover\:font-bold{font-weight:700}.group:hover .group-hover\:text-white{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.peer:checked~.peer-checked\:bg-amber-500{--tw-bg-opacity:1;background-color:rgb(245 158 11/var(--tw-bg-opacity,1))}.peer:checked~.peer-checked\:after\:translate-x-full:after{content:var(--tw-content);--tw-translate-x:100%;transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.peer:checked~.peer-checked\:after\:border-slate-950:after{content:var(--tw-content);--tw-border-opacity:1;border-color:rgb(2 6 23/var(--tw-border-opacity,1))}.peer:checked~.peer-checked\:after\:border-white:after{content:var(--tw-content);--tw-border-opacity:1;border-color:rgb(255 255 255/var(--tw-border-opacity,1))}.peer:checked~.peer-checked\:after\:bg-slate-950:after{content:var(--tw-content);--tw-bg-opacity:1;background-color:rgb(2 6 23/var(--tw-bg-opacity,1))}.peer:focus~.peer-focus\:outline-none{outline:2px solid transparent;outline-offset:2px}@media (min-width:640px){.sm\:w-auto{width:auto}.sm\:grid-cols-6{grid-template-columns:repeat(6,minmax(0,1fr))}.sm\:flex-row{flex-direction:row}.sm\:items-center{align-items:center}}@media (min-width:768px){.md\:block{display:block}.md\:h-\[28vw\]{height:28vw}.md\:max-h-\[420px\]{max-height:420px}.md\:w-\[18vw\]{width:18vw}.md\:max-w-\[300px\]{max-width:300px}.md\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.md\:gap-8{gap:2rem}.md\:p-12{padding:3rem}.md\:p-8{padding:2rem}.md\:text-2xl{font-size:1.5rem;line-height:2rem}.md\:text-3xl{font-size:1.875rem;line-height:2.25rem}.md\:text-4xl{font-size:2.25rem;line-height:2.5rem}.md\:text-lg{font-size:1.125rem;line-height:1.75rem}.md\:text-sm{font-size:.875rem;line-height:1.25rem}.md\:text-xl{font-size:1.25rem;line-height:1.75rem}}@media (min-width:1024px){.lg\:col-span-4{grid-column:span 4/span 4}.lg\:col-span-5{grid-column:span 5/span 5}.lg\:col-span-7{grid-column:span 7/span 7}.lg\:col-span-8{grid-column:span 8/span 8}.lg\:w-auto{width:auto}.lg\:grid-cols-12{grid-template-columns:repeat(12,minmax(0,1fr))}.lg\:flex-row{flex-direction:row}}
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-blue-500 selection:text-white hide-instructions">
+
+    <!-- Tab Navigation Header with integrated icons and interactive Presentation Mode Toggle -->
+    <header class="bg-slate-950/90 backdrop-blur border-b border-slate-800 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex flex-col lg:flex-row justify-between items-center py-4 gap-4">
+                <div class="flex flex-wrap items-center justify-between w-full lg:w-auto gap-4">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-8 h-8 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        <h1 class="text-xl font-bold tracking-wider text-slate-300 uppercase">Lecture on Cognitive Fallibility</h1>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3.5 py-2 rounded-xl">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="toggleInstructions" onchange="toggleInstructionsMode()" class="sr-only peer" checked>
+                            <div class="w-9 h-5 bg-slate-750 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-400 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500 peer-checked:after:bg-slate-950 peer-checked:after:border-slate-950"></div>
+                            <span class="ml-2.5 text-xs font-bold text-slate-300 select-none uppercase tracking-wide">Blind Run Mode</span>
+                        </label>
+                    </div>
+                </div>
+                <nav class="flex flex-wrap gap-2 justify-center">
+                    <!-- Tab 1: Wason Task -->
+                    <button onclick="switchTab('wason')" id="tabBtn_wason" class="tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 bg-blue-600 text-white shadow-md">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        1. Wason Task
+                    </button>
+                    <!-- Tab 2: Bump Hunter -->
+                    <button onclick="switchTab('bumphunter')" id="tabBtn_bumphunter" class="tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 bg-slate-800 text-slate-400 hover:text-white">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        2. Bump Hunter
+                    </button>
+                    <!-- Tab 3: Base Rate Fallacy -->
+                    <button onclick="switchTab('baserate')" id="tabBtn_baserate" class="tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 bg-slate-800 text-slate-400 hover:text-white">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                        </svg>
+                        3. Base Rate Fallacy
+                    </button>
+                    <!-- Tab 4: Calibration Game -->
+                    <button onclick="switchTab('calibration')" id="tabBtn_calibration" class="tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 bg-slate-800 text-slate-400 hover:text-white">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        4. Calibration Game
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow flex flex-col items-center justify-center w-full max-w-7xl mx-auto px-4 py-8 relative">
+        
+        <!-- TAB 1: WASON TASK -->
+        <div id="tab_wason" class="tab-content w-full flex flex-col items-center max-w-4xl">
+            <div class="bg-slate-800/80 border border-slate-700 p-8 md:p-12 rounded-3xl shadow-2xl w-full">
+                <!-- Game Header -->
+                <div class="text-center mb-8 border-b border-slate-700 pb-6">
+                    <span class="text-xs font-bold tracking-widest text-blue-400 uppercase bg-blue-950/80 border border-blue-800 px-3 py-1.5 rounded-full">Interactive logic test</span>
+                    <h2 class="text-3xl md:text-4xl font-bold text-white mt-4 mb-2">The Wason Selection Task</h2>
+                    <p class="instruction-clue text-slate-300 text-md md:text-lg max-w-2xl mx-auto mt-2">
+                        First formulated by Peter Cathcart Wason in 1966, this puzzle is a foundational tool in cognitive psychology used to demonstrate our systematic blind spots in falsificationism.
+                    </p>
+                    <div class="instruction-clue mt-4 bg-slate-900/60 rounded-xl p-4 text-xs md:text-sm text-slate-400 text-left max-w-xl mx-auto space-y-1 border border-slate-800">
+                        <strong class="text-slate-300 block mb-1">Instructions:</strong>
+                        <p>1. Analyze the hypothesis rule below carefully.</p>
+                        <p>2. Select only the card(s) that you <strong>must</strong> turn over to prove if the rule is true or false. Turn over only the minimum necessary.</p>
+                    </div>
+                </div>
+
+                <!-- Central Interactive Rule Presentation -->
+                <div class="bg-slate-900/80 rounded-2xl p-6 border border-slate-750 text-center mb-10 max-w-2xl mx-auto shadow-inner">
+                    <span class="text-xs text-slate-500 uppercase tracking-widest font-bold">Hypothesis Rule to Test</span>
+                    <h3 id="ruleDisplay" class="text-xl md:text-2xl font-bold text-yellow-400 mt-2 leading-relaxed">
+                        If a card has an F on one side, then it must have a 3 on the other side.
+                    </h3>
+                </div>
+
+                <!-- Cards Grid -->
+                <div id="cardsContainer" class="flex flex-wrap justify-center gap-6 md:gap-8 mb-10">
+                    <!-- Cards are dynamically rendered via javascript -->
+                </div>
+
+                <!-- Controls -->
+                <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
+                    <button onclick="resetSelection()" class="w-full sm:w-auto bg-slate-750 hover:bg-slate-700 text-slate-300 px-6 py-3.5 rounded-xl font-bold transition-all border border-slate-700">
+                        Reset Board
+                    </button>
+                    <button onclick="checkAnswer()" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-blue-950/50 transition-all active:scale-95">
+                        Submit Answer
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: BUMP HUNTER (LOOK ELSEWHERE EFFECT SIMULATOR) -->
+        <div id="tab_bumphunter" class="tab-content w-full hidden flex flex-col items-center max-w-5xl">
+            <div class="bg-slate-800/80 border border-slate-700 p-8 md:p-12 rounded-3xl shadow-2xl w-full">
+                <!-- Game Header -->
+                <div class="text-center mb-8 border-b border-slate-700 pb-6">
+                    <span class="text-xs font-bold tracking-widest text-emerald-400 uppercase bg-emerald-950/80 border border-emerald-800 px-3 py-1.5 rounded-full">Experimental Bias Simulation</span>
+                    <h2 class="text-3xl md:text-4xl font-bold text-white mt-4 mb-2">The "Bump Hunter" Simulator</h2>
+                    <p class="instruction-clue text-slate-300 text-md md:text-lg max-w-2xl mx-auto mt-2">
+                        Witness the **Look-Elsewhere Effect** (LEE). In collider physics, random fluctuations can yield local "discoveries" ($Z_{local} \ge 3\sigma$). But when searching multiple channels, trial factors erode the global significance.
+                    </p>
+                    <div class="instruction-clue mt-4 bg-slate-900/60 rounded-xl p-4 text-xs md:text-sm text-slate-400 text-left max-w-xl mx-auto space-y-1 border border-slate-800">
+                        <strong class="text-slate-300 block mb-1">How to Play:</strong>
+                        <p>1. Click **"Run New Experiment"** to generate high-energy decay stats (Poisson noise).</p>
+                        <p>2. Drag or click on the chart to select a range of bins where you see a "bump".</p>
+                        <p>3. Calculate the cumulative trial factor, or **Reveal the True Physics Model** to see if your discovery is real!</p>
+                    </div>
+                </div>
+
+                <!-- Simulation Interface Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    <!-- Chart Column (8 cols) -->
+                    <div class="lg:col-span-8 bg-slate-950 p-5 rounded-2xl border border-slate-850 space-y-4">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                            <h4 class="text-xs font-mono tracking-widest text-slate-400 uppercase">Mass Channels (GeV) vs Observed Events</h4>
+                            <span id="eventCountLabel" class="text-xs font-mono font-bold text-emerald-400 bg-emerald-950/30 px-3 py-1 rounded-lg border border-emerald-900/60">0 Events Tracked</span>
+                        </div>
+                        <div class="relative w-full aspect-[2/1] bg-slate-950 flex items-center justify-center border border-slate-900 rounded-lg p-2">
+                            <canvas id="histogramCanvas" class="w-full h-full block rounded cursor-crosshair"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Inspector Column (4 cols) -->
+                    <div class="lg:col-span-4 space-y-6">
+                        <!-- Controls Panel -->
+                        <div class="bg-slate-900/70 p-5 rounded-2xl border border-slate-850 space-y-3">
+                            <h3 class="text-sm font-bold uppercase tracking-widest text-slate-400 border-b border-slate-800 pb-2">Simulator Deck</h3>
+                            <button onclick="generateBumpHunterData()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-lg active:scale-95">
+                                🌌 Run New Experiment
+                            </button>
+                            <button id="trialFactorBtn" onclick="applyLookElsewhereEffect()" disabled class="lee-btn w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:pointer-events-none text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-lg active:scale-95">
+                                ⚖️ Correct for Look-Elsewhere Effect
+                            </button>
+                            <button id="revealPhysicsBtn" onclick="revealUnderlyingPhysics()" disabled class="w-full bg-amber-600 hover:bg-amber-500 disabled:opacity-30 disabled:pointer-events-none text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-lg active:scale-95">
+                                🔍 Reveal Underlying Model
+                            </button>
+                        </div>
+
+                        <!-- Statistics Inspector Panel -->
+                        <div class="bg-slate-900/70 p-5 rounded-2xl border border-slate-850 space-y-3">
+                            <h3 class="text-sm font-bold uppercase tracking-widest text-slate-400 border-b border-slate-800 pb-2">Statistical Inspector</h3>
+                            <div id="inspectorPanel" class="min-h-[140px] flex flex-col justify-center">
+                                <p class="text-xs text-slate-500 text-center leading-relaxed">No active experiment. Click **"Run New Experiment"** above to acquire signal data.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: BASE RATE FALLACY -->
+        <div id="tab_baserate" class="tab-content w-full hidden flex flex-col items-center max-w-5xl">
+            <div class="bg-slate-800/80 border border-slate-700 p-8 md:p-12 rounded-3xl shadow-2xl w-full">
+                <!-- Game Header -->
+                <div class="text-center mb-8 border-b border-slate-700 pb-6">
+                    <span class="text-xs font-bold tracking-widest text-purple-400 uppercase bg-purple-950/80 border border-purple-800 px-3 py-1.5 rounded-full">Bayesian Reasoning Simulator</span>
+                    <h2 class="text-3xl md:text-4xl font-bold text-white mt-4 mb-2">The Base Rate Fallacy</h2>
+                    <p class="instruction-clue text-slate-300 text-md md:text-lg max-w-2xl mx-auto mt-2">
+                        Explore how our brains systematically overestimate the validity of tests and alarms when tracking rare events, ignoring the foundational "prior probability" or base rate.
+                    </p>
+                    <div class="instruction-clue mt-4 bg-slate-900/60 rounded-xl p-4 text-xs md:text-sm text-slate-400 text-left max-w-xl mx-auto space-y-1 border border-slate-800">
+                        <strong class="text-slate-300 block mb-1">Interactive Guide:</strong>
+                        <p>1. Choose an educational scenario (Medical Screening or Cosmic Sensor).</p>
+                        <p>2. Adjust the sliders to set the <strong>Base Rate</strong>, <strong>Sensitivity</strong>, and <strong>False Positive Rate</strong>.</p>
+                        <p>3. Submit your answer, then explore the population grid to understand the "false alarm paradox."</p>
+                    </div>
+                </div>
+
+                <!-- PHASE 1: Question panel (visible before answer is submitted) -->
+                <div id="br_question_phase" class="space-y-5">
+
+                    <!-- Row 1: Scenario selector (compact, horizontal) -->
+                    <div class="bg-slate-900/70 p-4 rounded-2xl border border-slate-800">
+                        <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                            <span class="text-xs font-bold uppercase tracking-widest text-slate-400 sm:w-28 flex-shrink-0 self-center">Scenario:</span>
+                            <div class="flex flex-1 gap-3">
+                                <button onclick="setBaseRateScenario('medical')" id="scenarioBtn_medical" class="flex-1 px-4 py-2.5 rounded-xl text-xs font-semibold text-left border transition-all flex items-center justify-between bg-purple-950/30 border-purple-800 text-purple-300">
+                                    <span>🩺 Medical Screening</span>
+                                </button>
+                                <button onclick="setBaseRateScenario('physics')" id="scenarioBtn_physics" class="flex-1 px-4 py-2.5 rounded-xl text-xs font-semibold text-left border transition-all flex items-center justify-between border-slate-700 text-slate-400 hover:text-slate-300">
+                                    <span>🛰️ Deep-Space Sensor</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: The Question card (full width) -->
+                    <div class="bg-slate-900/70 border-2 border-purple-800/60 rounded-2xl p-8 text-center shadow-xl space-y-5">
+                        <span class="text-xs font-bold tracking-widest text-purple-400 uppercase">Your Challenge</span>
+                        <p id="br_question_text" class="text-xl md:text-2xl font-bold text-white leading-relaxed max-w-3xl mx-auto">
+                            <!-- populated by JS -->
+                        </p>
+                        <div class="flex flex-col items-center gap-3 pt-1">
+                            <div class="flex items-center gap-3">
+                                <input type="number" id="br_student_guess" min="0" max="100" step="0.1"
+                                    placeholder="e.g. 65"
+                                    class="w-36 text-center text-2xl font-bold bg-slate-800 border-2 border-slate-600 focus:border-purple-500 focus:outline-none rounded-xl px-4 py-3 text-white"
+                                    oninput="validateBrGuess()">
+                                <span class="text-2xl font-bold text-slate-300">%</span>
+                            </div>
+                            <button id="br_submit_btn" onclick="submitBaseRateAnswer()" disabled
+                                class="bg-purple-700 hover:bg-purple-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-lg py-3 px-10 rounded-xl shadow-lg transition-all active:scale-95">
+                                Submit Answer
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Sliders (3 columns side by side) -->
+                    <div class="bg-slate-900/70 p-5 rounded-2xl border border-slate-800">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 border-b border-slate-800 pb-2 mb-4">Probability Parameters</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <!-- Slider 1: Base Rate -->
+                            <div class="space-y-1">
+                                <div class="flex justify-between items-center">
+                                    <label class="text-xs font-semibold text-slate-300">Base Rate</label>
+                                    <span id="brValLabel" class="text-xs font-mono font-bold text-purple-400 bg-purple-950/30 px-2 py-0.5 rounded border border-purple-900">1.0%</span>
+                                </div>
+                                <input type="range" id="slider_baseRate" min="0.1" max="15.0" step="0.1" value="1.0" oninput="updateBaseRateFromSlider()" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-500">
+                                <p class="text-[10px] text-slate-500">True prevalence in the population.</p>
+                            </div>
+                            <!-- Slider 2: Sensitivity -->
+                            <div class="space-y-1">
+                                <div class="flex justify-between items-center">
+                                    <label id="sensLabel" class="text-xs font-semibold text-slate-300">Sensitivity (TPR)</label>
+                                    <span id="sensValLabel" class="text-xs font-mono font-bold text-emerald-400 bg-emerald-950/30 px-2 py-0.5 rounded border border-emerald-900">95.0%</span>
+                                </div>
+                                <input type="range" id="slider_sensitivity" min="70.0" max="100.0" step="0.5" value="95.0" oninput="updateBaseRateFromSlider()" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+                                <p id="sensHint" class="text-[10px] text-slate-500">Probability of correctly identifying a true positive.</p>
+                            </div>
+                            <!-- Slider 3: False Positive Rate -->
+                            <div class="space-y-1">
+                                <div class="flex justify-between items-center">
+                                    <label id="fprLabel" class="text-xs font-semibold text-slate-300">False Positive Rate</label>
+                                    <span id="fprValLabel" class="text-xs font-mono font-bold text-rose-400 bg-rose-950/30 px-2 py-0.5 rounded border border-rose-900">5.0%</span>
+                                </div>
+                                <input type="range" id="slider_falsePositive" min="0.5" max="20.0" step="0.5" value="5.0" oninput="updateBaseRateFromSlider()" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-500">
+                                <p id="fprHint" class="text-[10px] text-slate-500">Probability of a false alarm on a healthy subject.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- PHASE 2: Reveal panel (hidden until answer is submitted) -->
+                <div id="br_reveal_phase" class="hidden space-y-8">
+
+                    <!-- Student result banner -->
+                    <div id="br_result_banner" class="rounded-2xl p-6 border-2 text-center space-y-1">
+                        <!-- populated by JS -->
+                    </div>
+
+                    <!-- Simulation Interface Grid (same layout as before) -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                        <!-- Column 1: Scenario & parameter summary (5 cols, read-only in reveal) -->
+                        <div class="lg:col-span-5 space-y-6">
+                            <div class="bg-slate-900/70 p-5 rounded-2xl border border-slate-800 space-y-3">
+                                <h3 class="text-sm font-bold uppercase tracking-widest text-slate-400 border-b border-slate-800 pb-2">Parameters Used</h3>
+                                <div id="br_params_summary" class="space-y-2 text-sm font-mono text-slate-300">
+                                    <!-- populated by JS -->
+                                </div>
+                            </div>
+
+                            <!-- Mathematical Proof panel -->
+                            <div class="bg-slate-900/70 p-5 rounded-2xl border border-slate-800 space-y-4">
+                                <h3 class="text-sm font-bold uppercase tracking-widest text-slate-400 border-b border-slate-800 pb-2">Bayesian Probability Outcome</h3>
+                                <div class="grid grid-cols-1 gap-4">
+                                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-850 flex flex-col justify-center items-center text-center">
+                                        <span class="text-xs text-slate-400 uppercase tracking-widest mb-1">P(Sick | Alarm)</span>
+                                        <div id="bayesPosteriorPercent" class="text-5xl font-black text-purple-400 font-mono">—</div>
+                                        <p class="text-[10px] text-slate-500 mt-2">Only <span id="tpDotCount" class="text-emerald-400 font-bold">—</span> out of <span id="totalAlarmCount" class="text-yellow-400 font-bold">—</span> alarms are true cases!</p>
+                                    </div>
+                                    <div class="space-y-2 text-xs font-mono bg-slate-950/40 p-3.5 rounded-xl border border-slate-850">
+                                        <div class="text-slate-400 border-b border-slate-800 pb-1.5 font-sans font-bold">Bayes' Formula Breakdown:</div>
+                                        <div class="flex justify-between">
+                                            <span>P(Signal | Alarm) =</span>
+                                            <span class="text-white font-bold">P(Alarm|S)·P(S) / P(Alarm)</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span>Numerator (True Cases):</span>
+                                            <span id="bayesNumerator" class="text-emerald-400">—</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span>Denominator (All Alarms):</span>
+                                            <span id="bayesDenominator" class="text-yellow-400">—</span>
+                                        </div>
+                                        <div class="border-t border-slate-800 pt-1.5 text-slate-400 text-[10px] leading-relaxed font-sans">
+                                            Despite a <strong id="br_sens_note" class="text-white">95% sensitive</strong> test with only a <strong id="br_fpr_note" class="text-white">5% false positive rate</strong>, the vast majority of alarms are false because the background population is so immense!
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Column 2: Visual Dot Grid (7 cols) -->
+                        <div class="lg:col-span-7 space-y-6">
+                            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-850 space-y-3">
+                                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                    <h4 id="gridTitle" class="text-xs font-mono tracking-widest text-slate-400 uppercase">Population Grid (1,000 Patients)</h4>
+                                    <div class="flex flex-wrap gap-2 text-[9px] font-mono">
+                                        <span class="flex items-center gap-1.5 text-emerald-400"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> True Pos</span>
+                                        <span class="flex items-center gap-1.5 text-rose-400"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> False Pos</span>
+                                        <span class="flex items-center gap-1.5 text-amber-400"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Missed</span>
+                                        <span class="flex items-center gap-1.5 text-slate-500"><span class="w-2.5 h-2.5 rounded-full bg-slate-700 inline-block"></span> True Neg</span>
+                                    </div>
+                                </div>
+                                <div class="relative w-full aspect-[2/1] bg-slate-950 flex items-center justify-center border border-slate-900 rounded-lg p-2">
+                                    <canvas id="baseRateCanvas" class="w-full h-full block rounded"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reset button -->
+                    <div class="flex justify-center pt-2">
+                        <button onclick="resetBaseRateQuestion()"
+                            class="bg-slate-700 hover:bg-slate-600 text-white text-md font-semibold py-3 px-8 rounded-xl shadow transition-all active:scale-95 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" />
+                            </svg>
+                            Try Again / Change Parameters
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- TAB 4: CALIBRATION GAME (FULLY OPERATIONAL) -->
+        <div id="tab_calibration" class="tab-content w-full hidden flex flex-col items-center max-w-4xl">
+            <div class="bg-slate-800/80 border border-slate-700 p-8 md:p-12 rounded-3xl shadow-2xl w-full">
+                <!-- Game Header -->
+                <div class="text-center mb-8 border-b border-slate-700 pb-6">
+                    <span class="text-xs font-bold tracking-widest text-yellow-400 uppercase bg-yellow-950/80 border border-yellow-800 px-3 py-1.5 rounded-full">Interactive calibration test</span>
+                    <h2 class="text-3xl md:text-4xl font-bold text-white mt-4 mb-2">The Spiegelhalter Calibration Game</h2>
+                    <p class="instruction-clue text-slate-300 text-md md:text-lg max-w-2xl mx-auto mt-2">
+                        Adapted from David Spiegelhalter's paper (<em>Nature</em>, Dec 2024). This game tests your self-calibration. 
+                        By punishing overconfidence and rewarding honest uncertainty assessment, your final Brier-derived score reveals if you suffer from the <strong>illusion of knowledge</strong>.
+                    </p>
+                    <div class="instruction-clue mt-4 bg-slate-900/60 rounded-xl p-4 text-xs md:text-sm text-slate-400 text-left max-w-xl mx-auto space-y-1 border border-slate-800">
+                        <strong class="text-slate-300 block mb-1">Instructions:</strong>
+                        <p>1. Pick the answer (A or B) you believe is most likely correct.</p>
+                        <p>2. Rate your confidence on a scale of <strong>5 to 10</strong>. 
+                           (5 means complete guess/50%, 10 means absolutely certain/100%).</p>
+                    </div>
+                </div>
+
+                <!-- Questions Container (Now rendered step-by-step) -->
+                <div id="calibrationQuestionsContainer" class="min-h-[300px]">
+                    <!-- Question card will be dynamically built via JavaScript -->
+                </div>
+
+                <!-- Reset/Retake Button -->
+                <div class="mt-8 flex justify-center">
+                    <button onclick="resetCalibrationGame()" class="bg-slate-700 hover:bg-slate-600 text-white text-md font-semibold py-3 px-8 rounded-xl shadow transition-all active:scale-95 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" />
+                        </svg>
+                        Restart Game
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- DEBUG Button (Fixed to Right Edge) -->
+    <button id="debugBtn" onclick="openDebug()" class="fixed right-0 top-1/2 -translate-y-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-600 border-r-0 rounded-l-xl py-6 px-2 flex items-center justify-center transition-all shadow-2xl z-40 group">
+        <span class="vertical-text uppercase tracking-widest font-mono text-sm group-hover:font-bold">Debug</span>
+    </button>
+
+    <!-- DEBUG Modal -->
+    <div id="debugModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-600 rounded-3xl w-full max-w-4xl p-8 shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-3xl font-bold text-white">Debug Configuration</h3>
+                <button onclick="closeDebug()" class="text-slate-400 hover:text-white text-4xl">&times;</button>
+            </div>
+            
+            <div class="space-y-8">
+                <!-- Rule Configuration -->
+                <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
+                    <h4 class="text-xl font-semibold mb-4 text-slate-300">Rule Configuration (Wason Task)</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Condition (e.g., F)</label>
+                            <input type="text" id="debugCondition" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-3 text-white text-lg focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Consequence (e.g., 3)</label>
+                            <input type="text" id="debugConsequence" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-3 text-white text-lg focus:outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cards Configuration -->
+                <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
+                    <h4 class="text-xl font-semibold mb-4 text-slate-300">Cards Configuration (Wason Task)</h4>
+                    <p class="text-sm text-slate-400 mb-4">Set the text for each card and check the box if it is required to be turned over for the correct answer.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="debugCardsConfig">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-4 mt-8">
+                    <button onclick="closeDebug()" class="bg-slate-700 hover:bg-slate-600 px-6 py-3 rounded-xl font-semibold transition-colors">Cancel</button>
+                    <button onclick="saveDebug()" class="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-xl font-semibold transition-colors">Save & Apply</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Alert/Message Modal -->
+    <div id="messageModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-slate-800 border-2 rounded-3xl max-w-2xl w-full max-h-[90vh] p-6 md:p-8 shadow-2xl text-center transform transition-all scale-95 flex flex-col" id="messageBox">
+            <h3 id="messageTitle" class="text-3xl md:text-4xl font-bold mb-4 flex-shrink-0"></h3>
+            <div id="messageBody" class="text-slate-300 mb-6 text-left leading-relaxed overflow-y-auto flex-grow pr-2"></div>
+            <button onclick="closeMessage()" class="bg-slate-700 hover:bg-slate-600 text-white text-lg md:text-xl font-bold py-3 px-8 rounded-xl shadow transition-colors w-full flex-shrink-0">
+                Continue
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Application State
+        let state = {
+            ruleCondition: 'F',
+            ruleConsequence: '3',
+            cards: [
+                { id: 0, text: 'F', isCorrectToFlip: true, selected: false },
+                { id: 1, text: 'L', isCorrectToFlip: false, selected: false },
+                { id: 2, text: '3', isCorrectToFlip: false, selected: false },
+                { id: 3, text: '7', isCorrectToFlip: true, selected: false }
+            ],
+            // Bump Hunter state variables
+            bumpHunter: {
+                dataGenerated: false,
+                bins: 50,
+                xRange: [100, 200], // GeV
+                expectedBackground: [], // B_i
+                observedData: [], // D_i
+                selectedRange: { start: null, end: null },
+                isDragging: false,
+                revealed: false,
+                trialFactorApplied: false,
+                hoveredBinIndex: null,
+                globalEvents: 100000 // Target total background events
+            },
+            // Base Rate Fallacy state variables
+            baseRateFallacy: {
+                scenario: 'medical', // 'medical' or 'physics'
+                baseRate: 1.0,      // in percent (0.1% to 15.0%)
+                sensitivity: 95.0,  // in percent (70% to 100%)
+                falsePositive: 5.0, // in percent (0.5% to 20%)
+                dotsCount: 1000,
+                answered: false,    // true once student submits their guess
+                studentGuess: null  // the student's numeric guess
+            },
+            currentCalibrationIndex: 0,
+            userAnswers: {},
+            calibrationQuestions: [
+                {
+                    id: 1,
+                    question: "Which contains more water by percentage?",
+                    options: {
+                        A: "Human brain",
+                        B: "Human blood"
+                    },
+                    correct: "A",
+                    explanation: "Counterintuitively, the brain (~73% water) contains more water by percentage than whole blood (~50% water), as stated in Spiegelhalter\'s Nature paper. The common confusion arises because blood plasma alone is ~92% water — but whole blood includes red blood cells, which dilute that figure considerably. This question is a direct demonstration of how a plausible-sounding distractor (blood \'feels\' more liquid) can override careful reasoning.",
+                },
+                {
+                    id: 2,
+                    question: "Who published their key work first?",
+                    options: {
+                        A: "Charles Darwin",
+                        B: "Gregor Mendel"
+                    },
+                    correct: "A",
+                    explanation: "Charles Darwin published \'On the Origin of Species\' in 1859. Gregor Mendel published his foundational paper on inheritance in pea plants in 1866 — seven years later. Ironically, Darwin never knew of Mendel\'s work, which would have powerfully supported his own theory.",
+                },
+                {
+                    id: 3,
+                    question: "Which is the bigger planet?",
+                    options: {
+                        A: "Venus",
+                        B: "Earth"
+                    },
+                    correct: "B",
+                    explanation: "Earth has a mean radius of approximately 6,371 km, while Venus has a mean radius of about 6,051 km — making Earth roughly 5% larger. The two planets are often called \'twins\' due to their similarity, which makes this a surprisingly tricky question.",
+                },
+                {
+                    id: 4,
+                    question: "Which molecule has more atoms?",
+                    options: {
+                        A: "Caffeine",
+                        B: "Aspirin"
+                    },
+                    correct: "A",
+                    explanation: "Caffeine (C₈H₁₀N₄O₂) has 24 atoms per molecule, while Aspirin (acetylsalicylic acid, C₉H₈O₄) has 21 atoms per molecule. Although Aspirin has more carbon atoms, Caffeine\'s four nitrogen atoms push its total count higher.",
+                },
+                {
+                    id: 5,
+                    question: "Which has the higher melting point?",
+                    options: {
+                        A: "Gold",
+                        B: "Silver"
+                    },
+                    correct: "A",
+                    explanation: "Gold melts at 1,064°C (1,947°F), while Silver melts at a lower 962°C (1,764°F). Gold\'s stronger metallic bonding, due to relativistic effects on its electron orbitals, gives it its higher melting point.",
+                }
+            ],
+            brierPayoffs: {
+                5: { correct: 0, wrong: 0 },
+                6: { correct: 9, wrong: -11 },
+                7: { correct: 16, wrong: -24 },
+                8: { correct: 21, wrong: -39 },
+                9: { correct: 24, wrong: -56 },
+                10: { correct: 25, wrong: -75 }
+            }
+        };
+
+        // DOM elements caching
+        const ruleDisplay = document.getElementById('ruleDisplay');
+        const cardsContainer = document.getElementById('cardsContainer');
+        const debugCardsConfig = document.getElementById('debugCardsConfig');
+        const debugModal = document.getElementById('debugModal');
+        const messageModal = document.getElementById('messageModal');
+        const messageBox = document.getElementById('messageBox');
+        const messageTitle = document.getElementById('messageTitle');
+        const messageBody = document.getElementById('messageBody');
+
+        // Navigation system
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.classList.add('hidden');
+            });
+            document.getElementById(`tab_${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 bg-slate-800 text-slate-400 hover:text-white";
+            });
+            document.getElementById(`tabBtn_${tabId}`).className = "tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 bg-blue-600 text-white shadow-md";
+
+            const debugBtn = document.getElementById('debugBtn');
+            if (tabId === 'wason') {
+                debugBtn.classList.remove('hidden');
+            } else {
+                debugBtn.classList.add('hidden');
+            }
+
+            // Redraw Bump Hunter Canvas if switched to it
+            if (tabId === 'bumphunter') {
+                setTimeout(initBumpHunterCanvas, 100);
+            }
+
+            // Redraw Base Rate Canvas if switched to it
+            if (tabId === 'baserate') {
+                setTimeout(initBaseRateCanvas, 100);
+            }
+        }
+
+        function toggleInstructionsMode() {
+            const checkbox = document.getElementById('toggleInstructions');
+            if (checkbox.checked) {
+                document.body.classList.add('hide-instructions');
+            } else {
+                document.body.classList.remove('hide-instructions');
+            }
+        }
+
+        // Wason Logic
+        function renderRule() {
+            ruleDisplay.innerHTML = `If a card has an <span class="text-white bg-slate-700 px-3 py-1 rounded-lg">${state.ruleCondition}</span> on one side, <br class="hidden md:block"> then it must have a <span class="text-white bg-slate-700 px-3 py-1 rounded-lg">${state.ruleConsequence}</span> on the other side.`;
+        }
+
+        function renderCards() {
+            cardsContainer.innerHTML = '';
+            state.cards.forEach((card, index) => {
+                const cardEl = document.createElement('div');
+                
+                const baseClasses = "card-inner w-[40vw] h-[60vw] max-w-[250px] max-h-[350px] md:w-[18vw] md:h-[28vw] md:max-w-[300px] md:max-h-[420px] bg-white rounded-3xl flex items-center justify-center cursor-pointer border-8 select-none flex-shrink-0 shadow-lg";
+                const selectedClasses = card.selected ? "card-selected" : "card-unselected";
+                
+                let textSizeClass = "text-[120px]";
+                if (card.text.length > 2) textSizeClass = "text-5xl text-center px-4 leading-tight break-words";
+                if (card.text.length > 10) textSizeClass = "text-3xl text-center px-4 leading-tight break-words";
+
+                cardEl.className = `${baseClasses} ${selectedClasses}`;
+                cardEl.onclick = () => toggleCard(index);
+                
+                cardEl.innerHTML = `<span class="font-bold text-slate-800 ${textSizeClass}">${card.text}</span>`;
+                cardsContainer.appendChild(cardEl);
+            });
+        }
+
+        function toggleCard(index) {
+            state.cards[index].selected = !state.cards[index].selected;
+            renderCards();
+        }
+
+        function resetSelection() {
+            state.cards.forEach(card => card.selected = false);
+            renderCards();
+        }
+
+        function checkAnswer() {
+            let isPerfect = true;
+            let missedRequired = 0;
+            let selectedWrong = 0;
+
+            state.cards.forEach(card => {
+                if (card.isCorrectToFlip && !card.selected) {
+                    isPerfect = false;
+                    missedRequired++;
+                }
+                if (!card.isCorrectToFlip && card.selected) {
+                    isPerfect = false;
+                    selectedWrong++;
+                }
+            });
+
+            if (isPerfect) {
+                showMessage("Correct!", "You successfully identified the falsifying conditions. Falsificationism in action!", "border-green-500", "text-green-400");
+            } else {
+                let msg = "Not quite right.<br><br>";
+                if (selectedWrong > 0 && missedRequired > 0) {
+                    msg += "You turned over card(s) you didn't need to, and missed card(s) that were necessary.";
+                } else if (selectedWrong > 0) {
+                    msg += "You fell into the verification trap! You selected card(s) that could only confirm the rule, not falsify it.";
+                } else if (missedRequired > 0) {
+                    msg += "You missed one or more cards required to prove the rule false.";
+                }
+                showMessage("Incorrect", msg, "border-red-500", "text-red-400");
+            }
+        }
+
+        // Helper math equations for Gaussian error functions and trial factor conversions
+        function erfc(x) {
+            // Abramowitz and Stegun formula 7.1.26
+            const a1 =  0.254829592;
+            const a2 = -0.284496736;
+            const a3 =  1.421413741;
+            const a4 = -1.453152027;
+            const a5 =  1.061405429;
+            const p  =  0.3275911;
+            const sign = (x < 0) ? -1 : 1;
+            const absX = Math.abs(x);
+            const t = 1.0 / (1.0 + p * absX);
+            const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-absX * absX);
+            return (sign === 1) ? 1.0 - y : 1.0 + y;
+        }
+
+        function zToP(z) {
+            if (z <= 0) return 0.5;
+            return 0.5 * erfc(z / Math.sqrt(2));
+        }
+
+        function pToZ(p) {
+            if (p >= 0.5) return 0;
+            if (p <= 1e-15) return 8.0; 
+            const t = Math.sqrt(-2.0 * Math.log(p));
+            const c0 = 2.515517;
+            const c1 = 0.802853;
+            const c2 = 0.010328;
+            const d1 = 1.432788;
+            const d2 = 0.189269;
+            const d3 = 0.001308;
+            const z = t - ((c2 * t + c1) * t + c0) / (((d3 * t + d2) * t + d1) * t + 1.0);
+            return z;
+        }
+
+        // Generate Poisson approximation using box-muller
+        function generatePoisson(lambda) {
+            if (lambda < 30) {
+                // Knuth's algorithm for small Poisson bounds
+                let L = Math.exp(-lambda);
+                let k = 0;
+                let p = 1.0;
+                do {
+                    k++;
+                    p *= Math.random();
+                } while (p > L);
+                return k - 1;
+            } else {
+                // High stats Gaussian limit approximation
+                let u1 = Math.random();
+                let u2 = Math.random();
+                let z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+                let val = Math.round(lambda + Math.sqrt(lambda) * z0);
+                return Math.max(0, val);
+            }
+        }
+
+        function initBumpHunterCanvas() {
+            const canvas = document.getElementById('histogramCanvas');
+            if (!canvas) return;
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            
+            // Set up interactive resize listeners once
+            if (!canvas.dataset.resizeBound) {
+                window.addEventListener('resize', () => {
+                    if (!document.getElementById('tab_bumphunter').classList.contains('hidden')) {
+                        initBumpHunterCanvas();
+                    }
+                });
+                
+                // Mouse Drag-Selection Listeners
+                canvas.addEventListener('mousedown', handleHistogramMouseDown);
+                canvas.addEventListener('mousemove', handleHistogramMouseMove);
+                canvas.addEventListener('mouseup', handleHistogramMouseUp);
+                canvas.addEventListener('mouseleave', handleHistogramMouseLeave);
+
+                // Touch Drag-Selection Listeners (Mobile compatibility)
+                canvas.addEventListener('touchstart', handleHistogramTouchStart, { passive: false });
+                canvas.addEventListener('touchmove', handleHistogramTouchMove, { passive: false });
+                canvas.addEventListener('touchend', handleHistogramTouchEnd);
+                
+                canvas.dataset.resizeBound = "true";
+            }
+
+            drawHistogram();
+        }
+
+        function generateBumpHunterData() {
+            const bh = state.bumpHunter;
+            bh.expectedBackground = [];
+            bh.observedData = [];
+            bh.selectedRange = { start: null, end: null };
+            bh.isDragging = false;
+            bh.revealed = false;
+            bh.trialFactorApplied = false;
+
+            // Generate decay curve B_i = Constant * exp(-x/slope) + flat offset
+            let totalEventsGenerated = 0;
+            const slope = 35.0; // Decay rate
+            
+            // Compute norm factor
+            let normSum = 0;
+            for (let i = 0; i < bh.bins; i++) {
+                const xVal = bh.xRange[0] + (i + 0.5) * ((bh.xRange[1] - bh.xRange[0]) / bh.bins);
+                normSum += Math.exp(-xVal / slope);
+            }
+            const normFactor = bh.globalEvents / normSum;
+
+            for (let i = 0; i < bh.bins; i++) {
+                const xVal = bh.xRange[0] + (i + 0.5) * ((bh.xRange[1] - bh.xRange[0]) / bh.bins);
+                const lambda = normFactor * Math.exp(-xVal / slope);
+                bh.expectedBackground.push(lambda);
+
+                // Add statistical Poisson noise around the true background theory (NO signal added!)
+                const obs = generatePoisson(lambda);
+                bh.observedData.push(obs);
+                totalEventsGenerated += obs;
+            }
+
+            bh.dataGenerated = true;
+            document.getElementById('eventCountLabel').innerText = `${totalEventsGenerated.toLocaleString()} Events Tracked`;
+            document.getElementById('trialFactorBtn').removeAttribute('disabled');
+            document.getElementById('revealPhysicsBtn').removeAttribute('disabled');
+
+            // Reset inspectors
+            document.getElementById('inspectorPanel').innerHTML = `
+                <p class="text-slate-300 text-center font-semibold py-4">Data Loaded Successfully!</p>
+                <p class="text-xs text-slate-400 text-center">Click or drag across a range of bins in the histogram plot to inspect their cumulative significance (<i>Z</i><sub>local</sub>).</p>
+            `;
+
+            drawHistogram();
+        }
+
+        // Canvas Drawing Engine for the scientific histogram
+        function drawHistogram() {
+            const canvas = document.getElementById('histogramCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const w = canvas.width;
+            const h = canvas.height;
+            
+            ctx.clearRect(0, 0, w, h);
+            ctx.save();
+            ctx.scale(dpr, dpr);
+
+            const width = w / dpr;
+            const height = h / dpr;
+
+            // Plot limits and margins
+            const padL = 65;
+            const padR = 25;
+            const padT = 20;
+            const padB = 45;
+
+            const plotW = width - padL - padR;
+            const plotH = height - padT - padB;
+
+            // Draw axis frames
+            ctx.strokeStyle = '#475569'; // Slate 600
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(padL, padT, plotW, plotH);
+
+            const bh = state.bumpHunter;
+            if (!bh.dataGenerated) {
+                // Prompt to load data
+                ctx.fillStyle = '#64748b';
+                ctx.font = '14px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText("--- NO DATA RUN ACTIVE ---", padL + plotW/2, padT + plotH/2);
+                ctx.restore();
+                return;
+            }
+
+            // Find max y limit for scaling
+            let maxObsVal = Math.max(...bh.observedData);
+            let yMax = Math.ceil((maxObsVal * 1.1) / 100) * 100; // Round up to nearest 100
+            
+            // Draw dynamic grid lines
+            ctx.strokeStyle = '#1e293b'; // Slate 800
+            ctx.lineWidth = 1;
+            const gridCount = 5;
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '10px monospace';
+            
+            for (let i = 0; i <= gridCount; i++) {
+                const gridY = padT + (plotH / gridCount) * i;
+                const gridVal = Math.round(yMax - (yMax / gridCount) * i);
+                
+                ctx.beginPath();
+                ctx.moveTo(padL, gridY);
+                ctx.lineTo(padL + plotW, gridY);
+                ctx.stroke();
+
+                // Y-axis markers
+                ctx.fillText(gridVal, padL - 8, gridY);
+            }
+
+            // Draw dynamic X-axis markers
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            const xLabelsCount = 5;
+            for (let i = 0; i <= xLabelsCount; i++) {
+                const gridX = padL + (plotW / xLabelsCount) * i;
+                const gridVal = Math.round(bh.xRange[0] + ((bh.xRange[1] - bh.xRange[0]) / xLabelsCount) * i);
+
+                ctx.strokeStyle = '#1e293b';
+                ctx.beginPath();
+                ctx.moveTo(gridX, padT);
+                ctx.lineTo(gridX, padT + plotH);
+                ctx.stroke();
+
+                ctx.fillText(`${gridVal} GeV`, gridX, padT + plotH + 8);
+            }
+
+            // Draw hovered/selected highlights
+            const binW = plotW / bh.bins;
+            
+            if (bh.hoveredBinIndex !== null && bh.hoveredBinIndex >= 0 && bh.hoveredBinIndex < bh.bins) {
+                ctx.fillStyle = 'rgba(52, 211, 153, 0.08)'; // Emerald highlight
+                ctx.fillRect(padL + bh.hoveredBinIndex * binW, padT, binW, plotH);
+            }
+
+            // Draw selection range overlay
+            if (bh.selectedRange.start !== null && bh.selectedRange.end !== null) {
+                const minIdx = Math.min(bh.selectedRange.start, bh.selectedRange.end);
+                const maxIdx = Math.max(bh.selectedRange.start, bh.selectedRange.end);
+                const selectW = (maxIdx - minIdx + 1) * binW;
+                const selectX = padL + minIdx * binW;
+
+                ctx.fillStyle = 'rgba(59, 130, 246, 0.15)'; // Blue highlight
+                ctx.fillRect(selectX, padT, selectW, plotH);
+                ctx.strokeStyle = 'rgba(59, 130, 246, 0.5)';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(selectX, padT, selectW, plotH);
+            }
+
+            // Draw Poisson error points
+            ctx.strokeStyle = '#cbd5e1'; // Slate 300
+            ctx.fillStyle = '#f8fafc'; // White
+            ctx.lineWidth = 1.5;
+
+            for (let i = 0; i < bh.bins; i++) {
+                const obsVal = bh.observedData[i];
+                const cx = padL + (i + 0.5) * binW;
+                const cy = padT + plotH - (obsVal / yMax) * plotH;
+                
+                // Poison standard error bars (Error = sqrt(N))
+                const err = Math.sqrt(obsVal);
+                const cyHigh = padT + plotH - ((obsVal + err) / yMax) * plotH;
+                const cyLow = padT + plotH - (Math.max(0, obsVal - err) / yMax) * plotH;
+
+                ctx.beginPath();
+                ctx.moveTo(cx, cyHigh);
+                ctx.lineTo(cx, cyLow);
+                ctx.stroke();
+
+                // Draw end caps
+                ctx.beginPath();
+                ctx.moveTo(cx - 2, cyHigh);
+                ctx.lineTo(cx + 2, cyHigh);
+                ctx.moveTo(cx - 2, cyLow);
+                ctx.lineTo(cx + 2, cyLow);
+                ctx.stroke();
+
+                // Draw central data point dot
+                ctx.beginPath();
+                ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Draw Background Prediction (If revealed)
+            if (bh.revealed) {
+                ctx.strokeStyle = '#f59e0b'; // Amber 500 curve
+                ctx.lineWidth = 2.5;
+                ctx.shadowColor = 'rgba(245, 158, 11, 0.4)';
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+
+                for (let i = 0; i < bh.bins; i++) {
+                    const bgVal = bh.expectedBackground[i];
+                    const cx = padL + (i + 0.5) * binW;
+                    const cy = padT + plotH - (bgVal / yMax) * plotH;
+
+                    if (i === 0) {
+                        ctx.moveTo(cx, cy);
+                    } else {
+                        ctx.lineTo(cx, cy);
+                    }
+                }
+                ctx.stroke();
+                ctx.shadowBlur = 0; // Reset shadow
+            }
+
+            // Axis labels
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '11px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText("Di-photon Invariant Mass M(𝛄𝛄) [GeV]", padL + plotW/2, height - 10);
+
+            // Vertical axis label
+            ctx.save();
+            ctx.translate(18, padT + plotH/2);
+            ctx.rotate(-Math.PI/2);
+            ctx.fillText("Events / 2 GeV", 0, 0);
+            ctx.restore();
+
+            ctx.restore();
+        }
+
+        function getBinIndexFromEvent(e) {
+            const canvas = document.getElementById('histogramCanvas');
+            if (!canvas) return null;
+            const bh = state.bumpHunter;
+            const rect = canvas.getBoundingClientRect();
+            
+            // Touch/Mouse coordinate parsing normalization
+            let clientX = e.clientX;
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+            } else if (e.changedTouches && e.changedTouches.length > 0) {
+                clientX = e.changedTouches[0].clientX;
+            }
+            
+            const x = clientX - rect.left;
+            
+            const padL = 65;
+            const padR = 25;
+            const plotW = rect.width - padL - padR;
+            const binW = plotW / bh.bins;
+
+            const relativeX = x - padL;
+            if (relativeX < 0 || relativeX > plotW) return null;
+            return Math.floor(relativeX / binW);
+        }
+
+        function handleHistogramMouseDown(e) {
+            const bh = state.bumpHunter;
+            if (!bh.dataGenerated) return;
+            const index = getBinIndexFromEvent(e);
+            if (index !== null) {
+                bh.isDragging = true;
+                bh.selectedRange.start = index;
+                bh.selectedRange.end = index;
+                bh.trialFactorApplied = false;
+                drawHistogram();
+                updateInspectorPanel();
+            }
+        }
+
+        function handleHistogramMouseMove(e) {
+            const bh = state.bumpHunter;
+            const index = getBinIndexFromEvent(e);
+            
+            if (bh.isDragging) {
+                if (index !== null) {
+                    bh.selectedRange.end = index;
+                    drawHistogram();
+                    updateInspectorPanel();
+                }
+            } else {
+                if (index !== bh.hoveredBinIndex) {
+                    bh.hoveredBinIndex = index;
+                    drawHistogram();
+                }
+            }
+        }
+
+        function handleHistogramMouseUp(e) {
+            const bh = state.bumpHunter;
+            if (bh.isDragging) {
+                bh.isDragging = false;
+                drawHistogram();
+                updateInspectorPanel();
+            }
+        }
+
+        function handleHistogramMouseLeave() {
+            const bh = state.bumpHunter;
+            bh.hoveredBinIndex = null;
+            if (bh.isDragging) {
+                bh.isDragging = false;
+                drawHistogram();
+                updateInspectorPanel();
+            } else {
+                drawHistogram();
+            }
+        }
+
+        // Touch gesture integrations for mobile compatibility
+        function handleHistogramTouchStart(e) {
+            const bh = state.bumpHunter;
+            if (!bh.dataGenerated) return;
+            const index = getBinIndexFromEvent(e);
+            if (index !== null) {
+                e.preventDefault(); // Lock parent swipe scroll
+                bh.isDragging = true;
+                bh.selectedRange.start = index;
+                bh.selectedRange.end = index;
+                bh.trialFactorApplied = false;
+                drawHistogram();
+                updateInspectorPanel();
+            }
+        }
+
+        function handleHistogramTouchMove(e) {
+            const bh = state.bumpHunter;
+            if (bh.isDragging) {
+                const index = getBinIndexFromEvent(e);
+                if (index !== null) {
+                    e.preventDefault(); // Lock parent swipe scroll
+                    bh.selectedRange.end = index;
+                    drawHistogram();
+                    updateInspectorPanel();
+                }
+            }
+        }
+
+        function handleHistogramTouchEnd(e) {
+            const bh = state.bumpHunter;
+            if (bh.isDragging) {
+                bh.isDragging = false;
+                drawHistogram();
+                updateInspectorPanel();
+            }
+        }
+
+        // Statistical inspection output generator for single or grouped sliding window regions
+        function updateInspectorPanel() {
+            const bh = state.bumpHunter;
+            const start = bh.selectedRange.start;
+            const end = bh.selectedRange.end;
+            if (start === null || end === null) return;
+
+            const minIdx = Math.min(start, end);
+            const maxIdx = Math.max(start, end);
+            const width = maxIdx - minIdx + 1;
+
+            const minMass = Math.round(bh.xRange[0] + minIdx * ((bh.xRange[1] - bh.xRange[0]) / bh.bins));
+            const maxMass = Math.round(bh.xRange[0] + (maxIdx + 1) * ((bh.xRange[1] - bh.xRange[0]) / bh.bins));
+
+            let obs = 0;
+            let bg = 0;
+            for (let i = minIdx; i <= maxIdx; i++) {
+                obs += bh.observedData[i];
+                bg += bh.expectedBackground[i];
+            }
+            const diff = obs - bg;
+
+            // Compute local significance using standard Gaussian approximation for pooled bin metrics
+            const sigmaLocal = diff / Math.sqrt(bg);
+            const pValueLocal = zToP(Math.max(0, sigmaLocal));
+
+            const container = document.getElementById('inspectorPanel');
+            
+            const regionLabel = width === 1 
+                ? `${minMass} GeV` 
+                : `${minMass} - ${maxMass} GeV (${width} bins)`;
+
+            container.innerHTML = `
+                <div class="space-y-4">
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1 font-mono text-xs">
+                        <div class="flex justify-between"><span>Search Region:</span><span class="text-white">${regionLabel}</span></div>
+                        <div class="flex justify-between"><span>Observed (D):</span><span class="text-white">${obs}</span></div>
+                        <div class="flex justify-between"><span>Expected (B):</span><span class="text-white">${bg.toFixed(1)}</span></div>
+                        <div class="flex justify-between"><span>Excess (D - B):</span><span class="${diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${diff >= 0 ? '+' : ''}${diff.toFixed(1)}</span></div>
+                    </div>
+
+                    <div class="p-4 rounded-xl border border-blue-900 bg-blue-950/20 text-center">
+                        <div class="text-xs text-slate-400 uppercase tracking-widest mb-1">Local Significance (<i>Z</i><sub>local</sub>)</div>
+                        <div class="text-3xl font-black text-blue-400 font-mono">${sigmaLocal > 0 ? '+' : ''}${sigmaLocal.toFixed(2)}σ</div>
+                        <p class="text-[10px] text-slate-500 mt-1">Local probability of fluctuation: <br><strong class="font-mono">${pValueLocal.toExponential(3)}</strong></p>
+                    </div>
+
+                    ${sigmaLocal >= 2.0 ? `
+                        <p class="text-xs text-slate-400 leading-relaxed italic text-center animate-pulse">
+                            🎉 "We found a cumulative peak! That looks like a massive particle signal! But did we look everywhere?"
+                        </p>
+                    ` : `
+                        <p class="text-xs text-slate-500 text-center">
+                            This looks like standard background behavior. Drag a wider excess to test.
+                        </p>
+                    `}
+                </div>
+            `;
+        }
+
+        function applyLookElsewhereEffect() {
+            const bh = state.bumpHunter;
+            const start = bh.selectedRange.start;
+            const end = bh.selectedRange.end;
+            if (start === null || end === null) {
+                showMessage("No Range Selected", "Please select or drag a range in the mass spectrum to analyze first.", "border-blue-500", "text-blue-400");
+                return;
+            }
+
+            const minIdx = Math.min(start, end);
+            const maxIdx = Math.max(start, end);
+            const width = maxIdx - minIdx + 1;
+
+            let obs = 0;
+            let bg = 0;
+            for (let i = minIdx; i <= maxIdx; i++) {
+                obs += bh.observedData[i];
+                bg += bh.expectedBackground[i];
+            }
+            const diff = obs - bg;
+            const sigmaLocal = diff / Math.sqrt(bg);
+
+            if (sigmaLocal <= 0) {
+                showMessage("No Excess Found", "The selected range does not contain a positive cumulative fluctuation to test.", "border-yellow-500", "text-yellow-400");
+                return;
+            }
+
+            const pValueLocal = zToP(sigmaLocal);
+            
+            // Calculate Global Significance via Bonferroni Trial Factors correction:
+            // For a sliding search window of width W, the search trials space is: N_trials = N_total_bins - width + 1
+            const N_trials = Math.max(1, bh.bins - width + 1);
+            const pValueGlobal = 1.0 - Math.pow(1.0 - pValueLocal, N_trials);
+            const sigmaGlobal = pToZ(pValueGlobal);
+
+            bh.trialFactorApplied = true;
+
+            const explanationText = `
+                <div class="space-y-4">
+                    <p class="text-sm text-slate-300 leading-relaxed">
+                        In searching for a cumulative discovery, you scanned the entire spectrum. You didn't just test this single width of <strong>${width} bin(s)</strong>; you searched across all <strong>${N_trials} possible window configurations</strong> of this width!
+                    </p>
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                            <span class="text-xs text-slate-400 block">Local Signif.</span>
+                            <span class="text-xl font-bold font-mono text-blue-400">${sigmaLocal.toFixed(2)}σ</span>
+                        </div>
+                        <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                            <span class="text-xs text-slate-400 block">Global Signif.</span>
+                            <span class="text-xl font-bold font-mono text-red-400">${sigmaGlobal.toFixed(2)}σ</span>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-slate-950 rounded-xl border border-slate-850 font-mono text-xs space-y-1">
+                        <div class="flex justify-between"><span>Number of Search Windows (N):</span><span class="text-white">${N_trials}</span></div>
+                        <div class="flex justify-between"><span>Local p-value:</span><span class="text-white">${pValueLocal.toExponential(4)}</span></div>
+                        <div class="flex justify-between text-red-400"><span>Global p-value (corrected):</span><span>${pValueGlobal.toExponential(4)}</span></div>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Notice how the statistical significance of your cumulative bump dramatically washes out once we correct for the <strong>Look-Elsewhere Effect</strong>! This highlights how easily searchers can fool themselves by dynamically pooling data until it "looks good".
+                    </p>
+                </div>
+            `;
+
+            showMessage("Trial Factor Correction Applied", explanationText, "border-blue-500", "text-blue-400");
+            
+            // Update live inspector panel with global comparison
+            const container = document.getElementById('inspectorPanel');
+            container.innerHTML += `
+                <div class="mt-4 p-3 bg-red-950/20 border border-red-900 rounded-xl text-center">
+                    <div class="text-xs text-slate-400 uppercase tracking-widest mb-1">Global Significance (<i>Z</i><sub>global</sub>)</div>
+                    <div class="text-2xl font-black text-red-400 font-mono">${sigmaGlobal.toFixed(2)}σ</div>
+                    <p class="text-[9px] text-slate-500 mt-1">Probability of random appearance anywhere: <br><strong class="font-mono">${pValueGlobal.toExponential(3)}</strong></p>
+                </div>
+            `;
+        }
+
+        function revealUnderlyingPhysics() {
+            const bh = state.bumpHunter;
+            bh.revealed = true;
+            drawHistogram();
+
+            const revealMessage = `
+                <div class="space-y-4 text-left">
+                    <div class="p-4 bg-amber-950/20 border-2 border-amber-500 rounded-2xl text-center">
+                        <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Theoretical Truth Revealed</span>
+                        <h4 class="text-xl font-black text-white mt-1">Zero Real Signals Present!</h4>
+                    </div>
+                    <p class="text-sm text-slate-300 leading-relaxed">
+                        The golden curve plotted on the spectrum represents the <strong>exact underlying physics model</strong> that generated your dataset. It is a perfectly smooth, decaying background curve.
+                    </p>
+                    <p class="text-sm text-slate-300 leading-relaxed">
+                        Any bump or peak that you observed—even if it registered at a local significance of <strong class="text-blue-400">3.5σ or 4σ</strong>—was nothing more than a random fluctuation of background statistics.
+                    </p>
+                    <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 space-y-1 text-xs">
+                        <strong class="text-slate-300 block mb-1">Why this happens in physics labs:</strong>
+                        <p class="text-slate-400">1. Subconscious filtering: Researchers seek out fluctuations and selectively isolate "interesting" data segments (Confirmation bias).</p>
+                        <p class="text-slate-400">2. Massive data dimensionalities: When analyzing hundreds of independent mass channels simultaneously, a 3σ signal is mathematically guaranteed to appear somewhere.</p>
+                    </div>
+                </div>
+            `;
+
+            showMessage("The Veil of Physics Lifted", revealMessage, "border-amber-500", "text-amber-400");
+        }
+
+        // Calibration Game rendering
+        function initCalibrationGame() {
+            state.currentCalibrationIndex = 0;
+            state.userAnswers = {};
+            renderCalibrationQuestion();
+        }
+
+        function renderCalibrationQuestion() {
+            const container = document.getElementById('calibrationQuestionsContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            const q = state.calibrationQuestions[state.currentCalibrationIndex];
+            const totalQ = state.calibrationQuestions.length;
+            
+            // Get saved state or set defaults
+            const saved = state.userAnswers[q.id] || { answer: null, confidence: 5 };
+            
+            const qCard = document.createElement('div');
+            qCard.className = "bg-slate-900/50 border border-slate-700/80 rounded-2xl p-6 md:p-8 space-y-6 shadow-md transition-all duration-300";
+            
+            qCard.innerHTML = `
+                <div class="flex justify-between items-center border-b border-slate-800 pb-4 mb-4">
+                    <span class="text-xs font-bold tracking-widest text-amber-400 uppercase">Question ${state.currentCalibrationIndex + 1} of ${totalQ}</span>
+                    <div class="w-24 bg-slate-800 h-2 rounded-full overflow-hidden">
+                        <div class="bg-amber-500 h-full transition-all duration-300" style="width: ${((state.currentCalibrationIndex + 1) / totalQ) * 100}%"></div>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <span class="w-8 h-8 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center flex-shrink-0 mt-1">${q.id}</span>
+                    <div class="flex-grow">
+                        <h3 class="text-xl md:text-2xl font-bold text-white mb-4">${q.question}</h3>
+                        
+                        <!-- Radio Choice Options -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <label class="flex items-center gap-3 p-4 bg-slate-850 hover:bg-slate-800 border ${saved.answer === 'A' ? 'border-amber-500 bg-amber-950/20' : 'border-slate-750'} hover:border-slate-600 rounded-xl cursor-pointer transition-all">
+                                <input type="radio" name="cal_q_${q.id}" value="A" ${saved.answer === 'A' ? 'checked' : ''} onchange="selectOption('${q.id}', 'A')" class="w-5 h-5 text-amber-500 bg-slate-800 border-slate-700 focus:ring-amber-500 focus:ring-2">
+                                <span class="text-lg text-slate-200"><strong class="text-amber-400 mr-1">A)</strong> ${q.options.A}</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-4 bg-slate-850 hover:bg-slate-800 border ${saved.answer === 'B' ? 'border-amber-500 bg-amber-950/20' : 'border-slate-750'} hover:border-slate-600 rounded-xl cursor-pointer transition-all">
+                                <input type="radio" name="cal_q_${q.id}" value="B" ${saved.answer === 'B' ? 'checked' : ''} onchange="selectOption('${q.id}', 'B')" class="w-5 h-5 text-amber-500 bg-slate-800 border-slate-700 focus:ring-amber-500 focus:ring-2">
+                                <span class="text-lg text-slate-200"><strong class="text-amber-400 mr-1">B)</strong> ${q.options.B}</span>
+                            </label>
+                        </div>
+
+                        <!-- Slider Input Zone -->
+                        <div class="bg-slate-950/60 rounded-xl p-5 border border-slate-800">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2">
+                                <span class="text-sm font-semibold text-slate-400 uppercase tracking-wider">Quantify your Confidence (5 to 10):</span>
+                                <span id="sliderValueLabel_${q.id}" class="text-lg font-bold text-amber-400 bg-amber-950/40 border border-amber-800/60 px-3 py-1 rounded-lg">
+                                    5/10 (50%)
+                                </span>
+                            </div>
+                            <input type="range" id="cal_slider_${q.id}" min="5" max="10" value="${saved.confidence}" step="1" 
+                                oninput="updateSliderLabel(${q.id}, this.value); updateConfidence(${q.id}, this.value);"
+                                class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500 mt-2">
+                            <div class="flex justify-between text-[11px] text-slate-500 mt-2 font-mono">
+                                <span>5/10 (50%)</span>
+                                <span>7/10 (70%)</span>
+                                <span>10/10 (100%)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Button inside the card -->
+                <div class="flex justify-between items-center pt-4 border-t border-slate-800 mt-6">
+                    <button onclick="prevCalibrationQuestion()" ${state.currentCalibrationIndex === 0 ? 'disabled' : ''} 
+                        class="bg-slate-700 hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed text-white text-md font-semibold py-2 px-6 rounded-xl transition-all flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Previous
+                    </button>
+                    <button id="cal_next_btn" onclick="nextCalibrationQuestion()" disabled
+                        class="bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-lg font-bold py-3 px-8 rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-2">
+                        ${state.currentCalibrationIndex === totalQ - 1 ? 'Finish & See Profile' : 'Next'}
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+            `;
+            container.appendChild(qCard);
+            
+            // Trigger label updates
+            updateSliderLabel(q.id, saved.confidence);
+            
+            if (saved.answer) {
+                document.getElementById('cal_next_btn').removeAttribute('disabled');
+            }
+        }
+
+        function selectOption(qId, option) {
+            if (!state.userAnswers[qId]) {
+                state.userAnswers[qId] = { answer: option, confidence: 5 };
+            } else {
+                state.userAnswers[qId].answer = option;
+            }
+            renderCalibrationQuestion();
+        }
+
+        function updateConfidence(qId, confidence) {
+            if (!state.userAnswers[qId]) {
+                state.userAnswers[qId] = { answer: null, confidence: parseInt(confidence) };
+            } else {
+                state.userAnswers[qId].confidence = parseInt(confidence);
+            }
+        }
+
+        function prevCalibrationQuestion() {
+            if (state.currentCalibrationIndex > 0) {
+                state.currentCalibrationIndex--;
+                renderCalibrationQuestion();
+            }
+        }
+
+        function nextCalibrationQuestion() {
+            const totalQ = state.calibrationQuestions.length;
+            if (state.currentCalibrationIndex < totalQ - 1) {
+                state.currentCalibrationIndex++;
+                renderCalibrationQuestion();
+            } else {
+                calculateCalibrationScore();
+            }
+        }
+
+        function resetCalibrationGame() {
+            initCalibrationGame();
+        }
+
+        function updateSliderLabel(id, val) {
+            const label = document.getElementById(`sliderValueLabel_${id}`);
+            if (!label) return;
+            const pct = val * 10;
+            label.innerHTML = `${val}/10 (${pct}%)`;
+        }
+
+        // Scoring and Calibration analysis logic
+        function calculateCalibrationScore() {
+            let totalScore = 0;
+            let resultsHtml = `<div class="space-y-6">`;
+            let unansweredQuestions = [];
+
+            // Run validation and compute scoring
+            state.calibrationQuestions.forEach(q => {
+                const record = state.userAnswers[q.id];
+                if (!record || !record.answer) {
+                    unansweredQuestions.push(q.id);
+                    return;
+                }
+                const answer = record.answer;
+                const confidence = record.confidence;
+                
+                const isCorrect = (answer === q.correct);
+                const payoffGroup = state.brierPayoffs[confidence];
+                const score = isCorrect ? payoffGroup.correct : payoffGroup.wrong;
+                totalScore += score;
+
+                resultsHtml += `
+                    <div class="p-4 rounded-xl border ${isCorrect ? 'border-green-800 bg-green-950/20' : 'border-red-800 bg-red-950/20'}">
+                        <div class="flex justify-between items-start gap-4 mb-2">
+                            <span class="font-bold text-lg text-white">Question ${q.id}</span>
+                            <span class="text-sm font-semibold px-2 py-0.5 rounded ${isCorrect ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}">
+                                ${isCorrect ? 'Correct' : 'Incorrect'}
+                            </span>
+                        </div>
+                        <p class="text-sm text-slate-300 mb-2">${q.question}</p>
+                        <div class="text-xs space-y-1 text-slate-400">
+                            <div>Your Answer: <strong class="text-white">${answer}) ${q.options[answer]}</strong></div>
+                            <div>Correct Answer: <strong class="text-white">${q.correct}) ${q.options[q.correct]}</strong></div>
+                            <div>Confidence Rated: <strong class="text-yellow-400">${confidence}/10</strong></div>
+                            <div class="font-mono text-sm mt-2 ${score >= 0 ? 'text-green-400' : 'text-red-400'}">Question Score Contribution: ${score >= 0 ? '+' : ''}${score}</div>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-2 border-t border-slate-800/80 pt-2 italic">${q.explanation}</p>
+                    </div>
+                `;
+            });
+
+            if (unansweredQuestions.length > 0) {
+                showMessage("Incomplete Test", `Please complete all questions before submitting. Unanswered questions: ${unansweredQuestions.join(', ')}`, "border-yellow-600", "text-yellow-400");
+                return;
+            }
+
+            resultsHtml += `</div>`;
+
+            // Calculate profiles
+            let profileTitle = '';
+            let profileDescription = '';
+            let profileColor = '';
+
+            if (totalScore >= 75) {
+                profileTitle = "Superbly Calibrated Scientist";
+                profileDescription = `Your total score of <strong>${totalScore}</strong> is incredibly high! You show an exceptional grasp of the bounds of your own knowledge. You accurately rate your confidence and do not fall into the trap of overprecision. In a lab setting, your error estimates are highly trustworthy.`;
+                profileColor = "text-green-400 border-green-500";
+            } else if (totalScore >= 25 && totalScore < 75) {
+                profileTitle = "Well-Calibrated / Healthy Caution";
+                profileDescription = `Your total score of <strong>${totalScore}</strong> is strong and typical of a cautious researcher. You occasionally took moderate risks but remained generally honest about your uncertainty. This is a very respectable calibration profile!`;
+                profileColor = "text-blue-400 border-blue-500";
+            } else if (totalScore >= 0 && totalScore < 25) {
+                profileTitle = "Mildly Overconfident";
+                profileDescription = `Your total score of <strong>${totalScore}</strong> indicates mild overconfidence. You assigned high confidences (8 or 9) to questions where you possessed partial information, and the severe Brier penalty for being confident-and-wrong degraded your score. Pay close attention to your systematic error margins!`;
+                profileColor = "text-yellow-400 border-yellow-500";
+            } else {
+                profileTitle = "Dangerously Overconfident / Illusion of Knowledge";
+                profileDescription = `Your total score of <strong class="text-red-400 font-extrabold">${totalScore}</strong> represents severe overconfidence. The Brier scoring system is designed specifically to punish the worst sin in experimental science: <strong>being highly confident and wrong</strong>. Your negative score proves that you severely underestimate your own ignorance, which can lead to publishing false discoveries in experimental work.`;
+                profileColor = "text-red-500 border-red-500";
+            }
+
+            // Put together the detailed outcome summary
+            const summaryLayout = `
+                <div class="space-y-6 text-left">
+                    <div class="text-center bg-slate-900/80 p-6 rounded-2xl border border-slate-700">
+                        <span class="text-xs uppercase tracking-wider text-slate-400">Your Calibration Result</span>
+                        <h4 class="text-2xl font-extrabold mt-1 ${profileColor.split(' ')[0]}">${profileTitle}</h4>
+                        <div class="text-4xl font-black mt-2 text-white font-mono">${totalScore} <span class="text-sm font-normal text-slate-500">points (Max 125, Min -375)</span></div>
+                        <p class="text-sm text-slate-300 mt-4 leading-relaxed">${profileDescription}</p>
+                    </div>
+
+                    <!-- Revealed Brier structure map for post-game education -->
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-850">
+                        <h5 class="text-xs font-semibold tracking-wider text-slate-400 uppercase mb-3 text-center">The Post-Game Brier Penalty/Reward Map Revealed</h5>
+                        <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center text-[10px]">
+                            <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                                <div class="font-bold text-slate-400">Conf 5</div>
+                                <div class="text-green-400 mt-1">C: 0</div>
+                                <div class="text-red-400">W: 0</div>
+                            </div>
+                            <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                                <div class="font-bold text-slate-400">Conf 6</div>
+                                <div class="text-green-400 mt-1">C: +9</div>
+                                <div class="text-red-400">W: -11</div>
+                            </div>
+                            <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                                <div class="font-bold text-slate-400">Conf 7</div>
+                                <div class="text-green-400 mt-1">C: +16</div>
+                                <div class="text-red-400">W: -24</div>
+                            </div>
+                            <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                                <div class="font-bold text-slate-400">Conf 8</div>
+                                <div class="text-green-400 mt-1">C: +21</div>
+                                <div class="text-red-400">W: -39</div>
+                            </div>
+                            <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                                <div class="font-bold text-slate-400">Conf 9</div>
+                                <div class="text-green-400 mt-1">C: +24</div>
+                                <div class="text-red-400">W: -56</div>
+                            </div>
+                            <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                                <div class="font-bold text-slate-400">Conf 10</div>
+                                <div class="text-green-500 font-extrabold mt-1">C: +25</div>
+                                <div class="text-red-500 font-extrabold">W: -75</div>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-slate-500 text-center mt-2 font-mono">Notice the severe asymmetry: wrong answers at high confidence are heavily penalized to expose overprecision.</p>
+                    </div>
+                    
+                    <div>
+                        <h5 class="font-bold text-md text-slate-400 uppercase tracking-widest mb-3 text-center">Question-by-Question Breakdown</h5>
+                        <div class="space-y-4">
+                            ${resultsHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            showMessage("Calibration Profile Computed", summaryLayout, profileColor.split(' ')[1], profileColor.split(' ')[0]);
+        }
+
+        // Universal notification modal wrapper
+        function showMessage(title, body, borderClass, textClass) {
+            messageTitle.innerText = title;
+            messageTitle.className = `text-2xl md:text-3xl font-bold mb-4 flex-shrink-0 ${textClass}`;
+            messageBody.innerHTML = body;
+            
+            messageBox.className = `bg-slate-850 border-4 rounded-3xl max-w-2xl w-full max-h-[90vh] p-6 md:p-8 shadow-2xl text-center transform transition-all scale-100 flex flex-col ${borderClass}`;
+            messageModal.classList.remove('hidden');
+        }
+
+        function closeMessage() {
+            messageModal.classList.add('hidden');
+        }
+
+        function initBaseRateCanvas() {
+            const canvas = document.getElementById('baseRateCanvas');
+            if (!canvas) return;
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+
+            if (!canvas.dataset.resizeBound) {
+                window.addEventListener('resize', () => {
+                    if (!document.getElementById('tab_baserate').classList.contains('hidden')) {
+                        initBaseRateCanvas();
+                    }
+                });
+                canvas.dataset.resizeBound = "true";
+            }
+
+            // Only recalculate visuals; don't auto-reveal answer panel
+            updateBaseRateFromSlider();
+        }
+
+        function validateBrGuess() {
+            const input = document.getElementById('br_student_guess');
+            const btn   = document.getElementById('br_submit_btn');
+            const val   = parseFloat(input.value);
+            btn.disabled = !(val >= 0 && val <= 100);
+        }
+
+        function submitBaseRateAnswer() {
+            const br  = state.baseRateFallacy;
+            const val = parseFloat(document.getElementById('br_student_guess').value);
+            if (isNaN(val) || val < 0 || val > 100) return;
+
+            br.studentGuess = val;
+            br.answered = true;
+
+            // Run the Bayes calculation to get the true posterior
+            const S_rate   = br.baseRate / 100;
+            const B_rate   = 1 - S_rate;
+            const sens     = br.sensitivity / 100;
+            const fpr      = br.falsePositive / 100;
+            const S        = Math.round(1000 * S_rate);
+            const B        = 1000 - S;
+            const TP       = Math.round(S * sens);
+            const FN       = S - TP;
+            const FP       = Math.round(B * fpr);
+            const TN       = B - FP;
+            const totalAlarms = TP + FP;
+            const numerator   = sens * S_rate;
+            const denominator = (sens * S_rate) + (fpr * B_rate);
+            const posterior   = denominator > 0 ? (numerator / denominator) * 100 : 0;
+            const diff        = val - posterior;
+            const absDiff     = Math.abs(diff);
+
+            // Populate the result banner
+            const banner = document.getElementById('br_result_banner');
+            let bannerClass, icon, verdict;
+            if (absDiff <= 2) {
+                bannerClass = 'border-emerald-500 bg-emerald-950/30';
+                icon = '🎯';
+                verdict = 'Excellent calibration!';
+            } else if (absDiff <= 10) {
+                bannerClass = 'border-amber-500 bg-amber-950/20';
+                icon = '🤔';
+                verdict = 'Close — but base-rate neglect nudged you off.';
+            } else {
+                bannerClass = 'border-rose-500 bg-rose-950/20';
+                icon = '⚠️';
+                verdict = diff > 0 ? 'Significant overestimate — classic base-rate neglect!' : 'Significant underestimate — the test is more informative than you thought!';
+            }
+            banner.className = `rounded-2xl p-6 border-2 text-center space-y-1 ${bannerClass}`;
+            banner.innerHTML = `
+                <div class="text-4xl mb-1">${icon}</div>
+                <p class="text-slate-400 text-sm">Your answer: <strong class="text-white text-xl">${val.toFixed(1)}%</strong></p>
+                <p class="text-slate-400 text-sm">Correct answer: <strong class="text-purple-300 text-xl">${posterior.toFixed(1)}%</strong></p>
+                <p class="text-slate-300 font-semibold mt-2">${verdict}</p>
+            `;
+
+            // Populate parameter summary
+            const scenarioLabel = br.scenario === 'medical' ? '🩺 Medical Screening' : '🛰️ Deep-Space Sensor';
+            document.getElementById('br_params_summary').innerHTML = `
+                <div class="flex justify-between"><span class="text-slate-500">Scenario:</span><span>${scenarioLabel}</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Base Rate:</span><span class="text-purple-400">${br.baseRate.toFixed(1)}%</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Sensitivity:</span><span class="text-emerald-400">${br.sensitivity.toFixed(1)}%</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">False Positive Rate:</span><span class="text-rose-400">${br.falsePositive.toFixed(1)}%</span></div>
+            `;
+
+            // Update Bayes breakdown
+            document.getElementById('bayesPosteriorPercent').innerText = `${posterior.toFixed(1)}%`;
+            document.getElementById('tpDotCount').innerText = TP;
+            document.getElementById('totalAlarmCount').innerText = totalAlarms;
+            document.getElementById('bayesNumerator').innerText = numerator.toFixed(4);
+            document.getElementById('bayesDenominator').innerText = denominator.toFixed(4);
+            document.getElementById('br_sens_note').innerText = `${br.sensitivity.toFixed(0)}% sensitive`;
+            document.getElementById('br_fpr_note').innerText = `${br.falsePositive.toFixed(0)}% false positive rate`;
+
+            const gridTitle = document.getElementById('gridTitle');
+            gridTitle.innerText = br.scenario === 'medical'
+                ? 'Population Grid (1,000 Patients)'
+                : 'Deep-Space Sensor Grid (1,000 Signals)';
+
+            // Show reveal, hide question
+            document.getElementById('br_question_phase').classList.add('hidden');
+            document.getElementById('br_reveal_phase').classList.remove('hidden');
+
+            // Draw the dot grid now that canvas is visible
+            setTimeout(() => {
+                initBaseRateCanvas();
+                drawBaseRateGrid(TN, FN, TP, FP);
+            }, 50);
+        }
+
+        function resetBaseRateQuestion() {
+            const br = state.baseRateFallacy;
+            br.answered = false;
+            br.studentGuess = null;
+            document.getElementById('br_student_guess').value = '';
+            document.getElementById('br_submit_btn').disabled = true;
+            document.getElementById('br_reveal_phase').classList.add('hidden');
+            document.getElementById('br_question_phase').classList.remove('hidden');
+        }
+
+        function setBaseRateScenario(type) {
+            const br = state.baseRateFallacy;
+            br.scenario = type;
+
+            const btnMedical = document.getElementById('scenarioBtn_medical');
+            const btnPhysics = document.getElementById('scenarioBtn_physics');
+
+            if (type === 'medical') {
+                br.baseRate = 1.0;
+                br.sensitivity = 95.0;
+                br.falsePositive = 5.0;
+
+                btnMedical.className = "px-4 py-2.5 rounded-xl text-xs font-semibold text-left border transition-all flex items-center justify-between bg-purple-950/30 border-purple-800 text-purple-300";
+                btnPhysics.className = "px-4 py-2.5 rounded-xl text-xs font-semibold text-left border transition-all flex items-center justify-between border-slate-750 text-slate-400 hover:text-slate-300";
+            } else {
+                br.baseRate = 0.2;
+                br.sensitivity = 99.0;
+                br.falsePositive = 2.5;
+
+                btnPhysics.className = "px-4 py-2.5 rounded-xl text-xs font-semibold text-left border transition-all flex items-center justify-between bg-purple-950/30 border-purple-800 text-purple-300";
+                btnMedical.className = "px-4 py-2.5 rounded-xl text-xs font-semibold text-left border transition-all flex items-center justify-between border-slate-750 text-slate-400 hover:text-slate-300";
+            }
+
+            // Synchronize UI elements
+            document.getElementById('slider_baseRate').value = br.baseRate;
+            document.getElementById('slider_sensitivity').value = br.sensitivity;
+            document.getElementById('slider_falsePositive').value = br.falsePositive;
+
+            updateBaseRateFromSlider();
+        }
+
+        function buildBrQuestionText(br) {
+            const isMedical = br.scenario === 'medical';
+            if (isMedical) {
+                return `You are reviewing the results of a medical test for a rare disease, whose prevalence in a given population is `
+                     + `<strong class="text-purple-300">${br.baseRate.toFixed(1)}%</strong>. `
+                     + `The test has a sensitivity of <strong class="text-purple-300">${br.sensitivity.toFixed(1)}%</strong> `
+                     + `and a false positive rate of <strong class="text-purple-300">${br.falsePositive.toFixed(1)}%</strong>. `
+                     + `If the test gives a positive result (i.e. raises an alarm), what is the probability that the test subject is actually <strong class="text-purple-200">sick</strong>?`;
+            } else {
+                return `A detector triggers in a search for a rare particle in a stream of sensor readings where the prevalence is `
+                     + `<strong class="text-purple-300">${br.baseRate.toFixed(1)}%</strong>. `
+                     + `The detector has an efficiency of <strong class="text-purple-300">${br.sensitivity.toFixed(1)}%</strong> `
+                     + `and a misidentification (false positive) rate of <strong class="text-purple-300">${br.falsePositive.toFixed(1)}%</strong>. `
+                     + `What is the probability that the trigger points to an <strong class="text-purple-200">actual particle</strong>?`;
+            }
+        }
+
+        function updateBaseRateFromSlider() {
+            const br = state.baseRateFallacy;
+            br.baseRate      = parseFloat(document.getElementById('slider_baseRate').value);
+            br.sensitivity   = parseFloat(document.getElementById('slider_sensitivity').value);
+            br.falsePositive = parseFloat(document.getElementById('slider_falsePositive').value);
+
+            // Update range indicator labels
+            document.getElementById('brValLabel').innerText   = `${br.baseRate.toFixed(1)}%`;
+            document.getElementById('sensValLabel').innerText = `${br.sensitivity.toFixed(1)}%`;
+            document.getElementById('fprValLabel').innerText  = `${br.falsePositive.toFixed(1)}%`;
+
+            // Update slider labels and hints based on scenario
+            const isMedical = br.scenario === 'medical';
+            const sensLabel = document.getElementById('sensLabel');
+            const sensHint  = document.getElementById('sensHint');
+            const fprLabel  = document.getElementById('fprLabel');
+            const fprHint   = document.getElementById('fprHint');
+            if (sensLabel) sensLabel.innerText = isMedical ? 'Sensitivity (TPR)' : 'Detector Efficiency';
+            if (sensHint)  sensHint.innerText  = isMedical
+                ? 'Probability of correctly identifying a true positive.'
+                : 'Probability that a real anomaly triggers an alarm.';
+            if (fprLabel)  fprLabel.innerText  = isMedical
+                ? 'False Positive Rate'
+                : 'Misidentification (False Positive) Rate';
+            if (fprHint)   fprHint.innerText   = isMedical
+                ? 'Probability of a false alarm on a healthy subject.'
+                : 'Probability of an alarm on a background-only reading.';
+
+            // Refresh the live question text
+            const qtxt = document.getElementById('br_question_text');
+            if (qtxt) qtxt.innerHTML = buildBrQuestionText(br);
+        }
+
+        function drawBaseRateGrid(TN, FN, TP, FP) {
+            const canvas = document.getElementById('baseRateCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.clearRect(0, 0, w, h);
+            ctx.save();
+            ctx.scale(dpr, dpr);
+
+            const width = w / dpr;
+            const height = h / dpr;
+
+            const cols = 40;
+            const rows = 25;
+            const cellW = width / cols;
+            const cellH = height / rows;
+            const radius = Math.min(cellW, cellH) * 0.35;
+
+            // Prepare sorted configuration array to make visual comparison extremely clear
+            let dots = [];
+            for (let i = 0; i < TN; i++) dots.push(0); // Slate (True Negative)
+            for (let i = 0; i < FN; i++) dots.push(1); // Amber (False Negative)
+            for (let i = 0; i < TP; i++) dots.push(2); // Emerald (True Positive)
+            for (let i = 0; i < FP; i++) dots.push(3); // Rose (False Positive)
+
+            const colors = {
+                0: '#334155', // True Negatives (Slate 700)
+                1: '#f59e0b', // False Negatives (Amber 500)
+                2: '#10b981', // True Positives (Emerald 500)
+                3: '#f43f5e'  // False Positives (Rose 500)
+            };
+
+            for (let i = 0; i < 1000; i++) {
+                if (i >= dots.length) break;
+                const col = i % cols;
+                const row = Math.floor(i / cols);
+                const cx = col * cellW + cellW / 2;
+                const cy = row * cellH + cellH / 2;
+
+                ctx.fillStyle = colors[dots[i]];
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+
+        // Debug Menu implementation (Only for Wason task parameters)
+        function openDebug() {
+            document.getElementById('debugCondition').value = state.ruleCondition;
+            document.getElementById('debugConsequence').value = state.ruleConsequence;
+            
+            debugCardsConfig.innerHTML = '';
+            state.cards.forEach((card, index) => {
+                const configDiv = document.createElement('div');
+                configDiv.className = "bg-slate-800 p-4 rounded-xl border border-slate-600";
+                configDiv.innerHTML = `
+                    <div class="mb-3">
+                        <label class="block text-sm text-slate-400 mb-1">Card ${index + 1} Text</label>
+                        <input type="text" id="debugCardText_${index}" value="${card.text}" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2 text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <label class="flex items-center space-x-3 cursor-pointer group">
+                        <input type="checkbox" id="debugCardCorrect_${index}" ${card.isCorrectToFlip ? 'checked' : ''} class="w-5 h-5 text-blue-600 bg-slate-700 border-slate-500 rounded focus:ring-blue-500 focus:ring-2">
+                        <span class="text-slate-300 group-hover:text-white transition-colors">Must turn over?</span>
+                    </label>
+                `;
+                debugCardsConfig.appendChild(configDiv);
+            });
+
+            debugModal.classList.remove('hidden');
+        }
+
+        function closeDebug() {
+            debugModal.classList.add('hidden');
+        }
+
+        function saveDebug() {
+            state.ruleCondition = document.getElementById('debugCondition').value;
+            state.ruleConsequence = document.getElementById('debugConsequence').value;
+
+            state.cards.forEach((card, index) => {
+                card.text = document.getElementById(`debugCardText_${index}`).value;
+                card.isCorrectToFlip = document.getElementById(`debugCardCorrect_${index}`).checked;
+                card.selected = false; 
+            });
+
+            renderRule();
+            renderCards();
+            closeDebug();
+        }
+
+        window.onload = function() {
+            renderRule();
+            renderCards();
+            initCalibrationGame();
+        }
+    </script>
+</body>
+</html>
