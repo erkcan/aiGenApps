@@ -199,6 +199,9 @@
                             <button onclick="generateBumpHunterData()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-lg active:scale-95">
                                 🌌 Run New Experiment
                             </button>
+                            <button id="scanBtn" onclick="toggleScanAnalyses()" class="w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-lg active:scale-95">
+                                🔭 Scan Analyses
+                            </button>
                             <button id="trialFactorBtn" onclick="applyLookElsewhereEffect()" disabled class="lee-btn w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:pointer-events-none text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-lg active:scale-95">
                                 ⚖️ Correct for Look-Elsewhere Effect
                             </button>
@@ -515,7 +518,9 @@
                 revealed: false,
                 trialFactorApplied: false,
                 hoveredBinIndex: null,
-                globalEvents: 100000 // Target total background events
+                globalEvents: 100000, // Target total background events
+                scanIntervalId: null, // interval handle for scan mode
+                scanCount: 0          // number of experiments run in last scan
             },
             // Base Rate Fallacy state variables
             baseRateFallacy: {
@@ -798,12 +803,17 @@
 
         function generateBumpHunterData() {
             const bh = state.bumpHunter;
+            // If called manually (Run New Experiment) while scan is active, stop the scan
+            if (bh.scanIntervalId !== null && !bh._calledFromScan) {
+                stopScan();
+            }
             bh.expectedBackground = [];
             bh.observedData = [];
             bh.selectedRange = { start: null, end: null };
             bh.isDragging = false;
             bh.revealed = false;
             bh.trialFactorApplied = false;
+            bh.scanCount = 0;
 
             // Generate decay curve B_i = Constant * exp(-x/slope) + flat offset
             let totalEventsGenerated = 0;
@@ -833,11 +843,13 @@
             document.getElementById('trialFactorBtn').removeAttribute('disabled');
             document.getElementById('revealPhysicsBtn').removeAttribute('disabled');
 
-            // Reset inspectors
-            document.getElementById('inspectorPanel').innerHTML = `
-                <p class="text-slate-300 text-center font-semibold py-4">Data Loaded Successfully!</p>
-                <p class="text-xs text-slate-400 text-center">Click or drag across a range of bins in the histogram plot to inspect their cumulative significance (<i>Z</i><sub>local</sub>).</p>
-            `;
+            // Reset inspectors only when not in scan mode
+            if (bh.scanIntervalId === null) {
+                document.getElementById('inspectorPanel').innerHTML = `
+                    <p class="text-slate-300 text-center font-semibold py-4">Data Loaded Successfully!</p>
+                    <p class="text-xs text-slate-400 text-center">Click or drag across a range of bins in the histogram plot to inspect their cumulative significance (<i>Z</i><sub>local</sub>).</p>
+                `;
+            }
 
             drawHistogram();
         }
@@ -1211,11 +1223,10 @@
             const maxIdx = Math.max(start, end);
             const width = maxIdx - minIdx + 1;
 
-            let obs = 0;
-            let bg = 0;
+            let obs = 0, bg = 0;
             for (let i = minIdx; i <= maxIdx; i++) {
                 obs += bh.observedData[i];
-                bg += bh.expectedBackground[i];
+                bg  += bh.expectedBackground[i];
             }
             const diff = obs - bg;
             const sigmaLocal = diff / Math.sqrt(bg);
@@ -1226,52 +1237,101 @@
             }
 
             const pValueLocal = zToP(sigmaLocal);
-            
-            // Calculate Global Significance via Bonferroni Trial Factors correction:
-            // For a sliding search window of width W, the search trials space is: N_trials = N_total_bins - width + 1
-            const N_trials = Math.max(1, bh.bins - width + 1);
-            const pValueGlobal = 1.0 - Math.pow(1.0 - pValueLocal, N_trials);
-            const sigmaGlobal = pToZ(pValueGlobal);
+
+            // Tier 1: within-histogram LEE (Bonferroni over sliding windows of this width)
+            const N_windows = Math.max(1, bh.bins - width + 1);
+            const pValueHistogram = 1.0 - Math.pow(1.0 - pValueLocal, N_windows);
+            const sigmaHistogram  = pToZ(pValueHistogram);
+
+            // Tier 2: over all histograms scanned (only available after a Scan Analyses round)
+            const N_scans = bh.scanCount || 0;
+            const fromScan = N_scans > 0;
+            const N_total = N_windows * N_scans;
+            const pValueAllScans  = fromScan ? 1.0 - Math.pow(1.0 - pValueLocal, N_total) : null;
+            const sigmaAllScans   = fromScan ? pToZ(pValueAllScans) : null;
 
             bh.trialFactorApplied = true;
+
+            const scanRow = fromScan ? `
+                <div class="flex justify-between"><span>Histograms Scanned:</span><span class="text-white">${N_scans}</span></div>
+                <div class="flex justify-between"><span>Total Trials (N&#x2097; &#xD7; N&#x209B;):</span><span class="text-white">${N_total}</span></div>
+                <div class="flex justify-between text-orange-400"><span>Global p-value (all scans):</span><span>${pValueAllScans.toExponential(4)}</span></div>
+            ` : '';
+
+            const scanSigCard = fromScan ? `
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-center">
+                    <span class="text-xs text-slate-400 block">Global (all ${N_scans} histograms)</span>
+                    <span class="text-xl font-bold font-mono text-orange-400">${sigmaAllScans.toFixed(2)}&#963;</span>
+                    <span class="text-[10px] text-slate-500 block mt-1">${N_total} total trials</span>
+                </div>
+            ` : '';
+
+            const scanExplain = fromScan ? `
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    Furthermore, this bump was only found <strong>after scanning ${N_scans} independent histograms</strong>.
+                    Accounting for that second layer of trials reduces the global significance even further &#8212;
+                    from <strong class="text-red-400">${sigmaHistogram.toFixed(2)}&#963;</strong> (within-histogram)
+                    down to <strong class="text-orange-400">${sigmaAllScans.toFixed(2)}&#963;</strong> (across all scans).
+                </p>
+            ` : '';
 
             const explanationText = `
                 <div class="space-y-4">
                     <p class="text-sm text-slate-300 leading-relaxed">
-                        In searching for a cumulative discovery, you scanned the entire spectrum. You didn't just test this single width of <strong>${width} bin(s)</strong>; you searched across all <strong>${N_trials} possible window configurations</strong> of this width!
+                        You didn't just test this single window of <strong>${width} bin(s)</strong> &#8212;
+                        you searched across all <strong>${N_windows} possible window positions</strong> of this width
+                        within the histogram.${fromScan ? ` And before finding this histogram, the scan ran <strong>${N_scans}</strong> experiments.` : ''}
                     </p>
-                    <div class="grid grid-cols-2 gap-4 text-center">
+                    <div class="grid grid-cols-${fromScan ? 3 : 2} gap-3 text-center">
                         <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
-                            <span class="text-xs text-slate-400 block">Local Signif.</span>
-                            <span class="text-xl font-bold font-mono text-blue-400">${sigmaLocal.toFixed(2)}σ</span>
+                            <span class="text-xs text-slate-400 block">Local Z</span>
+                            <span class="text-xl font-bold font-mono text-blue-400">${sigmaLocal.toFixed(2)}&#963;</span>
                         </div>
                         <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
-                            <span class="text-xs text-slate-400 block">Global Signif.</span>
-                            <span class="text-xl font-bold font-mono text-red-400">${sigmaGlobal.toFixed(2)}σ</span>
+                            <span class="text-xs text-slate-400 block">Global (this histogram)</span>
+                            <span class="text-xl font-bold font-mono text-red-400">${sigmaHistogram.toFixed(2)}&#963;</span>
+                            <span class="text-[10px] text-slate-500 block mt-1">${N_windows} windows</span>
                         </div>
+                        ${scanSigCard}
                     </div>
                     <div class="p-3 bg-slate-950 rounded-xl border border-slate-850 font-mono text-xs space-y-1">
-                        <div class="flex justify-between"><span>Number of Search Windows (N):</span><span class="text-white">${N_trials}</span></div>
+                        <div class="flex justify-between"><span>Window width:</span><span class="text-white">${width} bin(s)</span></div>
+                        <div class="flex justify-between"><span>Windows in histogram (N&#x2097;):</span><span class="text-white">${N_windows}</span></div>
                         <div class="flex justify-between"><span>Local p-value:</span><span class="text-white">${pValueLocal.toExponential(4)}</span></div>
-                        <div class="flex justify-between text-red-400"><span>Global p-value (corrected):</span><span>${pValueGlobal.toExponential(4)}</span></div>
+                        <div class="flex justify-between text-red-400"><span>Global p-value (histogram):</span><span>${pValueHistogram.toExponential(4)}</span></div>
+                        ${scanRow}
                     </div>
+                    ${scanExplain}
                     <p class="text-xs text-slate-400 leading-relaxed">
-                        Notice how the statistical significance of your cumulative bump dramatically washes out once we correct for the <strong>Look-Elsewhere Effect</strong>! This highlights how easily searchers can fool themselves by dynamically pooling data until it "looks good".
+                        This is the Look-Elsewhere Effect in action &#8212; each layer of trial multiplication
+                        erodes the significance of even a visually compelling bump.
                     </p>
                 </div>
             `;
 
             showMessage("Trial Factor Correction Applied", explanationText, "border-blue-500", "text-blue-400");
-            
-            // Update live inspector panel with global comparison
+
+            // Update inspector panel
             const container = document.getElementById('inspectorPanel');
-            container.innerHTML += `
-                <div class="mt-4 p-3 bg-red-950/20 border border-red-900 rounded-xl text-center">
-                    <div class="text-xs text-slate-400 uppercase tracking-widest mb-1">Global Significance (<i>Z</i><sub>global</sub>)</div>
-                    <div class="text-2xl font-black text-red-400 font-mono">${sigmaGlobal.toFixed(2)}σ</div>
-                    <p class="text-[9px] text-slate-500 mt-1">Probability of random appearance anywhere: <br><strong class="font-mono">${pValueGlobal.toExponential(3)}</strong></p>
+            const inspectorAppend = fromScan ? `
+                <div class="mt-3 p-3 bg-red-950/20 border border-red-900 rounded-xl text-center">
+                    <div class="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Z<sub>global</sub> (this histogram)</div>
+                    <div class="text-2xl font-black text-red-400 font-mono">${sigmaHistogram.toFixed(2)}&#963;</div>
+                    <p class="text-[9px] text-slate-500 mt-1">p = ${pValueHistogram.toExponential(3)} over ${N_windows} windows</p>
+                </div>
+                <div class="mt-2 p-3 bg-orange-950/20 border border-orange-900 rounded-xl text-center">
+                    <div class="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Z<sub>global</sub> (all ${N_scans} histograms)</div>
+                    <div class="text-2xl font-black text-orange-400 font-mono">${sigmaAllScans.toFixed(2)}&#963;</div>
+                    <p class="text-[9px] text-slate-500 mt-1">p = ${pValueAllScans.toExponential(3)} over ${N_total} trials</p>
+                </div>
+            ` : `
+                <div class="mt-3 p-3 bg-red-950/20 border border-red-900 rounded-xl text-center">
+                    <div class="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Z<sub>global</sub> (this histogram)</div>
+                    <div class="text-2xl font-black text-red-400 font-mono">${sigmaHistogram.toFixed(2)}&#963;</div>
+                    <p class="text-[9px] text-slate-500 mt-1">p = ${pValueHistogram.toExponential(3)} over ${N_windows} windows</p>
                 </div>
             `;
+            container.innerHTML += inspectorAppend;
         }
 
         function revealUnderlyingPhysics() {
@@ -1300,6 +1360,136 @@
             `;
 
             showMessage("The Veil of Physics Lifted", revealMessage, "border-amber-500", "text-amber-400");
+        }
+
+        // Returns the best (highest sigma) window of 1–3 adjacent bins that hits >= threshold.
+        // start >= 1 and end <= bh.bins-2 so there is always at least one sideband bin on each side.
+        function findBestLocalBump(bh, threshold) {
+            let best = null;
+            for (let width = 1; width <= 3; width++) {
+                for (let start = 1; start <= bh.bins - width - 1; start++) {
+                    let obs = 0, bg = 0;
+                    for (let i = start; i < start + width; i++) {
+                        obs += bh.observedData[i];
+                        bg  += bh.expectedBackground[i];
+                    }
+                    const diff = obs - bg;
+                    if (diff <= 0) continue;
+                    const sigma = diff / Math.sqrt(bg);
+                    if (sigma >= threshold) {
+                        if (!best || sigma > best.sigma) {
+                            best = { start, end: start + width - 1, sigma, obs, bg };
+                        }
+                    }
+                }
+            }
+            return best;
+        }
+
+        function toggleScanAnalyses() {
+            const bh = state.bumpHunter;
+            if (bh.scanIntervalId !== null) {
+                stopScan();
+                return;
+            }
+            startScan();
+        }
+
+        function runOneScan(bh) {
+            // Inline data generation (avoids any side-effects from generateBumpHunterData)
+            bh.expectedBackground = [];
+            bh.observedData = [];
+            bh.selectedRange = { start: null, end: null };
+            bh.revealed = false;
+            bh.trialFactorApplied = false;
+
+            const slope = 35.0;
+            let normSum = 0;
+            for (let i = 0; i < bh.bins; i++) {
+                const xVal = bh.xRange[0] + (i + 0.5) * ((bh.xRange[1] - bh.xRange[0]) / bh.bins);
+                normSum += Math.exp(-xVal / slope);
+            }
+            const normFactor = bh.globalEvents / normSum;
+            let totalEvents = 0;
+            for (let i = 0; i < bh.bins; i++) {
+                const xVal = bh.xRange[0] + (i + 0.5) * ((bh.xRange[1] - bh.xRange[0]) / bh.bins);
+                const lambda = normFactor * Math.exp(-xVal / slope);
+                bh.expectedBackground.push(lambda);
+                const obs = generatePoisson(lambda);
+                bh.observedData.push(obs);
+                totalEvents += obs;
+            }
+            bh.dataGenerated = true;
+            document.getElementById('eventCountLabel').innerText = `${totalEvents.toLocaleString()} Events Tracked`;
+            drawHistogram();
+        }
+
+        function startScan() {
+            const bh = state.bumpHunter;
+            const btn = document.getElementById('scanBtn');
+            btn.textContent = '⏹ Stop Scan';
+            btn.classList.replace('bg-violet-600', 'bg-rose-600');
+            btn.classList.replace('hover:bg-violet-500', 'hover:bg-rose-500');
+            document.getElementById('trialFactorBtn').removeAttribute('disabled');
+            document.getElementById('revealPhysicsBtn').removeAttribute('disabled');
+
+            document.getElementById('inspectorPanel').innerHTML = `
+                <p class="text-slate-300 text-center font-semibold py-2 animate-pulse">🔭 Scanning analyses…</p>
+                <p class="text-xs text-slate-500 text-center">Generating experiments until a ≥3.5σ local bump is found.</p>
+            `;
+
+            let count = 0;
+            bh.scanIntervalId = setInterval(() => {
+                runOneScan(bh);
+                count++;
+                const hit = findBestLocalBump(bh, 3.5);
+                if (hit) {
+                    bh.scanCount = count;
+                    stopScan();
+                    bh.selectedRange.start = hit.start;
+                    bh.selectedRange.end   = hit.end;
+                    drawHistogram();
+
+                    const binSize = (bh.xRange[1] - bh.xRange[0]) / bh.bins;
+                    const minMass = Math.round(bh.xRange[0] + hit.start * binSize);
+                    const maxMass = Math.round(bh.xRange[0] + (hit.end + 1) * binSize);
+                    const nBins   = hit.end - hit.start + 1;
+                    const regionLabel = nBins === 1
+                        ? `${minMass} GeV`
+                        : `${minMass}–${maxMass} GeV (${nBins} bins)`;
+
+                    document.getElementById('inspectorPanel').innerHTML = `
+                        <div class="space-y-3">
+                            <p class="text-emerald-400 text-center font-bold py-1">&#127919; Found after ${count} experiment${count !== 1 ? 's' : ''}!</p>
+                            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1 font-mono text-xs">
+                                <div class="flex justify-between"><span>Search Region:</span><span class="text-white">${regionLabel}</span></div>
+                                <div class="flex justify-between"><span>Observed (D):</span><span class="text-white">${hit.obs}</span></div>
+                                <div class="flex justify-between"><span>Expected (B):</span><span class="text-white">${hit.bg.toFixed(1)}</span></div>
+                                <div class="flex justify-between"><span>Excess (D &#8722; B):</span><span class="text-emerald-400">+${(hit.obs - hit.bg).toFixed(1)}</span></div>
+                            </div>
+                            <div class="p-4 rounded-xl border border-emerald-800 bg-emerald-950/20 text-center">
+                                <div class="text-xs text-slate-400 uppercase tracking-widest mb-1">Local Significance (Z<sub>local</sub>)</div>
+                                <div class="text-3xl font-black text-emerald-400 font-mono">+${hit.sigma.toFixed(2)}&#963;</div>
+                            </div>
+                            <p class="text-xs text-slate-400 text-center italic">It took ${count} random experiment${count !== 1 ? 's' : ''} to find this bump &#8212; but was it ever real?</p>
+                        </div>
+                    `;
+                }
+            }, 400);
+        }
+
+        function stopScan() {
+            const bh = state.bumpHunter;
+            if (bh.scanIntervalId !== null) {
+                clearInterval(bh.scanIntervalId);
+                bh.scanIntervalId = null;
+            }
+            const btn = document.getElementById('scanBtn');
+            if (btn) {
+                btn.textContent = '🔭 Scan Analyses';
+                btn.classList.replace('bg-rose-600', 'bg-violet-600');
+                btn.classList.replace('hover:bg-rose-500', 'hover:bg-violet-500');
+            }
         }
 
         // Calibration Game rendering
