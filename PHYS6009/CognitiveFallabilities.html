@@ -534,6 +534,9 @@
             },
             currentCalibrationIndex: 0,
             userAnswers: {},
+            bonusPhase: null,      // null | 'choice' | 'question' | 'done'
+            bonusChoice: null,     // 'physics' | 'social' | 'skip'
+            bonusAnswer: null,     // { answer, confidence }
             calibrationQuestions: [
                 {
                     id: 1,
@@ -593,6 +596,26 @@
                 8: { correct: 21, wrong: -39 },
                 9: { correct: 24, wrong: -56 },
                 10: { correct: 25, wrong: -75 }
+            },
+            bonusQuestions: {
+                physics: {
+                    id: 'B1',
+                    category: 'Physical Sciences',
+                    question: "Which is hotter at its surface?",
+                    options: { A: "The Sun", B: "A lightning bolt" },
+                    correct: "B",
+                    explanation: "A lightning bolt reaches surface temperatures of roughly 30,000 K — about five times hotter than the Sun's photosphere at ~5,800 K. The Sun's core is far hotter (~15 million K), but its visible surface is relatively cool compared to the brief, violent plasma channel of a lightning discharge.",
+                    caveat: null
+                },
+                social: {
+                    id: 'B2',
+                    category: 'Social Sciences',
+                    question: "Which is older?",
+                    options: { A: "Oxford University", B: "The Aztec Empire" },
+                    correct: "A",
+                    explanation: "Oxford University traces its origins to teaching activity around 1096–1167 AD, making it one of the oldest universities in the world. The Aztec Empire, by contrast, was founded around 1300 AD with the establishment of Tenochtitlán. Oxford predates the Aztecs by well over a century — a fact most people find deeply counterintuitive.",
+                    caveat: null
+                }
             }
         };
 
@@ -1496,6 +1519,9 @@
         function initCalibrationGame() {
             state.currentCalibrationIndex = 0;
             state.userAnswers = {};
+            state.bonusPhase = null;
+            state.bonusChoice = null;
+            state.bonusAnswer = null;
             renderCalibrationQuestion();
         }
 
@@ -1615,7 +1641,9 @@
                 state.currentCalibrationIndex++;
                 renderCalibrationQuestion();
             } else {
-                calculateCalibrationScore();
+                // After last question, show bonus choice screen
+                state.bonusPhase = 'choice';
+                renderBonusChoice();
             }
         }
 
@@ -1630,13 +1658,147 @@
             label.innerHTML = `${val}/10 (${pct}%)`;
         }
 
+        // ── Bonus question flow ──────────────────────────────────────────────────
+        function renderBonusChoice() {
+            const container = document.getElementById('calibrationQuestionsContainer');
+            container.innerHTML = '';
+            const card = document.createElement('div');
+            card.className = "bg-slate-900/50 border border-slate-700/80 rounded-2xl p-6 md:p-8 space-y-6 shadow-md";
+            card.innerHTML = `
+                <div class="text-center space-y-3 border-b border-slate-800 pb-6">
+                    <span class="text-xs font-bold tracking-widest text-amber-400 uppercase">Bonus Round</span>
+                    <h3 class="text-2xl md:text-3xl font-bold text-white">You have completed the five core questions.</h3>
+                    <p class="text-slate-400 text-sm max-w-lg mx-auto">You may stop here and see your results, or challenge yourself with one additional question. Your bonus score will replace your Question 1 score if it is better.</p>
+                </div>
+                <div class="grid grid-cols-1 gap-4 max-w-xl mx-auto w-full">
+                    <button onclick="chooseBonusOption('skip')"
+                        class="w-full flex items-center gap-4 p-5 rounded-2xl border border-slate-600 bg-slate-800 hover:bg-slate-700 hover:border-slate-500 transition-all text-left">
+                        <span class="text-3xl">&#x1F3C1;</span>
+                        <div>
+                            <div class="font-bold text-white text-lg">A) Finish and see the results</div>
+                            <div class="text-slate-400 text-sm">View your calibration profile now.</div>
+                        </div>
+                    </button>
+                    <button onclick="chooseBonusOption('physics')"
+                        class="w-full flex items-center gap-4 p-5 rounded-2xl border border-blue-800 bg-blue-950/20 hover:bg-blue-950/40 hover:border-blue-600 transition-all text-left">
+                        <span class="text-3xl">&#x26A1;</span>
+                        <div>
+                            <div class="font-bold text-white text-lg">B) Bonus question in Physical Sciences</div>
+                            <div class="text-slate-400 text-sm">A question about natural phenomena.</div>
+                        </div>
+                    </button>
+                    <button onclick="chooseBonusOption('social')"
+                        class="w-full flex items-center gap-4 p-5 rounded-2xl border border-emerald-800 bg-emerald-950/20 hover:bg-emerald-950/40 hover:border-emerald-600 transition-all text-left">
+                        <span class="text-3xl">&#x1F30D;</span>
+                        <div>
+                            <div class="font-bold text-white text-lg">C) Bonus question in Social Sciences</div>
+                            <div class="text-slate-400 text-sm">A question about geography and society.</div>
+                        </div>
+                    </button>
+                </div>
+            `;
+            container.appendChild(card);
+        }
+
+        function chooseBonusOption(choice) {
+            state.bonusChoice = choice;
+            if (choice === 'skip') {
+                state.bonusPhase = 'done';
+                calculateCalibrationScore();
+            } else {
+                state.bonusPhase = 'question';
+                renderBonusQuestion();
+            }
+        }
+
+        function renderBonusQuestion() {
+            const q = state.bonusQuestions[state.bonusChoice];
+            const saved = state.bonusAnswer || { answer: null, confidence: 5 };
+            const container = document.getElementById('calibrationQuestionsContainer');
+            container.innerHTML = '';
+            const card = document.createElement('div');
+            card.className = "bg-slate-900/50 border border-slate-700/80 rounded-2xl p-6 md:p-8 space-y-6 shadow-md";
+            const accentColor = state.bonusChoice === 'physics' ? 'blue' : 'emerald';
+            card.innerHTML = `
+                <div class="flex justify-between items-center border-b border-slate-800 pb-4 mb-4">
+                    <span class="text-xs font-bold tracking-widest text-${accentColor}-400 uppercase">Bonus &mdash; ${q.category}</span>
+                    <span class="text-xs text-slate-500">Replaces Q1 if better</span>
+                </div>
+                <div class="flex items-start gap-4">
+                    <span class="w-8 h-8 rounded-full bg-${accentColor}-500 text-slate-950 font-bold flex items-center justify-center flex-shrink-0 mt-1">B</span>
+                    <div class="flex-grow">
+                        <h3 class="text-xl md:text-2xl font-bold text-white mb-4">${q.question}</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <label class="flex items-center gap-3 p-4 bg-slate-850 hover:bg-slate-800 border ${saved.answer === 'A' ? 'border-' + accentColor + '-500 bg-' + accentColor + '-950/20' : 'border-slate-750'} hover:border-slate-600 rounded-xl cursor-pointer transition-all">
+                                <input type="radio" name="cal_bonus" value="A" ${saved.answer === 'A' ? 'checked' : ''} onchange="selectBonusOption('A')" class="w-5 h-5 text-${accentColor}-500 bg-slate-800 border-slate-700 focus:ring-2">
+                                <span class="text-lg text-slate-200"><strong class="text-${accentColor}-400 mr-1">A)</strong> ${q.options.A}</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-4 bg-slate-850 hover:bg-slate-800 border ${saved.answer === 'B' ? 'border-' + accentColor + '-500 bg-' + accentColor + '-950/20' : 'border-slate-750'} hover:border-slate-600 rounded-xl cursor-pointer transition-all">
+                                <input type="radio" name="cal_bonus" value="B" ${saved.answer === 'B' ? 'checked' : ''} onchange="selectBonusOption('B')" class="w-5 h-5 text-${accentColor}-500 bg-slate-800 border-slate-700 focus:ring-2">
+                                <span class="text-lg text-slate-200"><strong class="text-${accentColor}-400 mr-1">B)</strong> ${q.options.B}</span>
+                            </label>
+                        </div>
+                        <div class="bg-slate-950/60 rounded-xl p-5 border border-slate-800">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2">
+                                <span class="text-sm font-semibold text-slate-400 uppercase tracking-wider">Quantify your Confidence (5 to 10):</span>
+                                <span id="sliderValueLabel_bonus" class="text-lg font-bold text-${accentColor}-400 bg-${accentColor}-950/40 border border-${accentColor}-800/60 px-3 py-1 rounded-lg">5/10 (50%)</span>
+                            </div>
+                            <input type="range" id="cal_slider_bonus" min="5" max="10" value="${saved.confidence}" step="1"
+                                oninput="updateSliderLabel('bonus', this.value); updateBonusConfidence(this.value);"
+                                class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-${accentColor}-500 mt-2">
+                            <div class="flex justify-between text-[11px] text-slate-500 mt-2 font-mono">
+                                <span>5/10 (50%)</span><span>7/10 (70%)</span><span>10/10 (100%)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center pt-4 border-t border-slate-800 mt-6">
+                    <button onclick="state.bonusPhase='choice'; renderBonusChoice();"
+                        class="bg-slate-700 hover:bg-slate-600 text-white text-md font-semibold py-2 px-6 rounded-xl transition-all flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Back
+                    </button>
+                    <button id="bonus_submit_btn" onclick="submitBonusQuestion()" ${saved.answer ? '' : 'disabled'}
+                        class="bg-${accentColor}-600 hover:bg-${accentColor}-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-lg font-bold py-3 px-8 rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-2">
+                        Finish &amp; See Profile
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+            `;
+            container.appendChild(card);
+            updateSliderLabel('bonus', saved.confidence);
+        }
+
+        function selectBonusOption(option) {
+            state.bonusAnswer = state.bonusAnswer || { answer: null, confidence: 5 };
+            state.bonusAnswer.answer = option;
+            renderBonusQuestion();
+        }
+
+        function updateBonusConfidence(val) {
+            state.bonusAnswer = state.bonusAnswer || { answer: null, confidence: 5 };
+            state.bonusAnswer.confidence = parseInt(val);
+        }
+
+        function submitBonusQuestion() {
+            if (!state.bonusAnswer || !state.bonusAnswer.answer) return;
+            state.bonusPhase = 'done';
+            calculateCalibrationScore();
+        }
+
         // Scoring and Calibration analysis logic
         function calculateCalibrationScore() {
             let totalScore = 0;
             let resultsHtml = `<div class="space-y-6">`;
             let unansweredQuestions = [];
 
-            // Run validation and compute scoring
+            // Score each of the five core questions; track Q1 score separately for bonus replacement
+            let q1Score = 0;
+
             state.calibrationQuestions.forEach(q => {
                 const record = state.userAnswers[q.id];
                 if (!record || !record.answer) {
@@ -1645,11 +1807,19 @@
                 }
                 const answer = record.answer;
                 const confidence = record.confidence;
-                
                 const isCorrect = (answer === q.correct);
                 const payoffGroup = state.brierPayoffs[confidence];
                 const score = isCorrect ? payoffGroup.correct : payoffGroup.wrong;
+
+                if (q.id === 1) q1Score = score;
                 totalScore += score;
+
+                // Q1 caveat text
+                const caveatHtml = q.id === 1
+                    ? `<p class="text-[11px] text-amber-400/80 mt-2 border-t border-amber-900/50 pt-2 italic">
+                        <strong>Caveat:</strong> The answer given here follows Spiegelhalter's own figures (~73% for the brain, ~50% for whole blood). However, the "~50%" figure is derived from a volume-fraction calculation rather than a direct gravimetric measurement — direct measurements of whole blood water content typically give ~80% by mass. The framing of the question (percent by what?) is itself ambiguous, which is why a bonus question is offered as an alternative.
+                       </p>`
+                    : '';
 
                 resultsHtml += `
                     <div class="p-4 rounded-xl border ${isCorrect ? 'border-green-800 bg-green-950/20' : 'border-red-800 bg-red-950/20'}">
@@ -1667,6 +1837,7 @@
                             <div class="font-mono text-sm mt-2 ${score >= 0 ? 'text-green-400' : 'text-red-400'}">Question Score Contribution: ${score >= 0 ? '+' : ''}${score}</div>
                         </div>
                         <p class="text-[11px] text-slate-400 mt-2 border-t border-slate-800/80 pt-2 italic">${q.explanation}</p>
+                        ${caveatHtml}
                     </div>
                 `;
             });
@@ -1676,7 +1847,49 @@
                 return;
             }
 
-            resultsHtml += `</div>`;
+            // Grade bonus question if answered
+            let bonusHtml = '';
+            let bonusScore = null;
+            const hasBonus = state.bonusChoice && state.bonusChoice !== 'skip' && state.bonusAnswer && state.bonusAnswer.answer;
+            if (hasBonus) {
+                const bq = state.bonusQuestions[state.bonusChoice];
+                const bAnswer = state.bonusAnswer.answer;
+                const bConf = state.bonusAnswer.confidence;
+                const bCorrect = (bAnswer === bq.correct);
+                const bPayoff = state.brierPayoffs[bConf];
+                bonusScore = bCorrect ? bPayoff.correct : bPayoff.wrong;
+                const replacedQ1 = bonusScore > q1Score;
+                const replacementNote = replacedQ1
+                    ? `<div class="text-xs font-semibold text-emerald-400 mt-1">&#x2714; This score (<strong>${bonusScore >= 0 ? '+' : ''}${bonusScore}</strong>) replaces Question 1's score (<strong>${q1Score >= 0 ? '+' : ''}${q1Score}</strong>) in your total.</div>`
+                    : `<div class="text-xs text-slate-500 mt-1">Question 1's score (<strong>${q1Score >= 0 ? '+' : ''}${q1Score}</strong>) is kept as it is higher.</div>`;
+
+                bonusHtml = `
+                    <div class="p-4 rounded-xl border-2 ${bCorrect ? 'border-emerald-600 bg-emerald-950/20' : 'border-orange-700 bg-orange-950/20'}">
+                        <div class="flex justify-between items-start gap-4 mb-2">
+                            <span class="font-bold text-lg text-white">Bonus Question <span class="text-xs font-normal text-slate-400">(${bq.category})</span></span>
+                            <span class="text-sm font-semibold px-2 py-0.5 rounded ${bCorrect ? 'bg-emerald-900 text-emerald-300' : 'bg-orange-900 text-orange-300'}">
+                                ${bCorrect ? 'Correct' : 'Incorrect'}
+                            </span>
+                        </div>
+                        <p class="text-sm text-slate-300 mb-2">${bq.question}</p>
+                        <div class="text-xs space-y-1 text-slate-400">
+                            <div>Your Answer: <strong class="text-white">${bAnswer}) ${bq.options[bAnswer]}</strong></div>
+                            <div>Correct Answer: <strong class="text-white">${bq.correct}) ${bq.options[bq.correct]}</strong></div>
+                            <div>Confidence Rated: <strong class="text-yellow-400">${bConf}/10</strong></div>
+                            <div class="font-mono text-sm mt-2 ${bonusScore >= 0 ? 'text-green-400' : 'text-red-400'}">Bonus Score: ${bonusScore >= 0 ? '+' : ''}${bonusScore}</div>
+                        </div>
+                        ${replacementNote}
+                        <p class="text-[11px] text-slate-400 mt-2 border-t border-slate-800/80 pt-2 italic">${bq.explanation}</p>
+                    </div>
+                `;
+
+                // Apply replacement: subtract Q1 score, add better of the two
+                if (replacedQ1) {
+                    totalScore = totalScore - q1Score + bonusScore;
+                }
+            }
+
+            resultsHtml += bonusHtml + `</div>`;
 
             // Calculate profiles
             let profileTitle = '';
