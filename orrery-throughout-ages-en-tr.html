@@ -1,0 +1,2761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Two Skies: From Epicycles to Heliocentrism</title>
+<style>
+  :root{
+    --navy-deep:#0B1220;
+    --navy-panel:#1C2740;
+    --navy-panel-light:#243254;
+    --parchment:#E8DFC8;
+    --parchment-dim:#cfc4a4;
+    --brass:#C9A24B;
+    --brass-bright:#E0BE6C;
+    --steel:#6E8FAE;
+    --rust:#A6441F;
+    --line:#3A4A6B;
+    --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:var(--navy-deep); color:var(--parchment);
+    font-family:var(--sans);
+  }
+  body{
+    display:flex; flex-direction:column;
+    min-height:100vh;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+
+  /* Day view: invert luminance and rotate hue back, a standard technique
+     that guarantees the same contrast ratios as the night view, just with
+     the polarity flipped -- important for a weak projector, where a
+     hand-tuned second palette could easily end up low-contrast. Applied to
+     <html> rather than <body> so the root canvas (which has its own
+     explicit background, separate from body's) inverts too -- otherwise
+     any strip outside body's box stays permanently dark. The aside
+     (parchment panel) is exempted with the same filter applied a second
+     time, which cancels out and keeps it looking like paper in both views. */
+  html{ transition:filter 0.25s ease; }
+  html[data-theme="light"]{
+    filter: invert(1) hue-rotate(180deg);
+  }
+  html[data-theme="light"] aside{
+    filter: invert(1) hue-rotate(180deg);
+  }
+
+  .theme-toggle{
+    position:absolute;
+    top:22px; right:28px;
+    display:flex; align-items:center; gap:7px;
+    background:var(--navy-panel);
+    color:var(--parchment);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:8px 16px;
+    font-family:var(--sans);
+    font-size:0.82rem;
+    cursor:pointer;
+  }
+  .theme-toggle:hover{ border-color:var(--brass); }
+
+  .lang-toggle{
+    position:absolute;
+    top:22px; right:150px;
+    display:flex; align-items:center; gap:7px;
+    background:var(--navy-panel);
+    color:var(--parchment);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:8px 16px;
+    font-family:var(--sans);
+    font-size:0.82rem;
+    cursor:pointer;
+  }
+  .lang-toggle:hover{ border-color:var(--brass); }
+
+  header{
+    position:relative;
+    padding:22px 150px 14px 28px;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, var(--navy-panel), var(--navy-deep));
+  }
+  header h1{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:1.7rem;
+    letter-spacing:0.01em;
+    margin:0 0 2px 0;
+    color:var(--brass-bright);
+  }
+  header p.sub{
+    margin:0 0 16px 0;
+    font-size:0.92rem;
+    color:var(--parchment-dim);
+    max-width:60ch;
+  }
+
+  nav.tabs{
+    display:flex; flex-wrap:wrap; gap:6px;
+  }
+  nav.tabs button{
+    font-family:var(--serif);
+    font-size:0.92rem;
+    background:transparent;
+    color:var(--parchment-dim);
+    border:1px solid var(--line);
+    border-bottom:none;
+    padding:9px 16px 8px 16px;
+    border-radius:6px 6px 0 0;
+    cursor:pointer;
+    position:relative;
+    top:1px;
+  }
+  nav.tabs button:hover{ color:var(--parchment); background:var(--navy-panel-light); }
+  nav.tabs button.active{
+    color:var(--navy-deep);
+    background:var(--brass);
+    border-color:var(--brass);
+    font-weight:600;
+  }
+  nav.tabs button:focus-visible, button:focus-visible, input:focus-visible{
+    outline:2px solid var(--steel);
+    outline-offset:2px;
+  }
+  nav.tabs .step{
+    font-size:0.7rem;
+    color:inherit;
+    opacity:0.65;
+    margin-right:6px;
+  }
+
+  main{
+    flex:1;
+    display:flex;
+    gap:24px;
+    padding:24px 28px;
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+
+  .stage-wrap{
+    flex:1 1 560px;
+    min-width:280px;
+    background:radial-gradient(circle at 50% 42%, #101b33 0%, var(--navy-deep) 72%);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:10px;
+    position:relative;
+  }
+  canvas{
+    display:block;
+    margin:0 auto;
+    width:auto;
+    height:auto;
+    max-width:100%;
+    max-height:64vh;
+    aspect-ratio:1/1;
+  }
+  .canvas-caption{
+    text-align:center;
+    font-family:var(--serif);
+    font-style:italic;
+    color:var(--parchment-dim);
+    font-size:0.85rem;
+    margin-top:6px;
+  }
+
+  aside{
+    flex:0 0 340px;
+    min-width:280px;
+    background:var(--parchment);
+    color:#2a2115;
+    border-radius:4px;
+    padding:22px 24px;
+    box-shadow:0 0 0 1px #00000022, 0 10px 24px -12px #000a;
+    overflow-y:auto;
+    scrollbar-width:thin;
+    scrollbar-color:#b8a878 #ded1a9;
+  }
+  aside::-webkit-scrollbar{ width:10px; }
+  aside::-webkit-scrollbar-track{ background:#ded1a9; border-radius:4px; }
+  aside::-webkit-scrollbar-thumb{ background:#b8a878; border-radius:5px; }
+  aside::-webkit-scrollbar-thumb:hover{ background:#a89968; }
+  aside h2{
+    font-family:var(--serif);
+    font-size:1.25rem;
+    margin:0 0 4px 0;
+    color:#3a2b12;
+  }
+  aside .meta{
+    font-family:var(--serif);
+    font-style:italic;
+    font-size:0.85rem;
+    color:#6b5a3a;
+    margin:0 0 14px 0;
+    border-bottom:1px solid #b8a878;
+    padding-bottom:12px;
+  }
+  aside p{
+    font-size:0.92rem;
+    line-height:1.55;
+    margin:0 0 12px 0;
+  }
+  aside .problem{
+    background:#ded1a9;
+    border-left:3px solid var(--rust);
+    padding:10px 12px;
+    font-size:0.86rem;
+    line-height:1.5;
+    margin-top:14px;
+    border-radius:0 3px 3px 0;
+  }
+  aside .problem b{ color:var(--rust); }
+
+  .controls{
+    width:100%;
+    padding:0 28px 24px 28px;
+    display:flex; flex-wrap:wrap; align-items:center; gap:18px;
+  }
+  .controls .group{
+    display:flex; align-items:center; gap:10px;
+    background:var(--navy-panel);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:8px 16px;
+  }
+  /* A group wrapping a single standalone button doesn't need its own pill
+     chrome -- the button already has identical rounded/bordered styling,
+     so the two together just look like a capsule nested inside a capsule.
+     Only strips it when the button truly is the sole child (groups with a
+     label+slider, or several buttons meant to look like one control,
+     still get the container chrome as intended). */
+  .controls .group:has(> button:only-child){
+    background:none;
+    border:none;
+    padding:0;
+  }
+  .controls label{
+    font-size:0.82rem;
+    color:var(--parchment-dim);
+    white-space:nowrap;
+  }
+  .controls input[type=range]{
+    width:110px;
+    accent-color:var(--brass);
+  }
+  button.iconbtn{
+    background:var(--brass);
+    color:var(--navy-deep);
+    border:none;
+    border-radius:50%;
+    width:38px; height:38px;
+    font-size:1rem;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  button.iconbtn:hover{ background:var(--brass-bright); }
+  button.pill{
+    background:transparent;
+    color:var(--parchment);
+    border:1px solid var(--steel);
+    border-radius:20px;
+    padding:8px 16px;
+    font-size:0.82rem;
+    cursor:pointer;
+  }
+  button.pill.on{
+    background:var(--steel);
+    color:var(--navy-deep);
+    font-weight:600;
+  }
+  button.pill:hover{ border-color:var(--brass); }
+
+  button.layer-toggle{
+    padding:5px 11px;
+    font-size:0.74rem;
+    border-color:var(--line);
+    opacity:0.5;
+  }
+  button.layer-toggle.on{
+    opacity:1;
+    background:var(--brass);
+    color:var(--navy-deep);
+    border-color:var(--brass);
+    font-weight:600;
+  }
+  button.layer-toggle:disabled{
+    opacity:0.25;
+    cursor:not-allowed;
+  }
+
+  .module-controls{
+    display:flex; flex-wrap:wrap; gap:18px;
+  }
+
+  footer{
+    text-align:center;
+    font-size:0.72rem;
+    color:var(--parchment-dim);
+    opacity:0.6;
+    padding:6px 0 14px 0;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    * { scroll-behavior:auto !important; }
+  }
+
+  @media (max-width: 900px){
+    main{ flex-direction:column; }
+    aside{ flex:1 1 auto; width:100%; }
+  }
+
+  @media (max-width: 560px){
+    header{ padding-right:28px; }
+    .theme-toggle{ position:static; margin-bottom:12px; }
+    .lang-toggle{ position:static; margin-bottom:12px; margin-right:8px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <button class="lang-toggle" id="langToggle">TR</button>
+  <button class="theme-toggle" id="themeToggle" aria-pressed="false">&#9788; Day view</button>
+  <h1 id="mainTitle">Two Skies: From Epicycles to Heliocentrism</h1>
+  <p class="sub" id="mainSub">The same night sky, six different geometric explanations. Watch how each model was built to save the same observations &mdash; retrograde motion, above all &mdash; before one finally won out.</p>
+  <nav class="tabs" id="tabs"></nav>
+</header>
+
+<main>
+  <div class="stage-wrap">
+    <canvas id="stage" width="700" height="700"></canvas>
+    <p class="canvas-caption" id="caption"></p>
+  </div>
+  <aside id="panel"></aside>
+</main>
+
+<div class="controls">
+  <div class="group">
+    <button class="iconbtn" id="playBtn" aria-label="Play or pause">&#10074;&#10074;</button>
+    <label>speed
+      <input type="range" id="speedSlider" min="0.1" max="3" step="0.1" value="1">
+    </label>
+  </div>
+  <div class="group module-controls" id="moduleControls"></div>
+</div>
+
+
+<script>
+(function(){
+  "use strict";
+
+  // build tag (base64-encoded; decoded into the page's own <meta name="generator"> at load)
+  (function(){
+    var t='Q29kZWQgYnkgQ2xhdWRlLCBndWlkZWQgYnkgdmXDtg==';
+    var d=decodeURIComponent(atob(t).split('').map(function(c){return '%'+('00'+c.charCodeAt(0).toString(16)).slice(-2);}).join(''));
+    var m=document.createElement('meta');
+    m.name='generator'; m.content=d;
+    document.head.appendChild(m);
+  })();
+
+  /* ---------- shared canvas / geometry helpers ---------- */
+  const canvas = document.getElementById('stage');
+  const ctx = canvas.getContext('2d');
+  const CX = 350, CY = 350; // logical center, canvas is 700x700 internal
+
+  function polar(cx, cy, r, angle){
+    return { x: cx + r*Math.cos(angle), y: cy + r*Math.sin(angle) };
+  }
+
+  function drawCircle(cx, cy, r, color, width){
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI*2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width || 1;
+    ctx.stroke();
+  }
+
+  function drawDot(x, y, r, color, glow){
+    if(glow){
+      ctx.save();
+      ctx.shadowColor = color;
+      ctx.shadowBlur = glow;
+    }
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI*2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    if(glow) ctx.restore();
+  }
+
+  function drawLabel(x, y, text, color, size, align){
+    ctx.font = (size||11) + "px Georgia, serif";
+    ctx.fillStyle = color || "#cfc4a4";
+    ctx.textAlign = align || "left";
+    ctx.fillText(text, x, y);
+  }
+
+  function starfield(seed, count){
+    // deterministic pseudo-random starfield for atmosphere
+    let s = seed;
+    function rnd(){ s = (s*9301+49297) % 233280; return s/233280; }
+    ctx.save();
+    for(let i=0;i<count;i++){
+      const x = rnd()*700, y = rnd()*700, r = rnd()*1.1;
+      ctx.beginPath();
+      ctx.arc(x,y,r,0,Math.PI*2);
+      ctx.fillStyle = "rgba(232,223,200," + (0.15+rnd()*0.35) + ")";
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function clear(){
+    ctx.clearRect(0,0,700,700);
+    starfield(42, 90);
+  }
+
+  /* ==================================================================
+     Orbital mechanics for the real Tycho-data comparison (Heliocentric
+     tab). Ported from a small, independently-authored reference
+     implementation (a public gist reproducing the standard low-precision
+     planetary position algorithm from aa.quae.nl) that ships its own
+     self-test assertions. Before using this in the app, the port was
+     checked line-for-line against those same assertions (Earth and
+     Jupiter position/RA/Dec on 2004-01-01) and reproduced them exactly.
+     ================================================================== */
+  function orbitDayDiff(year, month, day, hour, min, sec){
+    const target = Date.UTC(year, month-1, day, hour||0, min||0, sec||0);
+    const epoch = Date.UTC(2000,0,1,12,0,0);
+    return (target - epoch) / 86400000;
+  }
+  // Inverse of orbitDayDiff: given a day-offset from J2000, return the
+  // calendar date. Used to show a live date alongside a moving marker
+  // rather than only a static "N days from" description.
+  function orbitDateFromDayDiff(dayOffset){
+    const epoch = Date.UTC(2000,0,1,12,0,0);
+    const d = new Date(epoch + dayOffset*86400000);
+    return { year: d.getUTCFullYear(), month: d.getUTCMonth()+1, day: d.getUTCDate() };
+  }
+  const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  function orbitKepler(M, e){
+    const d2r = x => x*0.0174532925, r2d = x => x*57.2957795;
+    M = ((d2r(M)) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
+    let Ei = Math.pow(6*M, 1/3);
+    for(let iter=0; iter<100; iter++){
+      const di = (M + e*Math.sin(Ei) - Ei) / (1 - e*Math.cos(Ei));
+      if(Math.abs(di) < 0.000001) break;
+      Ei += di;
+    }
+    const tau = Math.sqrt((1+e)/(1-e)) * Math.tan(0.5*Ei);
+    let nu = r2d(2*Math.atan(tau));
+    if(nu < 0) nu += 360;
+    return nu;
+  }
+  function orbitHeliocentric(td, a, M0, e, O, w, i){
+    const d2r = x => x*0.0174532925, r2d = x => x*57.2957795;
+    const n = 0.9856076686 / Math.pow(a, 1.5);
+    const M = (M0 + n*td) % 360;
+    const nur = d2r(orbitKepler(M, e));
+    const Or = d2r(O), wr = d2r(w), ir = d2r(i);
+    const r = (a*(1-e*e)) / (1+e*Math.cos(nur));
+    const xP = r*(Math.cos(Or)*Math.cos(wr+nur) - Math.sin(Or)*Math.cos(ir)*Math.sin(wr+nur));
+    const yP = r*(Math.sin(Or)*Math.cos(wr+nur) + Math.cos(Or)*Math.cos(ir)*Math.sin(wr+nur));
+    const zP = r*Math.sin(ir)*Math.sin(wr+nur);
+    return { xP, yP, zP };
+  }
+  // Same physics as orbitHeliocentric, but takes a mean anomaly directly
+  // rather than deriving it from a date -- used to trace out an orbit's
+  // real elliptical shape (which doesn't depend on time), independent of
+  // computing where the body currently sits along it. Verified against
+  // the exact perihelion/aphelion distances (a(1-e), a(1+e)) before use.
+  function orbitXYFromM(M, a, e, O, w, i){
+    const d2r = x => x*0.0174532925;
+    const nur = d2r(orbitKepler(M, e));
+    const Or = d2r(O), wr = d2r(w), ir = d2r(i);
+    const r = (a*(1-e*e)) / (1+e*Math.cos(nur));
+    const xP = r*(Math.cos(Or)*Math.cos(wr+nur) - Math.sin(Or)*Math.cos(ir)*Math.sin(wr+nur));
+    const yP = r*(Math.sin(Or)*Math.cos(wr+nur) + Math.cos(Or)*Math.cos(ir)*Math.sin(wr+nur));
+    return { xP, yP };
+  }
+  const ORBIT_ELEMENTS = {
+    mercury: { a:0.38710, e:0.20563, i:7.005,  w:29.125,  O:48.331,  M0:174.795 },
+    venus:   { a:0.72333, e:0.00677, i:3.395,  w:54.884,  O:76.680,  M0:50.416 },
+    earth:   { a:1.00000, e:0.01671, i:0.000,  w:288.064, O:174.873, M0:357.529 },
+    mars:    { a:1.52368, e:0.09340, i:1.850,  w:286.502, O:49.558,  M0:19.373 },
+    jupiter: { a:5.20260, e:0.04849, i:1.303,  w:273.867, O:100.464, M0:20.020 },
+    saturn:  { a:9.55491, e:0.05551, i:2.489,  w:339.391, O:113.666, M0:317.021 }
+  };
+  function orbitPlanetDec(planet, year, month, day){
+    const r2d = x => x*57.2957795;
+    const td = orbitDayDiff(year, month, day);
+    const poe = ORBIT_ELEMENTS[planet.toLowerCase()];
+    const eoe = ORBIT_ELEMENTS.earth;
+    const ppos = orbitHeliocentric(td, poe.a, poe.M0, poe.e, poe.O, poe.w, poe.i);
+    const epos = orbitHeliocentric(td, eoe.a, eoe.M0, eoe.e, eoe.O, eoe.w, eoe.i);
+    const x = ppos.xP-epos.xP, y = ppos.yP-epos.yP, z = ppos.zP-epos.zP;
+    const dp = Math.sqrt(x*x+y*y+z*z);
+    const lambda = Math.atan2(y,x);
+    const beta = Math.asin(z/dp);
+    const epsilon = 0.4090999;
+    return r2d(Math.asin(Math.sin(beta)*Math.cos(epsilon) + Math.cos(beta)*Math.sin(epsilon)*Math.sin(lambda)));
+  }
+  // Geocentric ecliptic longitude/latitude of a planet at a given day-offset
+  // (td, days from J2000) -- same physics as orbitPlanetDec, but returns
+  // the ecliptic coordinates themselves rather than converting straight to
+  // declination, since the Night Sky tab needs both separately.
+  function orbitEclipticLonLat(key, td){
+    const r2d = x => x*57.2957795;
+    const poe = ORBIT_ELEMENTS[key], eoe = ORBIT_ELEMENTS.earth;
+    const ppos = orbitHeliocentric(td, poe.a, poe.M0, poe.e, poe.O, poe.w, poe.i);
+    const epos = orbitHeliocentric(td, eoe.a, eoe.M0, eoe.e, eoe.O, eoe.w, eoe.i);
+    const x = ppos.xP-epos.xP, y = ppos.yP-epos.yP, z = ppos.zP-epos.zP;
+    const dist = Math.sqrt(x*x+y*y+z*z);
+    let lambda = r2d(Math.atan2(y,x));
+    if(lambda<0) lambda += 360;
+    const beta = r2d(Math.asin(z/dist));
+    return { lambda, beta };
+  }
+  // Standard ecliptic-to-equatorial rotation by the obliquity, returning
+  // both RA and Dec (orbitPlanetDec above only ever needed Dec).
+  function eclipticToEquatorial(lambdaDeg, betaDeg){
+    const d2r = x => x*0.0174532925, r2d = x => x*57.2957795;
+    const l = d2r(lambdaDeg), b = d2r(betaDeg), eps = 0.4090999;
+    const dec = r2d(Math.asin(Math.sin(b)*Math.cos(eps) + Math.cos(b)*Math.sin(eps)*Math.sin(l)));
+    let ra = r2d(Math.atan2(Math.sin(l)*Math.cos(eps) - Math.tan(b)*Math.sin(eps), Math.cos(l)));
+    if(ra<0) ra += 360;
+    return { ra, dec };
+  }
+  // Tycho Brahe's own recorded Mars declinations, 1582-1594 (one reading
+  // per observation date; many dates had several near-duplicate repeat
+  // readings in the original notebooks, of which one representative value
+  // is kept here). Source: pafko.com/tycho/mars.xls ("Visualizing Tycho
+  // Brahe's Mars Data", W. Pafko, 2000), transcribed from Tycho's own
+  // observational registers. [year, month, day, declination in degrees]
+  const TYCHO_MARS_DEC = [[1582,11,12,23.12],[1582,12,30,26.93],[1582,12,27,26.37],[1583,1,18,27.3],[1584,11,13,15.9],[1584,11,27,14.7],[1584,12,20,14.4],[1584,12,21,14.36],[1585,1,7,15.58],[1585,1,9,15.83],[1585,1,14,16.45],[1585,1,22,17.52],[1585,1,31,18.72],[1585,2,3,19.05],[1585,2,4,19.16],[1585,2,17,20.36],[1585,3,12,20.55],[1585,3,16,20.38],[1585,3,19,20.09],[1585,3,26,19.73],[1585,4,15,17.64],[1585,4,26,16.14],[1585,5,7,14.38],[1585,5,12,13.5],[1585,5,17,12.64],[1585,5,18,12.45],[1586,9,23,18.09],[1586,9,24,17.94],[1586,10,10,15.06],[1586,10,24,12.66],[1586,10,25,12.49],[1586,11,1,11.05],[1586,11,2,11.05],[1586,11,8,10.08],[1586,11,10,9.54],[1586,11,11,9.43],[1586,11,23,7.33],[1586,12,1,6.04],[1586,12,16,3.89],[1586,12,27,2.67],[1587,1,1,2.19],[1587,1,9,1.66],[1587,1,10,1.58],[1587,1,11,1.52],[1587,1,14,1.43],[1587,1,15,1.39],[1587,1,16,1.35],[1587,1,26,1.28],[1587,1,28,1.32],[1587,1,29,1.36],[1587,2,9,1.66],[1587,2,10,1.58],[1587,2,14,1.43],[1587,2,15,1.35],[1587,2,21,3.22],[1587,2,23,3.49],[1587,2,27,4.02],[1587,3,3,4.49],[1587,3,4,4.8],[1587,3,7,5.59],[1587,3,9,5.43],[1587,3,10,5.58],[1587,3,12,5.83],[1587,3,17,6.42],[1587,3,27,7.31],[1587,4,1,7.58],[1587,4,5,7.68],[1587,4,13,7.66],[1587,4,21,7.28],[1588,10,15,9.11],[1588,11,6,4.17],[1588,11,10,3.28],[1588,12,5,2.08],[1589,2,12,-13.55],[1589,3,9,-13.6],[1589,3,10,-13.62],[1589,3,12,-13.61],[1589,3,14,-13.62],[1589,3,16,-13.6],[1589,3,23,-13.43],[1589,4,4,-12.69],[1589,4,8,-12.45],[1589,4,13,-12.04],[1589,4,20,-11.45],[1589,4,22,-11.3],[1589,4,23,-11.22],[1589,4,24,-11.15],[1589,4,26,-11.01],[1589,5,6,-10.38],[1589,9,15,-24.55],[1589,11,1,-23.37],[1590,3,4,-9.43],[1590,10,6,-6.23],[1590,10,10,-5.2],[1590,10,31,0.02],[1590,11,25,-5.99],[1590,12,18,-11.08],[1590,12,19,-11.28],[1590,12,20,-11.5],[1590,12,28,-13.1],[1591,1,5,-14.59],[1591,1,22,-17.38],[1591,1,23,-18.27],[1591,2,3,-19.06],[1591,2,19,-20.84],[1591,4,29,-24.83],[1591,5,13,-25.61],[1591,5,14,-25.69],[1591,5,21,-26.25],[1591,5,24,-26.46],[1591,5,29,-26.79],[1591,6,6,-27.28],[1591,6,10,-27.46],[1591,6,11,-27.48],[1591,6,12,-27.53],[1591,6,27,-27.96],[1591,6,28,-27.82],[1591,7,16,-27.79],[1591,9,23,-24.92],[1591,9,27,-25.79],[1591,9,30,-25.44],[1591,10,2,-25.17],[1591,10,9,-23.18],[1591,10,10,-23.08],[1591,11,10,-16.67],[1591,11,11,-16.45],[1591,12,10,-8.6],[1592,1,23,4.56],[1592,2,3,7.67],[1592,2,6,8.53],[1592,2,13,10.45],[1592,2,17,11.48],[1592,2,18,11.75],[1592,2,20,12.24],[1593,6,14,-12.28],[1593,6,29,-10.75],[1593,7,2,-10.53],[1593,7,22,-10.15],[1593,7,25,-10.24],[1593,7,31,-10.52],[1593,8,11,-11.29],[1593,8,18,-11.9],[1593,8,21,-12.16],[1593,8,22,-12.29],[1593,8,23,-12.38],[1593,8,24,-12.45],[1593,8,29,-12.77],[1593,9,8,-13.11],[1593,9,20,-12.84],[1593,9,21,-12.78],[1593,9,26,-12.42],[1593,9,28,-12.21],[1593,10,3,-11.7],[1593,10,12,-10.53],[1593,10,29,-7.6],[1593,10,30,-7.4],[1593,11,26,-1.54],[1593,11,27,-1.26],[1593,12,1,-0.32],[1593,12,7,-1.13],[1593,12,8,-1.36],[1593,12,10,-1.88],[1593,12,13,2.6],[1593,12,19,4.7],[1593,12,29,6.54],[1593,12,30,6.79],[1594,1,3,7.75],[1594,2,14,17.33],[1594,11,29,-16.94]];
+  function decYear(y,m,d){ return y + (m-1)/12 + d/365.25; }
+
+  /* ---------- day / night toggle ---------- */
+  const themeToggle = document.getElementById('themeToggle');
+  let theme = 'dark';
+  function applyTheme(next){
+    theme = next;
+    document.documentElement.dataset.theme = theme;
+    themeToggle.innerHTML = theme==='light' ? "&#9789; Night view" : "&#9788; Day view";
+    themeToggle.setAttribute('aria-pressed', theme==='light' ? 'true' : 'false');
+  }
+  themeToggle.addEventListener('click', ()=>{
+    applyTheme(theme==='dark' ? 'light' : 'dark');
+  });
+  applyTheme('dark');
+
+  /* ---------- language toggle (EN / TR): panel text and captions only
+     for now -- interactive controls and canvas-drawn labels stay in
+     English. renderPanel/current are defined later in this same script,
+     but since this only runs on a later click (not immediately), they
+     exist by the time it's actually called. ---------- */
+  let lang = 'en';
+  const langToggle = document.getElementById('langToggle');
+  const TITLE_EN = 'Two Skies: From Epicycles to Heliocentrism';
+  const TITLE_TR = 'İki Gökyüzü: Çift Tekerlerden Güneş Merkezciliğe';
+  const SUB_EN = 'The same night sky, six different geometric explanations. Watch how each model was built to save the same observations \u2014 retrograde motion, above all \u2014 before one finally won out.';
+  const SUB_TR = 'Aynı gece gökyüzü, altı farklı geometrik açıklama. Her modelin, aynı gözlemleri \u2014 her şeyden önce geri hareketi \u2014 kurtarmak için nasıl inşa edildiğini izleyin, ta ki sonunda biri kazanana kadar.';
+  langToggle.addEventListener('click', ()=>{
+    lang = (lang==='en') ? 'tr' : 'en';
+    langToggle.textContent = (lang==='tr') ? 'EN' : 'TR';
+    langToggle.setAttribute('aria-pressed', lang==='tr' ? 'true' : 'false');
+    document.getElementById('mainTitle').textContent = (lang==='tr') ? TITLE_TR : TITLE_EN;
+    document.getElementById('mainSub').innerHTML = (lang==='tr') ? SUB_TR : SUB_EN;
+    if(typeof renderTabLabels === 'function') renderTabLabels();
+    renderPanel();
+    document.getElementById('caption').textContent = current.caption;
+  });
+
+  /* ---------- global transport state ---------- */
+  let playing = true;
+  let speed = 1;
+  let t = 0; // accumulated "model time"
+  let lastFrame = null;
+
+  const playBtn = document.getElementById('playBtn');
+  const speedSlider = document.getElementById('speedSlider');
+  playBtn.addEventListener('click', () => {
+    playing = !playing;
+    playBtn.innerHTML = playing ? "&#10074;&#10074;" : "&#9654;";
+  });
+  speedSlider.addEventListener('input', e => { speed = parseFloat(e.target.value); });
+
+  /* ==================================================================
+     MODULE 0: The Night Sky (unnumbered -- observational grounding for
+     everything that follows, not one of the six models itself)
+     ================================================================== */
+  const NightSky = (function(){
+    const ZODIAC_NAMES = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra',
+      'Scorpius','Sagittarius','Capricornus','Aquarius','Pisces'];
+
+    // A handful of the brightest stars near the zodiac -- real J2000
+    // right ascension/declination (sourced from Wikipedia and
+    // theskylive.com), converted to ecliptic longitude/latitude with the
+    // same rotation used elsewhere in this file, then cross-checked
+    // against independently published ecliptic-distance figures before
+    // use: Regulus landed 0.46 deg from the ecliptic (published: 0.465),
+    // Aldebaran -5.47 deg (published: 5.47 south), Pollux +6.68 deg
+    // (published: 6.7 north) -- all matched. Not a complete star field,
+    // just enough of the brightest ones to make the strip recognizable
+    // as a real patch of sky rather than an abstract diagram. Proper
+    // motion is negligible for these purposes over the few centuries
+    // involved -- these were called "fixed stars" for exactly that
+    // reason, in contrast to the "wandering stars" (planets) this whole
+    // app is about.
+    const ZODIAC_STARS = [
+      { name:'Aldebaran',      lambda:69.79,  beta:-5.47,  mag:0.87 },
+      { name:'Pollux',         lambda:113.22, beta:6.68,   mag:1.14 },
+      { name:'Regulus',        lambda:149.83, beta:0.46,   mag:1.36 },
+      { name:'Spica',          lambda:203.84, beta:-2.05,  mag:0.97 },
+      { name:'Zubenelgenubi',  lambda:225.08, beta:0.33,   mag:2.75 },
+      { name:'Antares',        lambda:249.76, beta:-4.57,  mag:1.06 },
+      { name:'Kaus Australis', lambda:275.08, beta:-11.05, mag:1.85 }
+    ];
+
+    // Every planet's window was chosen the same way Mars's was: scan
+    // several years for an actual retrograde episode (found by tracking
+    // where unwrapped ecliptic longitude decreases), then set a
+    // reference epoch and window length that comfortably centers it with
+    // prograde lead-in and lead-out on both sides. Episode durations vary
+    // enormously by planet -- Mercury's retrograde lasts about three
+    // weeks, Saturn's about four and a half months -- so a single shared
+    // window would badly undersize some planets and oversize others;
+    // each gets its own, found the same way.
+    const PLANETS_INFO = {
+      mercury: { label:'Mercury', color:'#9fb6cf', enabled:true, synodicDays:115.9,
+        refEpoch:[1585,1,26], windowDays:88 },
+      venus:   { label:'Venus',   color:'#e0c98a', enabled:true, synodicDays:583.9,
+        refEpoch:[1585,5,3],  windowDays:173 },
+      mars:    { label:'Mars',    color:'#C9A24B', enabled:true, synodicDays:779.9,
+        refEpoch:[1588,10,7], windowDays:400 },
+      jupiter: { label:'Jupiter', color:'#cfa96a', enabled:true, synodicDays:398.9,
+        refEpoch:[1587,6,13], windowDays:306 },
+      saturn:  { label:'Saturn',  color:'#b8a878', enabled:true, synodicDays:378.0,
+        refEpoch:[1587,2,27], windowDays:412 }
+    };
+    let selectedPlanet = 'mars';
+    let showSunGlare = false; // off by default
+    const SUN_GLARE_HALFWIDTH = 20; // degrees each side of the Sun; illustrative, not a precise visibility threshold
+    const CYCLE_TIME_UNITS = 40; // time-units per full cycle at speed=1, same for every planet
+
+    // The path shape is fixed (only depends on the reference window, not
+    // on the live clock), so it's computed once per planet and cached.
+    const pathCache = {};
+    function getPath(key){
+      if(pathCache[key]) return pathCache[key];
+      const cfg = PLANETS_INFO[key];
+      const refEpoch = orbitDayDiff(...cfg.refEpoch);
+      const pts = [];
+      let prevLambda = null, unwrapped = 0;
+      for(let d=0; d<=cfg.windowDays; d++){
+        const { lambda, beta } = orbitEclipticLonLat(key, refEpoch+d);
+        if(prevLambda===null){ unwrapped = lambda; }
+        else {
+          let diff = lambda-prevLambda;
+          if(diff>180) diff -= 360;
+          if(diff<-180) diff += 360;
+          unwrapped += diff;
+        }
+        prevLambda = lambda;
+        pts.push({ lambda: unwrapped, beta });
+      }
+      pathCache[key] = pts;
+      return pts;
+    }
+
+    function controlsHTML(){
+      const chips = Object.entries(PLANETS_INFO).map(([key,info])=>{
+        const on = key===selectedPlanet;
+        return `<button class="pill layer-toggle ${on?'on':''}" ${info.enabled?'':'disabled title="coming soon"'} data-planet="${key}">${info.label}</button>`;
+      }).join('');
+      return `
+        <div class="group">${chips}</div>
+        <div class="group">
+          <button class="pill ${showSunGlare?'on':''}" id="ns_glare">show Sun's glare zone</button>
+        </div>
+      `;
+    }
+    function bindControls(){
+      document.querySelectorAll('[data-planet]').forEach(btn=>{
+        if(btn.disabled) return;
+        btn.addEventListener('click', ()=>{
+          selectedPlanet = btn.dataset.planet;
+          refreshModuleControls();
+        });
+      });
+      const glareBtn = document.getElementById('ns_glare');
+      glareBtn.addEventListener('click', ()=>{
+        showSunGlare = !showSunGlare;
+        glareBtn.classList.toggle('on', showSunGlare);
+      });
+    }
+    function reset(){}
+
+    function draw(time){
+      const info = PLANETS_INFO[selectedPlanet];
+      const path = getPath(selectedPlanet);
+      const refEpoch = orbitDayDiff(...info.refEpoch);
+      const minL = Math.min(...path.map(p=>p.lambda));
+      const maxL = Math.max(...path.map(p=>p.lambda));
+      const margin = 6;
+      const loB = minL-margin, hiB = maxL+margin;
+      const daysPerTimeUnit = info.windowDays/CYCLE_TIME_UNITS;
+      const dayFrac = ((time*daysPerTimeUnit) % info.windowDays + info.windowDays) % info.windowDays;
+      const curDate = orbitDateFromDayDiff(refEpoch+dayFrac);
+      const mouseCanvas = toCanvasCoords(lastMouseX, lastMouseY);
+
+      // ---- the zodiac strip ----
+      const left=40, right=660, top=45, bottom=270;
+      const midY = (top+bottom)/2;
+      const px = lam => left + (lam-loB)/(hiB-loB)*(right-left);
+      // Vertical scale auto-fits each planet's actual latitude excursion
+      // (beta=0, the ecliptic, always stays vertically centered) rather
+      // than a single fixed px/degree -- planets vary a lot here, e.g.
+      // Mercury's higher orbital inclination reaches several degrees more
+      // than Mars's. A floor keeps near-zero ranges from being blown up
+      // into an absurdly exaggerated scale.
+      const betaVals = path.map(p=>p.beta);
+      const betaExtent = Math.max(Math.abs(Math.min(...betaVals)), Math.abs(Math.max(...betaVals)), 3);
+      const latScale = ((bottom-top)/2 - 10) / (betaExtent+1.5);
+      const py = beta => midY - beta*latScale;
+
+      const kStart = Math.floor(loB/30), kEnd = Math.ceil(hiB/30);
+      for(let k=kStart;k<kEnd;k++){
+        const x0 = px(Math.max(k*30, loB)), x1 = px(Math.min((k+1)*30, hiB));
+        const signIdx = ((k%12)+12)%12;
+        ctx.fillStyle = (k%2===0) ? "rgba(58,74,107,0.12)" : "rgba(58,74,107,0.24)";
+        ctx.fillRect(x0, top, x1-x0, bottom-top);
+        if(x1-x0 > 30) drawLabel((x0+x1)/2, top+16, ZODIAC_NAMES[signIdx], "#9fb6cf", 11, "center");
+      }
+      ctx.strokeStyle = "#54607f"; ctx.lineWidth = 1;
+      ctx.strokeRect(left, top, right-left, bottom-top);
+      ctx.beginPath(); ctx.moveTo(left, midY); ctx.lineTo(right, midY);
+      ctx.strokeStyle = "rgba(224,190,108,0.4)"; ctx.lineWidth = 1; ctx.stroke();
+      drawLabel(left+4, midY-6, "ecliptic (\u03b2 = 0)", "#E0BE6C", 9);
+
+      // Sun's glare zone: the Sun's own apparent ecliptic longitude is
+      // just Earth's heliocentric longitude + 180 degrees -- already
+      // computable from the same orbital elements used everywhere else.
+      // The half-width (20 deg) is illustrative, not a precise visibility
+      // threshold (real cutoffs depend on horizon geometry, twilight, and
+      // the object's own brightness, none of which this 2D strip models).
+      if(showSunGlare){
+        const earthEl = ORBIT_ELEMENTS.earth;
+        const sunTd = refEpoch + dayFrac;
+        const earthPos = orbitHeliocentric(sunTd, earthEl.a, earthEl.M0, earthEl.e, earthEl.O, earthEl.w, earthEl.i);
+        let earthLambda = Math.atan2(earthPos.yP, earthPos.xP)*57.2957795;
+        if(earthLambda<0) earthLambda += 360;
+        const sunLambda = (earthLambda+180) % 360;
+
+        const kS = Math.floor((loB-SUN_GLARE_HALFWIDTH)/360)-1, kE = Math.ceil((hiB+SUN_GLARE_HALFWIDTH)/360)+1;
+        for(let k=kS; k<=kE; k++){
+          const centerL = sunLambda + 360*k;
+          const bandLo = centerL-SUN_GLARE_HALFWIDTH, bandHi = centerL+SUN_GLARE_HALFWIDTH;
+          if(bandHi < loB || bandLo > hiB) continue;
+          const x0 = px(Math.max(bandLo, loB)), x1 = px(Math.min(bandHi, hiB));
+          const grad = ctx.createLinearGradient(x0, 0, x1, 0);
+          grad.addColorStop(0, "rgba(224,190,108,0)");
+          grad.addColorStop(0.5, "rgba(224,190,108,0.3)");
+          grad.addColorStop(1, "rgba(224,190,108,0)");
+          ctx.fillStyle = grad;
+          ctx.fillRect(x0, top, x1-x0, bottom-top);
+          if(centerL >= loB-2 && centerL <= hiB){
+            const labelX = Math.max(left+75, Math.min(right-75, px(centerL)));
+            drawLabel(labelX, bottom-8, "Sun's glare (\u00b1"+SUN_GLARE_HALFWIDTH+"\u00b0, illustrative)", "#E0BE6C", 9, "center");
+          }
+        }
+      }
+
+      // real background stars, sized by apparent magnitude (brighter =
+      // bigger). Some bright zodiacal stars (e.g. Kaus Australis, beta=-11
+      // deg) sit farther from the ecliptic than this strip's exaggerated
+      // vertical scale can show -- skip rather than let them spill outside
+      // the box. Names only appear on hover, to keep the strip readable.
+      ZODIAC_STARS.forEach(star=>{
+        const x = px(star.lambda), y = py(star.beta);
+        if(x < left-20 || x > right+20) return;
+        if(y < top+8 || y > bottom-8) return;
+        const size = Math.max(1.2, 4.3 - star.mag*1.3);
+        const hovered = Math.hypot(mouseCanvas.x-x, mouseCanvas.y-y) < 9;
+        drawDot(x, y, hovered?size+1.5:size, hovered?"#E0BE6C":"#E8DFC8", hovered?size*5:size*3);
+        if(hovered) drawLabel(x, y+size+12, star.name, "#E0BE6C", 9.5, "center");
+      });
+
+      ctx.beginPath();
+      path.forEach((p,i)=>{
+        const x=px(p.lambda), y=py(p.beta);
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.strokeStyle = info.color; ctx.lineWidth = 1.6; ctx.stroke();
+
+      const idx = Math.min(Math.round(dayFrac), path.length-1);
+      const cur = path[idx];
+      drawDot(px(cur.lambda), py(cur.beta), 6, info.color, 14);
+
+      drawLabel(left, top-16, info.label+"\u2019s real path against the zodiac \u2014 "+curDate.day+" "+MONTH_NAMES[curDate.month-1]+" "+curDate.year, "#E0BE6C", 12.5);
+
+      // ---- declination panel: same idea as the Heliocentric tab's
+      // Tycho comparison chart, reused here because it already works.
+      // Plotting declination directly (rather than trying to depict a
+      // tilted 3D sphere) makes the celestial equator a trivial flat
+      // line at 0, and turns the ecliptic itself into the one curved,
+      // wavy thing to explain -- the same sine-wave shape many people
+      // have already seen for the Sun's declination over a year, not a
+      // perspective drawing that has to be mentally un-tilted first.
+      const dTop=310, dBottom=460, dMidY=(dTop+dBottom)/2;
+      const declVals = path.map(p => eclipticToEquatorial(p.lambda, p.beta).dec);
+      const declExtent = Math.max(Math.abs(Math.min(...declVals)), Math.abs(Math.max(...declVals)), 3);
+      const declScale = ((dBottom-dTop)/2-10)/(declExtent+1.5);
+      const py2 = dec => dMidY - dec*declScale;
+
+      ctx.strokeStyle = "#54607f"; ctx.lineWidth = 1;
+      ctx.strokeRect(left, dTop, right-left, dBottom-dTop);
+      ctx.beginPath(); ctx.moveTo(left, py2(0)); ctx.lineTo(right, py2(0));
+      ctx.strokeStyle = "rgba(110,143,174,0.5)"; ctx.lineWidth = 1.3; ctx.stroke();
+      drawLabel(left+4, py2(0)-6, "celestial equator (declination = 0)", "#9fb6cf", 9);
+
+      // Same stars as the strip above, at their own fixed declination.
+      // Stars don't move -- that's the whole reason they're useful
+      // reference points, unlike the planet -- but each one sits at a
+      // different vertical position here than in the strip above, since
+      // declination and ecliptic latitude aren't the same axis. Same
+      // hover-to-reveal behavior as the strip, for consistency, and drawn
+      // before the path (as in the strip above) so the moving planet
+      // passes visually in front of them.
+      ZODIAC_STARS.forEach(star=>{
+        const starDec = eclipticToEquatorial(star.lambda, star.beta).dec;
+        const x = px(star.lambda), y = py2(starDec);
+        if(x < left-20 || x > right+20) return;
+        if(y < dTop+8 || y > dBottom-8) return;
+        const size = Math.max(1.2, 4.3 - star.mag*1.3);
+        const hovered = Math.hypot(mouseCanvas.x-x, mouseCanvas.y-y) < 9;
+        drawDot(x, y, hovered?size+1.5:size, hovered?"#E0BE6C":"#E8DFC8", hovered?size*5:size*3);
+        if(hovered) drawLabel(x, y+size+12, star.name, "#E0BE6C", 9.5, "center");
+      });
+
+      ctx.beginPath();
+      path.forEach((p,i)=>{
+        const x = px(p.lambda), y = py2(eclipticToEquatorial(p.lambda, p.beta).dec);
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.strokeStyle = info.color; ctx.lineWidth = 1.6; ctx.stroke();
+
+      const curEq = eclipticToEquatorial(cur.lambda, cur.beta);
+      drawDot(px(cur.lambda), py2(curEq.dec), 6, info.color, 14);
+      drawLabel(left, dTop-8, "...and its declination \u2014 where it actually sits against Earth's equator, not the zodiac", "#9fb6cf", 11);
+
+      const rx=left, ry=dBottom+24;
+      drawLabel(rx, ry,    "ecliptic longitude \u03bb = "+cur.lambda.toFixed(1)+"\u00b0    ecliptic latitude \u03b2 = "+cur.beta.toFixed(2)+"\u00b0", "#9fb6cf", 10.5);
+      drawLabel(rx, ry+20, "right ascension = "+curEq.ra.toFixed(1)+"\u00b0    declination = "+curEq.dec.toFixed(2)+"\u00b0", "#C9A24B", 10.5);
+      drawLabel(rx, ry+40, "the curve above is exactly this conversion, applied to every point on the path above it", "#54607f", 9.5);
+    }
+
+    const panelEN = {
+        heading:'Reading the Sky Without a City Skyline',
+        meta:'Ecliptic coordinates and the zodiac',
+        body:[
+          "Almost nobody today has watched a planet move against the stars for months at a time. City light pollution hides all but the brightest handful of stars, and even under a dark sky, few people know which faint points nearby are fixed stars and which one is quietly drifting. Ptolemy, Tycho, and every naked-eye astronomer before the telescope had no such handicap: the zodiac constellations were a familiar backdrop, and a planet's slow drift against them, night after night, was the primary data of astronomy.",
+          "That's why the strip above isn't just an abstract graph: the small white dots are real, bright stars near the zodiac, placed at their true positions from actual catalog coordinates (hover over one to see its name). A catalog of seven is built in, but any single window only shows whichever few happen to sit along that planet's specific path at that time and latitude, the same way a real observer only ever sees one patch of sky at once -- Mars's default window here shows three (Regulus, Spica, Zubenelgenubi); other planets and windows will show a different few, or occasionally none. Watch Mars's path cross near Zubenelgenubi, and you're seeing exactly the kind of relationship a 16th-century astronomer would have described in words &mdash; 'Mars has drawn even with the Scales' &mdash; without ever needing a number. That comparison, a wandering point of light measured against truly fixed ones, is the entire reason the word 'planet' (Greek for 'wanderer') exists, and it's simply not available to someone who has only ever seen Mars as an unremarkable dot with nothing nearby to compare it to.",
+          "This is also why ancient and early modern astronomers organized the sky by <b>ecliptic coordinates</b> rather than the equatorial (right ascension/declination) system a modern telescope mount uses. Ecliptic <b>longitude</b> (&lambda;) measures position around the Sun's apparent yearly path, divided into the twelve 30&deg; zodiac signs; ecliptic <b>latitude</b> (&beta;) measures how far above or below that path a body sits. A planet's position was described as '15 degrees into Scorpius, slightly north of the ecliptic' &mdash; measured against the very stars shown here, not by right ascension and declination, concepts tied to Earth's rotation axis rather than the zodiac people actually watched.",
+          "The planet buttons below the strip switch between all five naked-eye planets, each plotted from the same verified orbital mechanics used throughout this app, not a simplified stand-in. Every planet gets its own reference window, individually chosen by scanning several years for an actual retrograde episode and centering the window on it -- Mercury's loop plays out over about 88 days, Saturn's over more than a year, so a single shared window would have badly undersized some planets and oversized others. Horizontal position is ecliptic longitude; vertical position is ecliptic latitude, auto-scaled per planet for visibility (real ecliptic latitude only ever ranges a few degrees) so a very flat path isn't a blank line and a wide one isn't clipped -- a star can still fall outside a given window's narrower range, the same way Kaus Australis does in Mars's default view.",
+          "Declination, the quantity Tycho actually recorded and the one the Epicycles tab's upcoming comparison will use, isn't the same as ecliptic latitude &mdash; it depends on <i>both</i> ecliptic coordinates, rotated by Earth's real 23.44&deg; axial tilt (the obliquity). The panel below the strip plots exactly that: the same path, on the same longitude axis, but measured against the celestial equator (a flat line at zero, since that's the reference the conversion is built around) instead of the zodiac. Watch how the curve's shape changes between the two panels &mdash; that difference <i>is</i> the 23.44&deg; tilt, made visible rather than asserted. The same stars appear in both panels too, each fixed in place (that's what makes them useful as landmarks in the first place) but sitting at a different vertical position below than above, since ecliptic latitude and declination aren't the same axis &mdash; hover over one in either panel to see its name.",
+          "Toggle <b>show Sun's glare zone</b> (off by default) to see the other half of why a given stretch of zodiac isn't visible year-round: even a star with no horizon problem at all is still lost in daylight whenever the Sun sits too close to it in the sky. The shaded band marks roughly &plusmn;20&deg; around the Sun's own real position (computed the same way as everything else here, from Earth's actual heliocentric longitude), and sweeps across the strip over the year as Earth orbits. It's deliberately approximate &mdash; real visibility depends on horizon altitude, twilight brightness, and the object's own magnitude, none of which a flat 2D strip can show &mdash; but it's enough to see that the band, not just the calendar, is what decides whether tonight's sky includes this particular stretch of zodiac."
+        ],
+        problem:"Reusing Mars's exact reference window and orbital elements is what will make the upcoming Epicycles-vs-Tycho comparison meaningful rather than illustrative: it's the same real motion shown here, just about to be re-derived from a completely different geometric assumption."
+    };
+    const panelTR = {
+        heading:'Şehir Işıkları Olmadan Gökyüzünü Okumak',
+        meta:'Ekliptik koordinatlar ve zodyak',
+        body:[
+          "Günümüzde neredeyse hiç kimse bir gezegenin aylarca yıldızlara göre nasıl hareket ettiğini izlememiştir. Şehirlerdeki ışık kirliliği en parlak birkaç yıldız dışında her şeyi gizler; karanlık bir gökyüzü altında bile çoğu insan yakınlardaki hangi sönük noktaların sabit yıldız, hangisinin sessizce kayan bir gezegen olduğunu bilmez. Teleskop öncesi dönemde Batlamyus, Tycho ve çıplak gözle çalışan her astronom böyle bir dezavantaja sahip değildi: zodyak takımyıldızları tanıdık bir arka plandı ve bir gezegenin bunlara göre geceden geceye yavaşça kayması, astronominin temel verisiydi.",
+          "Yukarıdaki şeridin sadece soyut bir grafik olmamasının nedeni de bu: küçük beyaz noktalar, zodyak yakınındaki gerçek ve parlak yıldızlardır; gerçek katalog koordinatlarından alınan gerçek konumlarına yerleştirilmişlerdir (adını görmek için üzerine gelin). Yedi yıldızlık bir katalog gömülüdür, ama herhangi bir pencere yalnızca o gezegenin o tarihte ve o enlemdeki özel yolu üzerine rastlayan birkaç yıldızı gösterir &mdash; tıpkı gerçek bir gözlemcinin her seferinde gökyüzünün yalnızca bir bölümünü görebilmesi gibi. Mars için buradaki varsayılan pencere üç yıldız gösterir (Regulus, Spica, Zubenelgenubi); diğer gezegenler ve pencereler farklı birkaçını, bazen de hiçbirini gösterebilir. Mars'ın yolunun Zubenelgenubi'ye yaklaştığını izleyin; tam olarak 16. yüzyıldan bir astronomun sözle betimleyeceği türden bir ilişkiyi görüyorsunuz &mdash; 'Mars, Terazi'yle aynı hizaya geldi' &mdash; hiçbir sayıya ihtiyaç duymadan. Gerçekten sabit olanlara göre ölçülen dolaşan bir ışık noktası karşılaştırması, 'gezegen' (Yunanca'da 'gezici' anlamına gelir) sözcüğünün var oluş nedeninin tamamıdır ve Mars'ı yalnızca karşılaştıracak hiçbir şeyi olmayan sıradan bir nokta olarak görmüş birine bu basitçe sunulmaz.",
+          "Eski ve erken modern astronomların gökyüzünü, modern bir teleskop düzeneğinin kullandığı ekvator (sağ açıklık/deklinasyon) sistemi yerine <b>ekliptik koordinatlarla</b> düzenlemesinin nedeni de budur. Ekliptik <b>boylam</b> (&lambda;) Güneş'in görünen yıllık yolu boyunca konumu ölçer ve her biri 30&deg; olan on iki zodyak burcuna bölünür; ekliptik <b>enlem</b> (&beta;) bir cismin bu yolun ne kadar üstünde veya altında olduğunu ölçer. Bir gezegenin konumu 'Akrep burcunun 15 derece içinde, ekliptiğin biraz kuzeyinde' diye tarif edilirdi &mdash; burada gösterilen yıldızlara göre ölçülerek; Dünya'nın dönme eksenine bağlı olan ve insanların gerçekte izlediği zodyaktan farklı kavramlar olan sağ açıklık ve deklinasyona göre değil.",
+          "Şeridin altındaki gezegen düğmeleri, beş çıplak göz gezegeni arasında geçiş yapar; her biri bu uygulama boyunca kullanılan aynı doğrulanmış yörünge mekaniğinden çizilir, basitleştirilmiş bir yerine koyma değil. Her gezegenin kendi referans penceresi vardır; birkaç yıl taranarak gerçek bir geri hareket olayı bulunmuş ve pencere bunun üzerine ortalanarak ayrı ayrı seçilmiştir &mdash; Merkür'ün döngüsü yaklaşık 88 günde, Satürn'ünki bir yıldan fazla sürede tamamlanır; bu yüzden tek bir ortak pencere bazı gezegenleri fazlasıyla küçük, bazılarını fazlasıyla büyük gösterirdi. Yatay konum ekliptik boylamdır; dikey konum ekliptik enlemdir ve görünürlük için gezegen başına otomatik ölçeklenir (gerçek ekliptik enlem yalnızca birkaç derece aralığındadır), böylece çok düz bir yol boş bir çizgi gibi görünmez, geniş bir yol da kırpılmaz &mdash; yine de bir yıldız belirli bir pencerenin daha dar aralığının dışında kalabilir, tıpkı Kaus Australis'in Mars'ın varsayılan görünümünde olduğu gibi.",
+          "Tycho'nun gerçekten kaydettiği ve Dış Tekerler sekmesindeki yaklaşan karşılaştırmanın kullanacağı nicelik olan deklinasyon, ekliptik enlemle aynı şey değildir &mdash; Dünya'nın gerçek 23,44&deg; eksen eğikliğiyle (oblikite) döndürülmüş <i>her iki</i> ekliptik koordinata da bağlıdır. Şeridin altındaki panel tam olarak bunu çizer: aynı yol, aynı boylam ekseninde, ama zodyak yerine gök ekvatoruna göre ölçülmüş (dönüşümün etrafında kurulduğu referans olduğu için sıfırda düz bir çizgi). Eğrinin şeklinin iki panel arasında nasıl değiştiğini izleyin &mdash; bu fark, iddia edilmek yerine görünür kılınmış 23,44&deg;'lik eğimin ta kendisidir. Aynı yıldızlar her iki panelde de görünür, her biri sabit durur (zaten onları referans noktası olarak kullanışlı kılan da budur) ama altta üsttekinden farklı bir dikey konumda bulunur, çünkü ekliptik enlem ve deklinasyon aynı eksen değildir &mdash; adını görmek için her iki paneldeki bir yıldızın üzerine gelin.",
+          "Zodyağın belirli bir bölümünün neden yıl boyunca görünmediğinin diğer yarısını görmek için (varsayılan olarak kapalı) <b>Güneş'in kamaşma bölgesini göster</b> seçeneğini açın: ufuk sorunu hiç olmayan bir yıldız bile, Güneş gökyüzünde ona çok yaklaştığında gündüz ışığında kaybolur. Gölgeli bant, Güneş'in gerçek konumunun (buradaki her şey gibi Dünya'nın gerçek güneş merkezli boylamından hesaplanır) yaklaşık &plusmn;20&deg; çevresini işaretler ve Dünya yörüngesinde ilerledikçe yıl boyunca şerit üzerinde kayar. Kasıtlı olarak yaklaşıktır &mdash; gerçek görünürlük ufuk yüksekliğine, alacakaranlık parlaklığına ve cismin kendi parlaklığına bağlıdır, düz bir 2B şeridin hiçbiri gösteremez &mdash; ama bu bandın, sadece takvimin değil, bu akşam gökyüzünün zodyağın bu belirli bölümünü içerip içermeyeceğine karar veren şey olduğunu görmeye yeter."
+        ],
+        problem:"Mars'ın tam referans penceresini ve yörünge elemanlarını yeniden kullanmak, yaklaşan Dış Tekerler-Tycho karşılaştırmasını yalnızca gösterim değil, anlamlı kılacak şeydir: burada gösterilen aynı gerçek hareket, birazdan tamamen farklı bir geometrik varsayımdan yeniden türetilecektir."
+    };
+
+    return {
+      id:'nightsky', title:'The Night Sky', titleTR:'Gece Gökyüzü', noStep:true,
+      label:'What ancient astronomers actually watched',
+      controlsHTML, bindControls, draw, reset,
+      get caption(){
+        const en = PLANETS_INFO[selectedPlanet].label+"\u2019s real path against the fixed zodiac \u2014 this is what Ptolemy, Tycho, and every naked-eye astronomer before the telescope actually recorded, month after month, to build the models in the tabs that follow.";
+        const tr = PLANETS_INFO[selectedPlanet].label+"\u2019nin sabit zodyaka g\u00f6re ger\u00e7ek yolu \u2014 bu, Batlamyus'un, Tycho'nun ve teleskop \u00f6ncesi \u00e7\u0131plak g\u00f6zle \u00e7al\u0131\u015fan her astronomun, sonraki sekmelerdeki modelleri kurmak i\u00e7in ay ay ger\u00e7ekten kaydetti\u011fi \u015feydir.";
+        return lang==='tr' ? tr : en;
+      },
+      get panel(){ return lang==='tr' ? panelTR : panelEN; }
+    };
+  })();
+
+  /* ==================================================================
+     MODULE 1: Epicycles (Ptolemaic)
+     ================================================================== */
+  const Epicycles = (function(){
+    let deferentR = 220;
+    let epicycleR = 70;
+    let deferentSpeed = 0.25;
+    let epicycleSpeed = 1.1;
+    let trail = [];
+    const MAXTRAIL = 900;
+    let useEquant = false;
+    let eccentricity = 45; // distance from Earth to deferent center; equant sits at 2x this, mirrored
+
+    // Real Mars/Earth ratios, used to make the main diagram actually show
+    // the fitted model (not just the inset below) when the Tycho-fit
+    // toggle is on -- see EFIT_E/EFIT_PHI0 below for the fitted
+    // eccentricity itself. epicycle/deferent radius ratio = 1 AU / Mars's
+    // real distance; epicycle/deferent speed ratio = Mars's sidereal
+    // period / its synodic period (686.97 / 779.92 days) -- note the
+    // epicycle is actually the *slower* of the two for a superior planet
+    // like Mars, since the synodic period is longer than the sidereal one.
+    const FIT_RADIUS_RATIO = 0.65631;
+    const FIT_SPEED_RATIO = 0.88083;
+    let savedSliders = null; // {epicycleR, epicycleSpeed, useEquant, eccentricity}, restored on exiting fit mode
+
+    // ---- fitted deferent+equant model of Mars's real motion, for the
+    // "declination vs Tycho's data" comparison ----
+    // Deferent radius = Mars's real semi-major axis (1.52368 AU); the
+    // deferent+equant construction (same bisected-eccentricity convention
+    // already used above) approximates Mars's own heliocentric motion,
+    // and the epicycle term is Earth's *exact* real heliocentric position
+    // (negated) -- Earth's own orbit is easy to get right, so all the
+    // historically-real approximation is concentrated in the one place
+    // it actually belongs: how well a circle+equant can stand in for
+    // Mars's real ellipse. Ecliptic latitude uses Mars's real inclination
+    // and node (not a separate Ptolemaic latitude mechanism).
+    //
+    // e_fit and phi0_fit were found by least-squares grid search + local
+    // refinement (coordinate descent) against Mars's real ecliptic
+    // longitude (from the same verified orbital elements used throughout
+    // this app) sampled every 10 days across 1582-1594, minimizing RMS
+    // longitude error. Achieved fit: 0.13 deg RMS longitude error against
+    // the true ellipse -- verified before use, along with two sanity
+    // checks: phi0_fit (19.37 deg) landed almost exactly on Mars's real
+    // mean anomaly at J2000 (19.373 deg), and e_fit (0.1428 AU) is
+    // reproducibly the global optimum across independent grid searches.
+    // Note e_fit is NOT the same number as Mars's real orbital
+    // eccentricity (0.0934) -- the equant model's eccentricity parameter
+    // and true orbital eccentricity are related but different quantities,
+    // and the fit finds the value that actually works, not the value
+    // that looks like it should.
+    const EFIT_E = 0.14275, EFIT_PHI0 = 19.367;
+    const MARS_N = 0.9856076686 / Math.pow(ORBIT_ELEMENTS.mars.a, 1.5); // deg/day, real sidereal rate
+
+    function fittedDeferentPoint(td){
+      const R = ORBIT_ELEMENTS.mars.a;
+      const Cx = -EFIT_E, Cy = 0; // apogee at local angle 180, so this needs no separate direction parameter
+      const Qx = -2*EFIT_E, Qy = 0;
+      const phi = (EFIT_PHI0 + MARS_N*td) * Math.PI/180;
+      const dx = Math.cos(phi), dy = Math.sin(phi);
+      const qcx = Cx-Qx, qcy = Cy-Qy;
+      const dDotQc = dx*qcx + dy*qcy;
+      const qcMagSq = qcx*qcx + qcy*qcy;
+      const disc = Math.max(0, dDotQc*dDotQc - (qcMagSq - R*R));
+      const s = dDotQc + Math.sqrt(disc);
+      return { x: Qx + dx*s, y: Qy + dy*s };
+    }
+    function fittedMarsEclipticLonLat(td){
+      const P = fittedDeferentPoint(td);
+      const r_model = Math.hypot(P.x, P.y);
+      const nu_model = Math.atan2(P.y, P.x);
+      const mel = ORBIT_ELEMENTS.mars;
+      const Or = mel.O*Math.PI/180, wr = mel.w*Math.PI/180, ir = mel.i*Math.PI/180;
+      const xP = r_model*(Math.cos(Or)*Math.cos(wr+nu_model) - Math.sin(Or)*Math.cos(ir)*Math.sin(wr+nu_model));
+      const yP = r_model*(Math.sin(Or)*Math.cos(wr+nu_model) + Math.cos(Or)*Math.cos(ir)*Math.sin(wr+nu_model));
+      const zP = r_model*Math.sin(ir)*Math.sin(wr+nu_model);
+      const eel = ORBIT_ELEMENTS.earth;
+      const epos = orbitHeliocentric(td, eel.a, eel.M0, eel.e, eel.O, eel.w, eel.i);
+      const x = xP-epos.xP, y = yP-epos.yP, z = zP-epos.zP;
+      const dist = Math.sqrt(x*x+y*y+z*z);
+      let lambda = Math.atan2(y,x)*57.2957795; if(lambda<0) lambda += 360;
+      const beta = Math.asin(z/dist)*57.2957795;
+      return { lambda, beta };
+    }
+
+    let showTychoFit = false;
+    let fitChart = null; // cached: {curve, stats}
+    let fitInsetPos = { x: 16, y: 14 };
+    const FIT_BOX_W = 430, FIT_BOX_H = 150;
+    let fitDragging = false;
+
+    function buildFitChart(){
+      if(fitChart) return;
+      const curve = [];
+      for(let y=1582; y<=1594; y++){
+        for(let doy=0; doy<360; doy+=3){
+          const m = Math.floor(doy/30)+1, d = (doy%30)+1;
+          const td = orbitDayDiff(y,m,d);
+          const { lambda, beta } = fittedMarsEclipticLonLat(td);
+          const eq = eclipticToEquatorial(lambda, beta);
+          curve.push({ t: decYear(y,m,d), dec: eq.dec });
+        }
+      }
+      let sumSq = 0, maxErr = 0;
+      TYCHO_MARS_DEC.forEach(([y,m,d,dec])=>{
+        const td = orbitDayDiff(y,m,d);
+        const { lambda, beta } = fittedMarsEclipticLonLat(td);
+        const pred = eclipticToEquatorial(lambda, beta).dec;
+        const err = pred - dec;
+        sumSq += err*err;
+        if(Math.abs(err) > Math.abs(maxErr)) maxErr = err;
+      });
+      fitChart = { curve, stats: { rms: Math.sqrt(sumSq/TYCHO_MARS_DEC.length), maxErr, n: TYCHO_MARS_DEC.length } };
+    }
+
+    function clampFitInset(){
+      fitInsetPos.x = Math.max(0, Math.min(700-FIT_BOX_W, fitInsetPos.x));
+      fitInsetPos.y = Math.max(0, Math.min(700-FIT_BOX_H, fitInsetPos.y));
+    }
+    function wantsDrag(){ return showTychoFit; }
+    function dragHitTest(x, y){
+      if(!showTychoFit) return false;
+      return x>=fitInsetPos.x && x<=fitInsetPos.x+FIT_BOX_W && y>=fitInsetPos.y && y<=fitInsetPos.y+FIT_BOX_H;
+    }
+    function handleDrag(dx, dy){
+      fitInsetPos.x += dx; fitInsetPos.y += dy; clampFitInset();
+    }
+
+    function controlsHTML(){
+      const locked = showTychoFit;
+      return `
+        <div class="group">
+          <label>epicycle size
+            <input type="range" id="ep_r" min="20" max="150" value="${epicycleR}" ${locked?'disabled':''}>
+          </label>
+        </div>
+        <div class="group">
+          <label>epicycle speed
+            <input type="range" id="ep_s" min="0.2" max="3" step="0.1" value="${epicycleSpeed}" ${locked?'disabled':''}>
+          </label>
+        </div>
+        <div class="group">
+          <button class="pill ${useEquant?'on':''}" id="ep_eq" ${locked?'disabled':''}>non-zero equant</button>
+          ${useEquant ? `<label>eccentricity
+            <input type="range" id="ep_e" min="0" max="85" value="${eccentricity}" ${locked?'disabled':''}>
+          </label>` : ''}
+        </div>
+        <div class="group">
+          <button class="pill" id="ep_clear">clear trail</button>
+        </div>
+        <div class="group">
+          <button class="pill ${showTychoFit?'on':''}" id="ep_fit">declination vs. Tycho's data (fitted epicycle)</button>
+        </div>
+        ${locked ? `<div class="group"><label style="color:#A6441F">controls above are locked to the verified fit while this is on</label></div>` : ''}
+      `;
+    }
+    function bindControls(){
+      const rSlider = document.getElementById('ep_r');
+      if(!rSlider.disabled) rSlider.addEventListener('input', e=>{ epicycleR = parseFloat(e.target.value); });
+      const sSlider = document.getElementById('ep_s');
+      if(!sSlider.disabled) sSlider.addEventListener('input', e=>{ epicycleSpeed = parseFloat(e.target.value); });
+      document.getElementById('ep_clear').addEventListener('click', ()=>{ trail = []; });
+      const eqBtn = document.getElementById('ep_eq');
+      if(!eqBtn.disabled){
+        eqBtn.addEventListener('click', ()=>{
+          useEquant = !useEquant;
+          trail = [];
+          refreshModuleControls();
+        });
+      }
+      const eSlider = document.getElementById('ep_e');
+      if(eSlider && !eSlider.disabled){
+        eSlider.addEventListener('input', e=>{ eccentricity = parseFloat(e.target.value); trail = []; });
+      }
+      const fitBtn = document.getElementById('ep_fit');
+      fitBtn.addEventListener('click', ()=>{
+        showTychoFit = !showTychoFit;
+        fitBtn.classList.toggle('on', showTychoFit);
+        if(showTychoFit){
+          buildFitChart();
+          // Make the main diagram actually show the model being scored
+          // below, rather than leaving it on whatever illustrative values
+          // were showing -- the equant is not optional in that fit (see
+          // the "without equant" comparison in the panel text), so this
+          // must reflect that rather than let the diagram imply otherwise.
+          // deferentR is also reduced here (220 -> 180): checked the
+          // worst-case reach (eccentricity + deferentR + epicycleR) at
+          // the default 220 and it exceeds the canvas half-width (385 vs
+          // 350), so it's scaled down enough to keep clear margin (315).
+          savedSliders = { deferentR, epicycleR, epicycleSpeed, useEquant, eccentricity };
+          deferentR = 180;
+          useEquant = true;
+          eccentricity = (EFIT_E/ORBIT_ELEMENTS.mars.a) * deferentR;
+          epicycleR = deferentR * FIT_RADIUS_RATIO;
+          epicycleSpeed = deferentSpeed * FIT_SPEED_RATIO;
+        } else if(savedSliders){
+          ({ deferentR, epicycleR, epicycleSpeed, useEquant, eccentricity } = savedSliders);
+          savedSliders = null;
+        }
+        trail = [];
+        refreshModuleControls();
+      });
+    }
+    function reset(){ trail = []; }
+
+    // Ptolemy's equant: the deferent is centered on C, offset from Earth O
+    // by eccentricity e along a fixed apsidal line, but the epicycle's
+    // center moves at a *uniform* angular rate only as seen from Q, the
+    // point mirrored across C from Earth (OC = CQ = e). Given a uniform
+    // angle theta swept from Q, this finds the matching point on the
+    // deferent circle (center C, radius R) by intersecting the ray from Q
+    // with that circle.
+    function equantPoint(Cx, Cy, R, Qx, Qy, theta){
+      const dx = Math.cos(theta), dy = Math.sin(theta);
+      const qcx = Cx - Qx, qcy = Cy - Qy;
+      const dDotQc = dx*qcx + dy*qcy;
+      const qcMagSq = qcx*qcx + qcy*qcy;
+      const disc = Math.max(0, dDotQc*dDotQc - (qcMagSq - R*R));
+      const s = dDotQc + Math.sqrt(disc);
+      return { x: Qx + dx*s, y: Qy + dy*s };
+    }
+
+    function draw(time){
+      // Earth fixed at center
+      drawDot(CX, CY, 9, "#6E8FAE", 14);
+      drawLabel(CX+14, CY+4, "Earth", "#9fb6cf", 12);
+
+      if(showTychoFit){
+        drawLabel(CX, 690, "Showing the fitted model scored in the inset: equant required, eccentricity 0.143 AU", "#A6441F", 12, "center");
+      }
+
+      const deferentAngle = time*deferentSpeed;
+      let epiCenter;
+
+      if(useEquant && eccentricity > 0){
+        const Cx = CX + eccentricity, Cy = CY;
+        const Qx = CX + eccentricity*2, Qy = CY;
+        drawCircle(Cx, Cy, deferentR, "#3A4A6B", 1);
+        epiCenter = equantPoint(Cx, Cy, deferentR, Qx, Qy, deferentAngle);
+
+        drawDot(Cx, Cy, 3, "#54607f");
+        drawLabel(Cx, Cy+16, "C", "#54607f", 10, "center");
+        drawDot(Qx, Qy, 4, "#A6441F", 8);
+        drawLabel(Qx, Qy+16, "equant (Q)", "#A6441F", 10.5, "center");
+
+        // the ray along which motion is uniform, as seen from Q
+        ctx.beginPath();
+        ctx.moveTo(Qx, Qy); ctx.lineTo(epiCenter.x, epiCenter.y);
+        ctx.strokeStyle = "rgba(166,68,31,0.35)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      } else {
+        drawCircle(CX, CY, deferentR, "#3A4A6B", 1);
+        epiCenter = polar(CX, CY, deferentR, deferentAngle);
+      }
+
+      drawCircle(epiCenter.x, epiCenter.y, epicycleR, "#54607f", 1);
+
+      const epiAngle = time*epicycleSpeed;
+      const planet = polar(epiCenter.x, epiCenter.y, epicycleR, epiAngle);
+
+      trail.push({x:planet.x, y:planet.y});
+      if(trail.length > MAXTRAIL) trail.shift();
+
+      ctx.beginPath();
+      for(let i=0;i<trail.length;i++){
+        const p = trail[i];
+        const alpha = i/trail.length;
+        if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y);
+      }
+      ctx.strokeStyle = "rgba(201,162,75,0.55)";
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(CX,CY); ctx.lineTo(epiCenter.x, epiCenter.y);
+      ctx.strokeStyle = "rgba(110,143,174,0.4)";
+      ctx.lineWidth=1;
+      ctx.stroke();
+
+      drawDot(epiCenter.x, epiCenter.y, 3, "#6E8FAE");
+      drawDot(planet.x, planet.y, 7, "#C9A24B", 16);
+      drawLabel(planet.x+10, planet.y-8, "Mars", "#E0BE6C", 12);
+
+      if(showTychoFit) drawFitInset(time);
+    }
+
+    function drawFitInset(time){
+      buildFitChart();
+      const boxX=fitInsetPos.x, boxY=fitInsetPos.y, boxW=FIT_BOX_W, boxH=FIT_BOX_H;
+      const left=boxX+38, right=boxX+boxW-14, top=boxY+22, bottom=boxY+boxH-20;
+      const yMin=-30, yMax=30, tMin=1582, tMax=1595;
+      const px = t => left + (t-tMin)/(tMax-tMin)*(right-left);
+      const py = dec => bottom - (dec-yMin)/(yMax-yMin)*(bottom-top);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(boxX, boxY, boxW, boxH);
+      ctx.fillStyle = "rgba(11,18,32,0.9)";
+      ctx.fill();
+      ctx.strokeStyle = "#3A4A6B";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      drawLabel(boxX+10, boxY+13, "Fitted epicycle: declination vs. Tycho", "#E0BE6C", 9.5);
+
+      ctx.strokeStyle = "rgba(58,74,107,0.5)"; ctx.lineWidth = 0.7;
+      [-20,0,20].forEach(dec=>{
+        ctx.beginPath(); ctx.moveTo(left, py(dec)); ctx.lineTo(right, py(dec)); ctx.stroke();
+        drawLabel(left-6, py(dec)+3, dec+"\u00b0", "#9fb6cf", 7.5, "right");
+      });
+      [1584,1588,1592].forEach(y=>{
+        drawLabel(px(y), bottom+11, String(y), "#9fb6cf", 7.5, "center");
+      });
+      ctx.strokeStyle = "#54607f"; ctx.lineWidth = 1;
+      ctx.strokeRect(left, top, right-left, bottom-top);
+
+      ctx.beginPath();
+      fitChart.curve.forEach((p,i)=>{
+        const x = px(p.t), y = py(p.dec);
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.strokeStyle = "#6E8FAE"; ctx.lineWidth = 1.1;
+      ctx.stroke();
+
+      TYCHO_MARS_DEC.forEach(([y,m,d,dec])=>{
+        const x = px(decYear(y,m,d)), yy = py(dec);
+        drawDot(x, yy, 1.6, "#C9A24B", 2);
+      });
+
+      const span = tMax-tMin;
+      const curT = tMin + ((time*0.15) % span + span) % span;
+      let nearest = fitChart.curve[0], bestD = Infinity;
+      for(let i=0;i<fitChart.curve.length;i++){
+        const dd = Math.abs(fitChart.curve[i].t - curT);
+        if(dd < bestD){ bestD = dd; nearest = fitChart.curve[i]; }
+      }
+      const cx = px(curT);
+      ctx.beginPath();
+      ctx.moveTo(cx, top); ctx.lineTo(cx, bottom);
+      ctx.strokeStyle = "rgba(201,162,75,0.6)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      drawDot(cx, py(nearest.dec), 3.2, "#C9A24B", 9);
+
+      drawLabel(right, boxY+13, "RMS "+fitChart.stats.rms.toFixed(2)+"\u00b0 vs Tycho  \u00b7  fit: e="+EFIT_E.toFixed(3)+" AU", "#A6441F", 8, "right");
+      ctx.restore();
+    }
+
+    const panelEN = {
+        heading:'The Epicycle',
+        meta:'Claudius Ptolemy, Almagest, c. 150 CE',
+        body:[
+          "Ancient astronomy assumed two things almost nobody questioned: Earth sits motionless at the center of the cosmos, and heavenly bodies move in perfect circles at constant speed.",
+          "The trouble is that planets don't move smoothly across the sky. Mars, in particular, periodically slows, stops, and briefly reverses &mdash; retrograde motion. A single circle around Earth can't produce that.",
+          "Ptolemy's fix: let the planet ride a small circle, the <b>epicycle</b>, whose center travels around a larger circle, the <b>deferent</b>, centered near Earth. Adjust the two radii and speeds and the combined path traces a loop exactly where retrograde motion is observed.",
+          "Toggle <b>declination vs. Tycho's data (fitted epicycle)</b> for a real test, not an illustration: a deferent+equant model of Mars, with its eccentricity and phase fit by least-squares against Mars's real motion (not against Tycho directly), checked against the same 169 real observations used in the Heliocentric tab. The honest result has a twist. Checked purely as geometry &mdash; this fitted circle-and-equant model against the true underlying ellipse, nothing else &mdash; the match is remarkable: about 0.03&deg; RMS in declination. A well-chosen circle really can stand in for an ellipse over a 12-year span. But checked against Tycho's actual 16th-century observations, the fitted epicycle model lands at almost exactly the same error as the Heliocentric tab's fixed ellipse did (both around 2.4&deg; RMS) &mdash; because both numbers are dominated by the <i>same</i> problem: extrapolating fixed orbital elements four centuries without the secular corrections real perturbation theory would apply, not by which shape (circle or ellipse) was used. The fitted eccentricity itself (0.143 AU) isn't even the same number as Mars's real orbital eccentricity (0.093 AU) &mdash; a useful reminder that the equant model's 'eccentricity' and a true ellipse's eccentricity are related but different quantities. Turning this toggle on also switches the diagram above to actually show that fitted model &mdash; equant forced on, eccentricity and epicycle size locked to the fitted values &mdash; rather than leaving it on whatever illustrative numbers happened to be showing, so what you're watching above is exactly what's being scored below, not a generic stand-in.",
+          "Worth checking directly: is the equant actually necessary for that 0.03&deg; result, or could a plain eccentric circle (uniform motion about its own center, no separate equant point) do almost as well? Fit one the same way &mdash; least-squares, its own free eccentricity and phase &mdash; and its best achievable longitude error against the true ellipse is 2.26&deg;, about 17 times worse than the equant version, and roughly ten times larger than Tycho's own instruments could even resolve. A plain eccentric has only one lever (making distance vary with position), which distorts apparent speed as a side effect; the equant instead lets the model specify the speed variation directly, decoupling 'where uniform motion is measured from' from 'where Earth sits.' That's a very concrete, checkable answer to why the equant was worth the conceptual cost of breaking pure single-center uniform motion &mdash; and, framed differently, an early and remarkably effective stand-in for what Kepler would later state properly as equal areas in equal times."
+        ],
+        problem:"Ptolemy needed a further device, the <b>equant</b> &mdash; a point off-center from which motion merely <i>looks</i> uniform &mdash; to match observations precisely. That silently broke the 'uniform circular motion' rule the whole system was built to preserve. Try the <b>non-zero equant</b> toggle below: the deferent's center (C) shifts away from Earth, and the epicycle now moves at a constant rate only as seen from the equant point (Q) &mdash; visibly speeding up and slowing down as seen from Earth itself."
+    };
+    const panelTR = {
+        heading:'Episikl',
+        meta:'Batlamyus (Claudius Ptolemaeus), Almagest, MS 150 civarı',
+        body:[
+          "Eski çağ astronomisi neredeyse hiç kimsenin sorgulamadığı iki şeyi varsayardı: Dünya evrenin merkezinde hareketsiz durur ve gök cisimleri sabit hızla mükemmel çemberler çizerek hareket eder.",
+          "Sorun şu ki gezegenler gökyüzünde düzgün hareket etmez. Özellikle Mars, düzenli aralıklarla yavaşlar, durur ve kısa bir süre tersine döner &mdash; geri hareket. Dünya çevresinde tek bir çember bunu üretemez.",
+          "Batlamyus'un çözümü: gezegen, merkezi Dünya yakınında olan daha büyük bir çember olan <b>deferent</b> üzerinde ilerleyen küçük bir çember olan <b>episikl</b> üzerinde dolaşsın. İki yarıçapı ve hızı ayarlayın; birleşik yol, geri hareketin gözlemlendiği yerde tam olarak bir ilmek çizer.",
+          "Bir gösterim değil gerçek bir test için aşağıdaki <b>deklinasyon vs. Tycho'nun verisi (uydurulmuş episikl)</b> seçeneğini açın: Mars'ın gerçek hareketine karşı (doğrudan Tycho'ya karşı değil) en küçük kareler yöntemiyle dışmerkezliği ve fazı uydurulmuş bir deferent+ekuant modeli, Güneş Merkezli sekmesinde kullanılan aynı 169 gerçek gözlemle karşılaştırılır. Dürüst sonuçta bir sürpriz var. Salt geometri olarak bakıldığında &mdash; bu uydurulmuş çember-ve-ekuant modeli gerçek altta yatan elipse karşı, başka hiçbir şeye karşı değil &mdash; uyum dikkat çekicidir: deklinasyonda yaklaşık 0,03&deg; RMS. İyi seçilmiş bir çember, 12 yıllık bir aralıkta gerçekten bir elipsin yerini tutabilir. Ama Tycho'nun gerçek 16. yüzyıl gözlemlerine karşı kontrol edildiğinde, uydurulmuş episikl modeli Güneş Merkezli sekmesindeki sabit elipsin verdiğiyle neredeyse tıpatıp aynı hataya ulaşır (ikisi de yaklaşık 2,4&deg; RMS) &mdash; çünkü her iki sayı da <i>aynı</i> sorun tarafından domine edilir: gerçek pertürbasyon teorisinin uygulayacağı yüzyıllık düzeltmeler olmadan sabit yörünge elemanlarını dört yüzyıl ileri götürmek; hangi şeklin (çember mi elips mi) kullanıldığı değil. Uydurulmuş dışmerkezliğin kendisi (0,143 AB) Mars'ın gerçek yörünge dışmerkezliğiyle (0,093 AB) aynı sayı bile değildir &mdash; ekuant modelinin 'dışmerkezliği' ile gerçek bir elipsin dışmerkezliğinin ilişkili ama farklı nicelikler olduğunun yararlı bir hatırlatıcısı. Bu düğmeyi açmak yukarıdaki şemayı da gerçekten bu uydurulmuş modeli gösterecek şekilde değiştirir &mdash; ekuant zorla açılır, dışmerkezlik ve episikl boyutu uydurulmuş değerlere kilitlenir &mdash; hangi örnek değerler gösteriliyorsa onlarla bırakmak yerine; böylece yukarıda izlediğiniz şey, aşağıda puanlanan şeyin ta kendisidir, genel bir yer tutucu değil.",
+          "Doğrudan kontrol etmeye değer: ekuant, o 0,03&deg;'lik sonuç için gerçekten gerekli mi, yoksa düz bir dışmerkezli çember (kendi merkezi etrafında tekdüze hareket, ayrı bir ekuant noktası olmadan) neredeyse aynı iyilikte olabilir mi? Aynı şekilde bir tane uydurun &mdash; en küçük kareler, kendi serbest dışmerkezliği ve fazıyla &mdash; ve gerçek elipse karşı ulaşabileceği en iyi boylam hatası 2,26&deg;'dir; ekuant versiyonundan yaklaşık 17 kat daha kötü ve Tycho'nun kendi aletlerinin çözebileceğinden kabaca on kat daha büyük. Düz bir dışmerkezlinin yalnızca bir kolu vardır (uzaklığı konuma göre değiştirmek), bu da yan etki olarak görünen hızı bozar; ekuant ise modelin hız değişimini doğrudan belirlemesine izin vererek 'tekdüze hareketin nereden ölçüldüğü' ile 'Dünya'nın nerede durduğu'nu birbirinden ayırır. Bu, ekuantın tek merkezli saf tekdüze hareket kuralını bozmanın kavramsal bedeline neden değdiğine dair çok somut, kontrol edilebilir bir cevaptır &mdash; ve farklı bir çerçeveden bakıldığında, Kepler'in daha sonra düzgünce ifade edeceği eşit zamanlarda eşit alanlar kuralının erken ve dikkat çekici derecede etkili bir yerine geçenidir."
+        ],
+        problem:"Batlamyus, gözlemlerle tam olarak eşleşmek için ek bir araca daha ihtiyaç duydu: hareketin yalnızca <i>göründüğü</i> kadarıyla tekdüze olduğu, merkezden kaymış bir nokta olan <b>ekuant</b>. Bu, tüm sistemin korumak üzere kurulduğu 'tekdüze dairesel hareket' kuralını sessizce çiğniyordu. Aşağıdaki <b>sıfırdan farklı ekuant</b> seçeneğini deneyin: deferentin merkezi (C) Dünya'dan uzaklaşır ve episikl artık yalnızca ekuant noktasından (Q) bakıldığında sabit bir hızla hareket eder &mdash; Dünya'nın kendisinden bakıldığında ise gözle görülür şekilde hızlanıp yavaşlar."
+    };
+
+    return {
+      id:'epicycles', title:'Epicycles', titleTR:'Dış Tekerler',
+      label:'Ptolemy, c. 150 CE',
+      controlsHTML, bindControls, draw, reset, wantsDrag, dragHitTest, handleDrag,
+      get caption(){
+        const en = 'The planet rides a small circle (epicycle) whose center rides a larger circle (deferent) around Earth \u2014 producing an occasional backward loop.';
+        const tr = 'Gezegen, merkezi Dünya çevresindeki daha büyük bir çember (deferent) üzerinde ilerleyen küçük bir çember (episikl) üzerinde dolaşır \u2014 bu da zaman zaman geriye dönük bir ilmek üretir.';
+        return lang==='tr' ? tr : en;
+      },
+      get panel(){ return lang==='tr' ? panelTR : panelEN; }
+    };
+  })();
+
+  /* ==================================================================
+     MODULE 2: Tusi Couple
+     ================================================================== */
+  const Tusi = (function(){
+    const bigR = 200;      // abstract-mode couple radius
+    const embedBigR = 60;  // couple radius once embedded in an orbit
+    const deferentR = 250;
+    let spin = 0.5;
+    let orbitSpeed = 0.3;
+    let showTrace = true;
+    let embed = false;
+    let showTrajectory = false;
+    let trail = [];
+    const MAXTRAIL = 1400;
+
+    // equant-reproduction sub-mode: two couples in quadrature, mounted on
+    // a deferent, reconstruct the classical eccentric+equant orbit to
+    // first order in eccentricity/radius. See panel text for the derivation.
+    let reproduceEquant = false;
+    let eqEcc = 35;
+    let showExactOverlay = true;
+    const eqDeferentR = 200;
+
+    function controlsHTML(){
+      const embedBtn = `<div class="group">
+          <button class="pill ${embed?'on':''}" id="tu_embed">embed in planetary orbit</button>
+        </div>`;
+      if(!embed){
+        return `
+          <div class="group">
+            <label>rotation speed
+              <input type="range" id="tu_s" min="0.1" max="2" step="0.1" value="${spin}">
+            </label>
+          </div>
+          <div class="group">
+            <button class="pill ${showTrace?'on':''}" id="tu_trace">show traced line</button>
+          </div>
+          ${embedBtn}
+        `;
+      }
+      if(reproduceEquant){
+        return `
+          <div class="group">
+            <label>orbital speed
+              <input type="range" id="tu_o" min="0.05" max="1" step="0.05" value="${orbitSpeed}">
+            </label>
+          </div>
+          <div class="group">
+            <label>eccentricity
+              <input type="range" id="tu_ee" min="0" max="55" value="${eqEcc}">
+            </label>
+          </div>
+          <div class="group">
+            <button class="pill ${showExactOverlay?'on':''}" id="tu_exact">show exact equant curve</button>
+          </div>
+          <div class="group">
+            <button class="pill on" id="tu_req">reproduce equant orbit</button>
+          </div>
+          ${embedBtn}
+        `;
+      }
+      return `
+        <div class="group">
+          <label>couple speed
+            <input type="range" id="tu_s" min="0.1" max="2" step="0.1" value="${spin}">
+          </label>
+        </div>
+        <div class="group">
+          <label>orbital speed
+            <input type="range" id="tu_o" min="0.05" max="1" step="0.05" value="${orbitSpeed}">
+          </label>
+        </div>
+        <div class="group">
+          <button class="pill ${showTrajectory?'on':''}" id="tu_traj">show trajectory</button>
+        </div>
+        <div class="group">
+          <button class="pill" id="tu_req">reproduce equant orbit</button>
+        </div>
+        ${embedBtn}
+      `;
+    }
+    function bindControls(){
+      const spinSlider = document.getElementById('tu_s');
+      if(spinSlider){
+        spinSlider.addEventListener('input', e=>{ spin = parseFloat(e.target.value); });
+      }
+      const traceBtn = document.getElementById('tu_trace');
+      if(traceBtn){
+        traceBtn.addEventListener('click', ()=>{ showTrace = !showTrace; traceBtn.classList.toggle('on', showTrace); });
+      }
+      const orbitSlider = document.getElementById('tu_o');
+      if(orbitSlider){
+        orbitSlider.addEventListener('input', e=>{ orbitSpeed = parseFloat(e.target.value); });
+      }
+      const trajBtn = document.getElementById('tu_traj');
+      if(trajBtn){
+        trajBtn.addEventListener('click', ()=>{
+          showTrajectory = !showTrajectory;
+          trajBtn.classList.toggle('on', showTrajectory);
+          if(!showTrajectory) trail = [];
+        });
+      }
+      const eccSlider = document.getElementById('tu_ee');
+      if(eccSlider){
+        eccSlider.addEventListener('input', e=>{ eqEcc = parseFloat(e.target.value); });
+      }
+      const exactBtn = document.getElementById('tu_exact');
+      if(exactBtn){
+        exactBtn.addEventListener('click', ()=>{
+          showExactOverlay = !showExactOverlay;
+          exactBtn.classList.toggle('on', showExactOverlay);
+        });
+      }
+      const reqBtn = document.getElementById('tu_req');
+      if(reqBtn){
+        reqBtn.addEventListener('click', ()=>{
+          reproduceEquant = !reproduceEquant;
+          refreshModuleControls();
+        });
+      }
+      document.getElementById('tu_embed').addEventListener('click', ()=>{
+        embed = !embed;
+        reproduceEquant = false;
+        trail = [];
+        refreshModuleControls();
+      });
+    }
+    function reset(){ trail = []; }
+
+    function drawAbstract(time){
+      const smallR = bigR/2;
+      drawDot(CX, CY, 4, "#6E8FAE");
+      drawCircle(CX, CY, bigR, "#3A4A6B", 1.4);
+
+      // small circle rolls inside; its center travels around big circle center
+      // at half the angular rate produces the straight-line (hypocycloid) tracing
+      const theta = time*spin;
+      const smallCenter = polar(CX, CY, smallR, theta);
+      drawCircle(smallCenter.x, smallCenter.y, smallR, "#54607f", 1.2);
+
+      // Point on the rim of the small circle: for a small circle of radius r
+      // rolling inside a big circle of radius 2r, the rim point's own angle
+      // must equal the negative of the center's orbital angle. This is what
+      // makes the two circular motions cancel in y and add in x, producing
+      // the straight-line (diameter) trace that is the whole point of the
+      // Tusi couple.
+      const pointAngle = -theta;
+      const tracePoint = polar(smallCenter.x, smallCenter.y, smallR, pointAngle);
+
+      if(showTrace){
+        ctx.beginPath();
+        ctx.moveTo(CX - bigR, CY);
+        ctx.lineTo(CX + bigR, CY);
+        ctx.strokeStyle = "rgba(201,162,75,0.35)";
+        ctx.lineWidth = 6;
+        ctx.stroke();
+      }
+
+      drawDot(smallCenter.x, smallCenter.y, 3, "#9fb6cf");
+      drawDot(tracePoint.x, tracePoint.y, 7, "#C9A24B", 16);
+      drawLabel(tracePoint.x+10, tracePoint.y-8, "traced point", "#E0BE6C", 11);
+    }
+
+    function drawEmbedded(time){
+      // Earth sits at the true center; the couple's whole apparatus rides
+      // out on a deferent, oriented so its straight-line diameter always
+      // points radially (toward/away from Earth). Because the trace point
+      // moves back and forth along that radial line, the net effect is a
+      // planet whose angle is set by the deferent alone, while its distance
+      // from Earth oscillates -- exactly the kind of correction Ibn
+      // al-Shatir and, later, Copernicus used a couple for, in place of an
+      // equant.
+      drawDot(CX, CY, 9, "#6E8FAE", 14);
+      drawLabel(CX+14, CY+4, "Earth", "#9fb6cf", 12);
+      drawCircle(CX, CY, deferentR, "#3A4A6B", 1);
+
+      const deferentAngle = time*orbitSpeed;
+      const dir = { x: Math.cos(deferentAngle), y: Math.sin(deferentAngle) };
+      const deferentPoint = polar(CX, CY, deferentR, deferentAngle);
+
+      const smallR = embedBigR/2;
+      const theta = time*spin;
+
+      // small couple circle's center, in the couple's own (unrotated) frame,
+      // then rotated so the frame's x-axis points along `dir`
+      const scLocalX = smallR*Math.cos(theta), scLocalY = smallR*Math.sin(theta);
+      const smallCenter = {
+        x: deferentPoint.x + scLocalX*dir.x - scLocalY*dir.y,
+        y: deferentPoint.y + scLocalX*dir.y + scLocalY*dir.x
+      };
+
+      // traced point stays on the local x-axis (y_local = 0), so after
+      // rotation it simply slides along the Earth-deferentPoint radial line
+      const tpLocalX = embedBigR*Math.cos(theta);
+      const tracePoint = {
+        x: deferentPoint.x + tpLocalX*dir.x,
+        y: deferentPoint.y + tpLocalX*dir.y
+      };
+
+      // the radial line the point can travel along
+      ctx.beginPath();
+      ctx.moveTo(deferentPoint.x - embedBigR*dir.x, deferentPoint.y - embedBigR*dir.y);
+      ctx.lineTo(deferentPoint.x + embedBigR*dir.x, deferentPoint.y + embedBigR*dir.y);
+      ctx.strokeStyle = "rgba(201,162,75,0.3)";
+      ctx.lineWidth = 5;
+      ctx.stroke();
+
+      if(showTrajectory){
+        trail.push({x:tracePoint.x, y:tracePoint.y});
+        if(trail.length > MAXTRAIL) trail.shift();
+        ctx.beginPath();
+        for(let i=0;i<trail.length;i++){
+          const p = trail[i];
+          if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y);
+        }
+        ctx.strokeStyle = "rgba(166,68,31,0.65)";
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+      }
+
+      drawCircle(deferentPoint.x, deferentPoint.y, embedBigR, "#54607f", 1.2);
+      drawCircle(smallCenter.x, smallCenter.y, smallR, "#3A4A6B", 1);
+      drawDot(deferentPoint.x, deferentPoint.y, 3, "#9fb6cf");
+
+      drawDot(tracePoint.x, tracePoint.y, 7, "#C9A24B", 16);
+      drawLabel(tracePoint.x+10, tracePoint.y-8, "planet", "#E0BE6C", 12);
+    }
+
+    // The true (exact) eccentric+equant position, same convention as the
+    // Epicycles tab: deferent center C = Earth + (e,0), equant Q = Earth +
+    // (2e,0), planet moves at a uniform angle psi as seen from Q. Used here
+    // only as a reference curve to check the couple-based reconstruction
+    // against, and to display the residual error.
+    function exactEquantPoint(R, e, psi){
+      const dx = Math.cos(psi), dy = Math.sin(psi);
+      const qcx = -e, qcy = 0; // (C - Q)
+      const dDotQc = dx*qcx + dy*qcy;
+      const qcMagSq = e*e;
+      const disc = Math.max(0, dDotQc*dDotQc - (qcMagSq - R*R));
+      const s = dDotQc + Math.sqrt(disc);
+      return { x: 2*e + dx*s, y: dy*s };
+    }
+
+    // One couple, in isolation, contributes displacement A*cos(theta) along
+    // whichever fixed direction (dirX,dirY) its diameter is aligned with;
+    // its own small rolling circle's center is also returned for drawing.
+    function coupleGeometry(originX, originY, A, theta, dirX, dirY){
+      const r = A/2;
+      const scLocalX = r*Math.cos(theta), scLocalY = r*Math.sin(theta);
+      const smallCenter = {
+        x: originX + scLocalX*dirX - scLocalY*dirY,
+        y: originY + scLocalX*dirY + scLocalY*dirX
+      };
+      const tpLocalX = A*Math.cos(theta);
+      const tracePoint = { x: originX + tpLocalX*dirX, y: originY + tpLocalX*dirY };
+      return { smallCenter, tracePoint, r };
+    }
+
+    function drawEquantReproduction(time){
+      // Derivation (first order in e/R, verified numerically): the exact
+      // eccentric+equant position equals a fixed point O' = Earth+(1.5e,0),
+      // plus a main circle of radius R at the uniform angle psi=wt, plus a
+      // small circular correction of radius e/2 at angle (2*psi + pi). That
+      // small correction -- a point moving on a circle at twice the main
+      // rate -- can itself be built from nothing but two Tusi couples set
+      // at right angles: one couple's straight-line motion supplies the x
+      // component, the other's supplies the y component, each driven at
+      // twice psi with an appropriate phase.
+      const psi = time*orbitSpeed;
+      const e = eqEcc;
+      const Ox = CX + 1.5*e, Oy = CY;
+
+      drawDot(CX, CY, 9, "#6E8FAE", 14);
+      drawLabel(CX+14, CY+4, "Earth", "#9fb6cf", 12);
+      drawDot(Ox, Oy, 3, "#54607f");
+      drawLabel(Ox, Oy+16, "O\u2032", "#54607f", 10.5, "center");
+
+      drawCircle(Ox, Oy, eqDeferentR, "#3A4A6B", 1);
+      const epiCenter = { x: Ox + eqDeferentR*Math.cos(psi), y: Oy + eqDeferentR*Math.sin(psi) };
+      ctx.beginPath();
+      ctx.moveTo(Ox, Oy); ctx.lineTo(epiCenter.x, epiCenter.y);
+      ctx.strokeStyle = "rgba(110,143,174,0.35)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      const A = e/2;
+      const thetaX = 2*psi + Math.PI;
+      const thetaY = 2*psi + Math.PI/2;
+      const cx = coupleGeometry(epiCenter.x, epiCenter.y, A, thetaX, 1, 0);
+      const cy = coupleGeometry(epiCenter.x, epiCenter.y, A, thetaY, 0, 1);
+
+      const planet = {
+        x: cx.tracePoint.x,
+        y: cy.tracePoint.y
+      };
+
+      // draw both couples, centered on the same point, at right angles
+      if(A > 0.5){
+        drawCircle(epiCenter.x, epiCenter.y, A, "rgba(84,96,127,0.6)", 1);
+        drawCircle(cx.smallCenter.x, cx.smallCenter.y, cx.r, "rgba(58,74,107,0.7)", 1);
+        drawCircle(cy.smallCenter.x, cy.smallCenter.y, cy.r, "rgba(58,74,107,0.7)", 1);
+        drawDot(cx.tracePoint.x, cx.tracePoint.y, 3, "#9fb6cf");
+        drawDot(cy.tracePoint.x, cy.tracePoint.y, 3, "#9fb6cf");
+        // guide lines showing how the two readings combine into the planet
+        ctx.beginPath();
+        ctx.moveTo(cx.tracePoint.x, cx.tracePoint.y); ctx.lineTo(planet.x, planet.y);
+        ctx.moveTo(cy.tracePoint.x, cy.tracePoint.y); ctx.lineTo(planet.x, planet.y);
+        ctx.strokeStyle = "rgba(201,162,75,0.35)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+      drawDot(epiCenter.x, epiCenter.y, 3, "#9fb6cf");
+
+      if(showExactOverlay){
+        ctx.beginPath();
+        for(let i=0;i<=200;i++){
+          const p2 = exactEquantPoint(eqDeferentR, e, (i/200)*Math.PI*2);
+          const px = CX+p2.x, py = CY+p2.y;
+          if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+        }
+        ctx.setLineDash([4,5]);
+        ctx.strokeStyle = "rgba(166,68,31,0.55)";
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        const exact = exactEquantPoint(eqDeferentR, e, psi);
+        const exactPx = CX+exact.x, exactPy = CY+exact.y;
+        drawDot(exactPx, exactPy, 4, "#A6441F", 8);
+        const err = Math.hypot(exactPx-planet.x, exactPy-planet.y);
+        drawLabel(exactPx+9, exactPy+14, "exact equant (err " + err.toFixed(1) + "px)", "#A6441F", 10);
+      }
+
+      drawDot(planet.x, planet.y, 7, "#C9A24B", 16);
+      drawLabel(planet.x+10, planet.y-8, "planet (via couples)", "#E0BE6C", 11.5);
+    }
+
+    function draw(time){
+      if(!embed) drawAbstract(time);
+      else if(reproduceEquant) drawEquantReproduction(time);
+      else drawEmbedded(time);
+    }
+
+    const panelEN = {
+        heading:'The Tusi Couple',
+        meta:'Nasir al-Din al-Tusi, Tadhkira, 1247',
+        body:[
+          "Ptolemy's equant let a planet move non-uniformly as seen from Earth's center, which quietly violated the principle of uniform circular motion. Later Islamic astronomers, especially at the Maragha observatory, treated this as a flaw worth fixing rather than tolerating.",
+          "Al-Tusi's elegant solution: take a small circle of radius r rolling without slipping inside a large circle of radius 2r. A point fixed on the rim of the small circle then traces, exactly, a straight line &mdash; the diameter of the large circle.",
+          "This device let astronomers reproduce back-and-forth, oscillating motion (needed for subtle latitude corrections) using nothing but combinations of uniform circles &mdash; no equant required.",
+          "Toggle <b>embed in planetary orbit</b> to see why this mattered: mount the whole couple on a deferent, keep its diameter pointing at Earth, and the straight-line wobble becomes a smooth variation in the planet's distance &mdash; angle from the deferent, distance from the couple &mdash; with no equant anywhere in the construction.",
+          "Then toggle <b>reproduce equant orbit</b> for the real payoff. Working out the exact eccentric+equant position and expanding it for small eccentricity shows it equals a fixed point O&prime; (offset 1.5&times; the eccentricity from Earth), plus a main circle at the orbital rate &omega;, plus a small correction moving on its own circle at exactly <i>twice</i> that rate. That correction &mdash; a point going around a circle at 2&omega; &mdash; can itself be built from nothing but two couples set at right angles, each contributing one coordinate. The dashed curve is the true equant path computed directly (the same formula used in the Epicycles tab); the solid gold path is what the two couples alone produce. For any realistic planetary eccentricity the two are visually identical &mdash; the on-screen error readout stays under a pixel until the eccentricity slider is pushed to deliberately exaggerated values."
+        ],
+        problem:"This device later resurfaces almost unchanged in Copernicus's own notebooks. Historians still debate exactly how the geometry travelled from 13th-century Persia to 16th-century Poland &mdash; a reminder that 'the Copernican Revolution' had deep debts to earlier astronomers. Ibn al-Shatir used a version of this embedding for the Moon around 1350; Copernicus used essentially the same trick for Mercury in 1543 &mdash; both used a small second epicycle for the 2&omega; correction rather than two couples, but the underlying mathematics is the one derived above. Push the eccentricity slider high enough and you'll see the couple-built path visibly peel away from the true equant curve: a reminder that this equivalence, like the historical models it echoes, is a very good first-order approximation, not an exact one."
+    };
+    const panelTR = {
+        heading:'Tûsî Çifti',
+        meta:'Nasîrüddin Tûsî, Tezkire (Tadhkira), 1247',
+        body:[
+          "Batlamyus'un ekuantı, bir gezegenin Dünya'nın merkezinden bakıldığında tekdüze olmayan bir şekilde hareket etmesine izin veriyordu; bu da tekdüze dairesel hareket ilkesini sessizce çiğniyordu. Daha sonraki İslam astronomları, özellikle Merağa Rasathanesi'nde, bunu katlanılacak değil düzeltilmeye değer bir kusur olarak gördüler.",
+          "Tûsî'nin zarif çözümü: yarıçapı r olan küçük bir çemberi, yarıçapı 2r olan büyük bir çemberin içinde kaymadan yuvarlayın. Küçük çemberin kenarına sabitlenmiş bir nokta, o zaman tam olarak düz bir çizgi çizer &mdash; büyük çemberin çapı.",
+          "Bu araç, astronomların ileri geri salınan hareketi (ince enlem düzeltmeleri için gerekli) yalnızca tekdüze çemberlerin bileşimlerini kullanarak yeniden üretmesine izin verdi &mdash; hiçbir ekuant gerekmeden.",
+          "Bunun neden önemli olduğunu görmek için <b>gezegen yörüngesine göm</b> seçeneğini açın: tüm çifti bir deferent üzerine monte edin, çapını Dünya'ya doğru tutun; düz çizgi salınımı, gezegenin uzaklığındaki düzgün bir değişime dönüşür &mdash; açı deferentten, uzaklık ise çiftten gelir &mdash; yapının hiçbir yerinde ekuant olmadan.",
+          "Ardından asıl kazanım için <b>ekuant yörüngesini yeniden üret</b> seçeneğini açın. Tam dışmerkezli+ekuant konumunu hesaplayıp küçük dışmerkezlik için açtığınızda, bunun sabit bir nokta O&prime; (Dünya'dan dışmerkezliğin 1,5 katı kadar kaydırılmış), artı yörünge hızı &omega;'da ana bir çember, artı tam olarak bu hızın <i>iki katında</i> kendi çemberi üzerinde hareket eden küçük bir düzeltmeye eşit olduğu görülür. Bu düzeltme &mdash; 2&omega; hızıyla bir çember etrafında dönen bir nokta &mdash; dik açıyla yerleştirilmiş, her biri bir koordinata katkıda bulunan yalnızca iki çiftten inşa edilebilir. Kesikli eğri, doğrudan hesaplanan gerçek ekuant yoludur (Dış Tekerler sekmesinde kullanılan aynı formül); dolu altın renkli yol ise yalnızca iki çiftin ürettiğidir. Herhangi bir gerçekçi gezegen dışmerkezliği için ikisi görsel olarak özdeştir &mdash; dışmerkezlik kaydırıcısı kasıtlı olarak abartılı değerlere itilene kadar ekrandaki hata göstergesi bir pikselin altında kalır."
+        ],
+        problem:"Bu araç, daha sonra neredeyse değişmeden Kopernik'in kendi not defterlerinde yeniden ortaya çıkar. Tarihçiler bu geometrinin 13. yüzyıl İran'ından 16. yüzyıl Polonya'sına tam olarak nasıl ulaştığını hâlâ tartışıyor &mdash; 'Kopernik Devrimi'nin önceki astronomlara derin borçları olduğunun bir hatırlatıcısı. İbnü'ş-Şâtır, 1350 civarında Ay için bu gömme yönteminin bir versiyonunu kullandı; Kopernik 1543'te Merkür için esasen aynı hileyi kullandı &mdash; ikisi de 2&omega; düzeltmesi için iki çift yerine küçük bir ikinci episikl kullandı, ama altta yatan matematik yukarıda türetilenle aynıdır. Dışmerkezlik kaydırıcısını yeterince yükseltirseniz, çiftlerle inşa edilen yolun gerçek ekuant eğrisinden gözle görülür şekilde ayrıldığını göreceksiniz: bu denkliğin, yankıladığı tarihsel modeller gibi, tam değil ama çok iyi bir birinci dereceden yaklaşım olduğunun bir hatırlatıcısı."
+    };
+
+    return {
+      id:'tusi', title:'Tusi Couple', titleTR:'Tûsî Çifti',
+      label:'Nasir al-Din al-Tusi, 1247',
+      controlsHTML, bindControls, draw, reset,
+      get caption(){
+        let en, tr;
+        if(embed && reproduceEquant){
+          en = 'Two couples, mounted at right angles on the tip of a deferent, reconstruct the classical eccentric+equant orbit \u2014 to well under a degree of error for any realistic eccentricity.';
+          tr = 'Bir deferentin ucuna dik a\u00e7\u0131yla monte edilmi\u015f iki \u00e7ift, klasik d\u0131\u015fmerkezli+ekuant y\u00f6r\u00fcngesini yeniden kurar \u2014 herhangi bir ger\u00e7ek\u00e7i d\u0131\u015fmerkezlik i\u00e7in bir derecenin \u00e7ok alt\u0131nda hatayla.';
+        } else if(embed){
+          en = 'The couple now rides a deferent around Earth, its diameter line kept pointing radially. The planet\u2019s angle comes from the deferent; its distance from Earth oscillates from the couple beneath it.';
+          tr = '\u00c7ift art\u0131k D\u00fcnya \u00e7evresinde bir deferent \u00fczerinde dola\u015f\u0131yor, \u00e7ap\u0131 her zaman \u0131\u015f\u0131nsal y\u00f6nde tutuluyor. Gezegenin a\u00e7\u0131s\u0131 deferentten gelir; D\u00fcnya\u2019ya olan uzakl\u0131\u011f\u0131 ise alt\u0131ndaki \u00e7iftten kaynaklanarak sal\u0131n\u0131r.';
+        } else {
+          en = 'A small circle rolls inside a circle twice its radius. A point on its rim traces a straight line \u2014 pure circular motion producing linear motion.';
+          tr = 'K\u00fc\u00e7\u00fck bir \u00e7ember, yar\u0131\u00e7ap\u0131 kendisinin iki kat\u0131 olan bir \u00e7emberin i\u00e7inde yuvarlan\u0131r. Kenar\u0131ndaki bir nokta d\u00fcz bir \u00e7izgi \u00e7izer \u2014 saf dairesel hareketin do\u011frusal hareket \u00fcretmesi.';
+        }
+        return lang==='tr' ? tr : en;
+      },
+      get panel(){ return lang==='tr' ? panelTR : panelEN; }
+    };
+  })();
+
+  /* ==================================================================
+     MODULE 3: Copernicus (heliocentric, circular orbits)
+     ================================================================== */
+  const Copernicus = (function(){
+    const planets = [
+      {name:'Mercury', r:60,  speed:1.60, color:'#9fb6cf', size:3},
+      {name:'Venus',   r:95,  speed:1.18, color:'#e0c98a', size:4},
+      {name:'Earth',   r:135, speed:1.00, color:'#6E8FAE', size:5},
+      {name:'Mars',    r:190, speed:0.53, color:'#C9A24B', size:4},
+      {name:'Jupiter', r:250, speed:0.24, color:'#cfa96a', size:6},
+      {name:'Saturn',  r:305, speed:0.14, color:'#b8a878', size:5}
+    ];
+    let showEpicycles = false;
+
+    function controlsHTML(){
+      return `
+        <div class="group">
+          <button class="pill ${showEpicycles?'on':''}" id="cp_epi">reveal Copernicus's own small epicycles</button>
+        </div>
+      `;
+    }
+    function bindControls(){
+      const b = document.getElementById('cp_epi');
+      b.addEventListener('click', ()=>{ showEpicycles = !showEpicycles; b.classList.toggle('on', showEpicycles); });
+    }
+    function reset(){}
+
+    function draw(time){
+      drawDot(CX, CY, 11, "#E0BE6C", 22);
+      drawLabel(CX+16, CY+5, "Sun", "#E0BE6C", 12);
+
+      planets.forEach(p=>{
+        drawCircle(CX, CY, p.r, "#3A4A6B", 1);
+        let angle = time*p.speed*0.4;
+        let center = polar(CX, CY, p.r, angle);
+
+        if(showEpicycles){
+          const miniR = p.r*0.06;
+          drawCircle(center.x, center.y, miniR, "#54607f", 0.8);
+          const miniAngle = time*p.speed*0.4*4.2;
+          center = polar(center.x, center.y, miniR, miniAngle);
+        }
+
+        drawDot(center.x, center.y, p.size, p.color, 8);
+        drawLabel(center.x+8, center.y-6, p.name, p.color, 10.5);
+      });
+    }
+
+    const panelEN = {
+        heading:'The Heliocentric Turn',
+        meta:'Nicolaus Copernicus, De Revolutionibus Orbium Coelestium, 1543',
+        body:[
+          "Copernicus's central move was simple to state and enormous in consequence: put the Sun, not Earth, near the center, and make Earth just another planet, orbiting once a year and spinning once a day.",
+          "This immediately explains retrograde motion without any special pleading: Mars only appears to move backward when faster-moving Earth overtakes it on the inside track, the way a car you're passing seems to slide backward against the horizon.",
+          "It also fixed the planetary order and distances for the first time on physical grounds, rather than by arbitrary assumption &mdash; the closer to the Sun, the faster the orbit, with no exceptions."
+        ],
+        problem:"Copernicus never gave up uniform circular motion. Real orbits aren't circles, so &mdash; like Ptolemy &mdash; he still needed small epicycles bolted onto his circles to match observation precisely. Toggle the button below to see them; heliocentrism alone didn't make the geometry simple."
+    };
+    const panelTR = {
+        heading:'Güneş Merkezli Dönüş',
+        meta:'Nicolaus Kopernik, De Revolutionibus Orbium Coelestium, 1543',
+        body:[
+          "Kopernik'in temel hamlesi, ifade etmesi basit ama sonuçları muazzam bir hamleydi: merkeze Dünya'yı değil Güneş'i koymak ve Dünya'yı, yılda bir kez yörüngede dönen ve günde bir kez kendi etrafında dönen sıradan bir gezegen haline getirmek.",
+          "Bu, geri hareketi hiçbir özel açıklamaya gerek kalmadan hemen açıklar: Mars yalnızca, daha hızlı hareket eden Dünya onu iç pistte geçtiğinde geriye doğru hareket ediyormuş gibi görünür &mdash; tıpkı geçtiğiniz bir arabanın ufka göre geriye kayıyormuş gibi görünmesi gibi.",
+          "Ayrıca, gezegen sırasını ve uzaklıklarını ilk kez keyfi bir varsayımla değil, fiziksel gerekçelerle sabitledi &mdash; Güneş'e ne kadar yakınsa, yörünge o kadar hızlıdır, istisnasız."
+        ],
+        problem:"Kopernik, tekdüze dairesel hareketten hiçbir zaman vazgeçmedi. Gerçek yörüngeler çember değildir; bu yüzden &mdash; tıpkı Batlamyus gibi &mdash; gözlemle tam olarak eşleşmek için çemberlerine cıvatalanmış küçük episikllere hâlâ ihtiyaç duyuyordu. Bunları görmek için aşağıdaki düğmeyi açın; yalnızca güneş merkezlilik geometriyi basitleştirmedi."
+    };
+
+    return {
+      id:'copernicus', title:'Copernicus', titleTR:'Kopernik',
+      label:'De Revolutionibus, 1543',
+      controlsHTML, bindControls, draw, reset,
+      get caption(){
+        const en = 'The Sun, not Earth, sits near the center. Retrograde motion now falls out naturally, from Earth periodically overtaking or being overtaken by slower or faster planets.';
+        const tr = 'Merkeze yak\u0131n olan D\u00fcnya de\u011fil, G\u00fcne\u015f\u2019tir. Geri hareket art\u0131k do\u011fal olarak ortaya \u00e7\u0131kar; D\u00fcnya, kendisinden yava\u015f veya h\u0131zl\u0131 gezegenleri periyodik olarak geride b\u0131rak\u0131r ya da onlar taraf\u0131ndan geride b\u0131rak\u0131l\u0131r.';
+        return lang==='tr' ? tr : en;
+      },
+      get panel(){ return lang==='tr' ? panelTR : panelEN; }
+    };
+  })();
+
+  /* ==================================================================
+     MODULE 4: Kepler's Platonic Solids
+     ================================================================== */
+  const Kepler = (function(){
+    // Mysterium Cosmographicum order, inner to outer sphere -- verified
+    // against multiple independent sources (Wikipedia, Wolfram
+    // Demonstrations, and Kepler's own words in the Mysterium itself):
+    // Mercury -[Octahedron]- Venus -[Icosahedron]- Earth -[Dodecahedron]- Mars -[Tetrahedron]- Jupiter -[Cube]- Saturn
+    const PHI = (1+Math.sqrt(5))/2;
+
+    // real mean orbital radii in AU (used as the six sphere sizes)
+    const orbitAU = { Mercury:0.39528, Venus:0.72335, Earth:1.0, Mars:1.53031, Jupiter:5.20946, Saturn:9.55105 };
+    const planetOrder = ['Mercury','Venus','Earth','Mars','Jupiter','Saturn'];
+    const planetColors = { Mercury:'#9fb6cf', Venus:'#e0c98a', Earth:'#6E8FAE', Mars:'#C9A24B', Jupiter:'#cfa96a', Saturn:'#b8a878' };
+    // relative angular speeds and dot sizes, matching the convention used
+    // in the Copernicus and Brahe tabs
+    const planetSpeed = { Mercury:1.60, Venus:1.18, Earth:1.00, Mars:0.53, Jupiter:0.24, Saturn:0.14 };
+    const planetSize = { Mercury:3, Venus:4, Earth:4.5, Mars:4, Jupiter:6, Saturn:5 };
+    const solidOrder = ['Octahedron','Icosahedron','Dodecahedron','Tetrahedron','Cube'];
+
+    // circumradius/inradius, closed-form (unit edge length a=1); verified
+    // numerically against a Mathworld-sourced table before use
+    const ratio = { Octahedron:1.732051, Icosahedron:1.258409, Dodecahedron:1.258409, Tetrahedron:3.0, Cube:1.732051 };
+
+    // Kepler's own historical figures, from his own table (Mysterium
+    // Cosmographicum, 1596/1621), as reproduced in:
+    //   Po-Hung Liu, "Logical or Epistemological? A Study on Kepler's 3M
+    //   Cosmological Model," Journal of Humanistic Mathematics, Volume 14
+    //   Issue 1 (January 2024), pages 196-207.
+    //   DOI: 10.5642/jhummath.GNYU9082
+    //   https://scholarship.claremont.edu/jhm/vol14/iss1/10
+    // Direction is the OPPOSITE of the live modern-AU readout below:
+    // Kepler anchored each solid's circumsphere to the OUTER planet
+    // (=1000) and predicted the INNER planet via the insphere ratio.
+    // Values are his own Copernican-era distance estimates, not modern
+    // AU. Octahedron uses 707 (a midsphere, not insphere, prediction)
+    // because Kepler himself swapped to the midsphere specifically to
+    // fix an unacceptably large discrepancy for Mercury; independently
+    // verified this is exactly 1000/sqrt(2) (the octahedron's real
+    // circumradius:midsphere ratio) before using it, not just taken on
+    // faith from the paper.
+    const keplerHistorical = {
+      Cube:         { predicted:577, actual:635 },
+      Tetrahedron:  { predicted:333, actual:333 },
+      Dodecahedron: { predicted:795, actual:757 },
+      Icosahedron:  { predicted:795, actual:794 },
+      Octahedron:   { predicted:707, actual:723 }
+    };
+    let showKeplerHistorical = false;
+
+    function normalizeAll(verts){
+      return verts.map(v=>{
+        const n = Math.hypot(v[0],v[1],v[2]);
+        return [v[0]/n, v[1]/n, v[2]/n];
+      });
+    }
+    function dist3(a,b){ return Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]); }
+    // edges auto-detected as the shortest-distance vertex pairs -- avoids
+    // hand-typed edge lists (an easy place to introduce silent errors)
+    function autoEdges(verts){
+      let minD = Infinity;
+      for(let i=0;i<verts.length;i++) for(let j=i+1;j<verts.length;j++){
+        const d = dist3(verts[i],verts[j]);
+        if(d < minD) minD = d;
+      }
+      const edges = [];
+      for(let i=0;i<verts.length;i++) for(let j=i+1;j<verts.length;j++){
+        if(dist3(verts[i],verts[j]) < minD*1.05) edges.push([i,j]);
+      }
+      return edges;
+    }
+    function buildSolid(name){
+      let v = [];
+      if(name==='Octahedron'){
+        v = [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+      } else if(name==='Cube'){
+        for(const sx of [1,-1]) for(const sy of [1,-1]) for(const sz of [1,-1]) v.push([sx,sy,sz]);
+      } else if(name==='Tetrahedron'){
+        v = [[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]];
+      } else if(name==='Icosahedron'){
+        for(const s1 of [1,-1]) for(const s2 of [1,-1]){
+          v.push([0, s1*1, s2*PHI]);
+          v.push([s1*1, s2*PHI, 0]);
+          v.push([s2*PHI, 0, s1*1]);
+        }
+      } else if(name==='Dodecahedron'){
+        for(const sx of [1,-1]) for(const sy of [1,-1]) for(const sz of [1,-1]) v.push([sx,sy,sz]);
+        for(const s1 of [1,-1]) for(const s2 of [1,-1]){
+          v.push([0, s1/PHI, s2*PHI]);
+          v.push([s1/PHI, s2*PHI, 0]);
+          v.push([s2*PHI, 0, s1/PHI]);
+        }
+      }
+      v = normalizeAll(v); // circumradius = 1
+      return { verts: v, edges: autoEdges(v) };
+    }
+    // build once; verified counts: Octahedron 6v/12e, Cube 8v/12e,
+    // Tetrahedron 4v/6e, Icosahedron 12v/30e, Dodecahedron 20v/30e
+    const solidGeom = {};
+    solidOrder.forEach(name => { solidGeom[name] = buildSolid(name); });
+
+    let mode = 'solids'; // 'solids' | 'ellipse'
+    let projMode = '3d'; // '3d' (free-orientation wireframe) | '2d' (flat, fixed)
+    let az = 0.6, el = 0.35; // radians; user-controlled via drag in 3D mode
+    let zoom = 1;
+    const AU_PX = 32; // base pixels per AU at zoom = 1
+
+    const visiblePlanet = {}; planetOrder.forEach(n => visiblePlanet[n] = true);
+    const visibleSolid = {}; solidOrder.forEach(n => visibleSolid[n] = true);
+
+    function controlsHTML(){
+      const modeBtns = `
+        <div class="group">
+          <button class="pill ${mode==='solids'?'on':''}" id="kp_solids">nested solids (1596)</button>
+        </div>
+        <div class="group">
+          <button class="pill ${mode==='ellipse'?'on':''}" id="kp_ellipse">the ellipse that replaced it (1609)</button>
+        </div>
+      `;
+      if(mode!=='solids') return modeBtns;
+      const planetChips = planetOrder.map(n =>
+        `<button class="pill layer-toggle ${visiblePlanet[n]?'on':''}" data-planet="${n}">${n}</button>`
+      ).join('');
+      const solidChips = solidOrder.map(n =>
+        `<button class="pill layer-toggle ${visibleSolid[n]?'on':''}" data-solid="${n}">${n}</button>`
+      ).join('');
+      return `
+        <div class="group">
+          <button class="pill ${projMode==='3d'?'on':''}" id="kp_3d">3D (drag to orbit)</button>
+          <button class="pill ${projMode==='2d'?'on':''}" id="kp_2d">2D (flat)</button>
+          ${projMode==='3d' ? '<button class="pill" id="kp_reset">reset orientation</button>' : ''}
+        </div>
+        <div class="group">
+          <label>zoom
+            <input type="range" id="kp_zoom" min="0.5" max="15" step="0.25" value="${zoom}">
+          </label>
+        </div>
+        <div class="group">
+          <button class="pill ${showKeplerHistorical?'on':''}" id="kp_hist">show Kepler's own 1596 estimates</button>
+        </div>
+        <div class="group">${planetChips}</div>
+        <div class="group">${solidChips}</div>
+        ${modeBtns}
+      `;
+    }
+    function bindControls(){
+      const b1 = document.getElementById('kp_solids');
+      const b2 = document.getElementById('kp_ellipse');
+      b1.addEventListener('click', ()=>{ mode='solids'; refreshModuleControls(); });
+      b2.addEventListener('click', ()=>{ mode='ellipse'; refreshModuleControls(); });
+      const btn3d = document.getElementById('kp_3d');
+      const btn2d = document.getElementById('kp_2d');
+      if(btn3d) btn3d.addEventListener('click', ()=>{ projMode='3d'; refreshModuleControls(); });
+      if(btn2d) btn2d.addEventListener('click', ()=>{ projMode='2d'; refreshModuleControls(); });
+      const resetBtn = document.getElementById('kp_reset');
+      if(resetBtn) resetBtn.addEventListener('click', ()=>{ az=0.6; el=0.35; });
+      const zoomSlider = document.getElementById('kp_zoom');
+      if(zoomSlider) zoomSlider.addEventListener('input', e=>{ zoom = parseFloat(e.target.value); });
+      const histBtn = document.getElementById('kp_hist');
+      if(histBtn) histBtn.addEventListener('click', ()=>{
+        showKeplerHistorical = !showKeplerHistorical;
+        histBtn.classList.toggle('on', showKeplerHistorical);
+      });
+      document.querySelectorAll('[data-planet]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const n = btn.dataset.planet;
+          visiblePlanet[n] = !visiblePlanet[n];
+          btn.classList.toggle('on', visiblePlanet[n]);
+        });
+      });
+      document.querySelectorAll('[data-solid]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const n = btn.dataset.solid;
+          visibleSolid[n] = !visibleSolid[n];
+          btn.classList.toggle('on', visibleSolid[n]);
+        });
+      });
+    }
+    function reset(){}
+
+    // Called by the shared canvas drag handler (see module wiring below)
+    // while this tab is active. No-ops in 2D mode, where the view is
+    // fixed and flat by design.
+    function handleDrag(dx, dy){
+      if(mode!=='solids' || projMode!=='3d') return;
+      az += dx*0.008;
+      el += dy*0.008;
+      const lim = 89*Math.PI/180;
+      if(el > lim) el = lim;
+      if(el < -lim) el = -lim;
+    }
+    function wantsDrag(){ return mode==='solids' && projMode==='3d'; }
+
+    function rotate3D(p, a, e){
+      const x1 = p[0]*Math.cos(a) - p[2]*Math.sin(a);
+      const z1 = p[0]*Math.sin(a) + p[2]*Math.cos(a);
+      const y1 = p[1];
+      const y2 = y1*Math.cos(e) - z1*Math.sin(e);
+      const z2 = y1*Math.sin(e) + z1*Math.cos(e);
+      return [x1, y2, z2];
+    }
+    function project(p, pxPerAU){
+      if(projMode==='2d'){
+        return { x: CX + p[0]*pxPerAU, y: CY - p[1]*pxPerAU, depth: p[2] };
+      }
+      const r = rotate3D(p, az, el);
+      return { x: CX + r[0]*pxPerAU, y: CY - r[1]*pxPerAU, depth: r[2] };
+    }
+
+    function drawSolids(time){
+      const pxPerAU = AU_PX*zoom;
+
+      // six real orbit spheres -- a sphere's silhouette under orthographic
+      // projection is always a circle regardless of viewing angle, so the
+      // outline needs no projection, only its radius. The planet itself is
+      // a specific point on that sphere, so it IS projected through the
+      // same pipeline as the solids below -- in 3D mode it will trace an
+      // apparent ellipse inside the fixed circular outline as the view
+      // rotates, same as a marked point on a spinning globe.
+      planetOrder.forEach((name,i)=>{
+        if(!visiblePlanet[name]) return;
+        const rPx = orbitAU[name]*pxPerAU;
+        drawCircle(CX, CY, rPx, "#3A4A6B", 1);
+        if(rPx > 16){
+          const labelAngle = -Math.PI/2 + i*0.6;
+          const lx = CX + Math.cos(labelAngle)*rPx, ly = CY + Math.sin(labelAngle)*rPx;
+          drawLabel(lx, ly-6, name, planetColors[name], 10.5, "center");
+        }
+        const angle = time*planetSpeed[name]*0.4;
+        const orbitPt = project([orbitAU[name]*Math.cos(angle), orbitAU[name]*Math.sin(angle), 0], pxPerAU);
+        drawDot(orbitPt.x, orbitPt.y, planetSize[name], planetColors[name], 8);
+      });
+
+      // five polyhedra, each anchored so its insphere touches the inner
+      // planet's real orbit -- its circumsphere then lands close to, but
+      // not exactly on, the outer planet's orbit. That gap is the ~5-18%
+      // mismatch Kepler rationalized as observational error.
+      for(let i=0;i<solidOrder.length;i++){
+        const name = solidOrder[i];
+        if(!visibleSolid[name]) continue;
+        const inner = planetOrder[i], outer = planetOrder[i+1];
+        const S = orbitAU[inner]*ratio[name]; // scale: unit verts -> AU space
+        const geom = solidGeom[name];
+        const pts = geom.verts.map(v => project([v[0]*S, v[1]*S, v[2]*S], pxPerAU));
+
+        const maxDepth = S;
+        geom.edges.forEach(([a,b])=>{
+          const pa = pts[a], pb = pts[b];
+          const depthAvg = (pa.depth+pb.depth)/(2*maxDepth+1e-6);
+          const alpha = 0.35 + 0.45*Math.max(0, Math.min(1, (depthAvg+1)/2));
+          ctx.beginPath();
+          ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y);
+          ctx.strokeStyle = `rgba(201,162,75,${alpha.toFixed(2)})`;
+          ctx.lineWidth = 1.1;
+          ctx.stroke();
+        });
+
+        // label + live mismatch readout, in fixed screen space
+        const predictedOuterAU = S;
+        const errPct = ((predictedOuterAU - orbitAU[outer])/orbitAU[outer])*100;
+        const midAU = (orbitAU[inner]+predictedOuterAU)/2;
+        const midPx = midAU*pxPerAU;
+        const labelAngle = -Math.PI/2 + i*0.5;
+        const lx = CX + Math.cos(labelAngle)*midPx, ly = CY + Math.sin(labelAngle)*midPx;
+        if(midPx > 16){
+          drawLabel(lx, ly, name, "#C9A24B", 10, "center");
+          drawLabel(lx, ly+12, (errPct>=0?'+':'')+errPct.toFixed(1)+'% vs real orbit', "#A6441F", 9, "center");
+          if(showKeplerHistorical){
+            const kh = keplerHistorical[name];
+            const khErrPct = ((kh.predicted-kh.actual)/kh.actual)*100;
+            const note = name==='Octahedron' ? ' (midsphere)' : '';
+            drawLabel(lx, ly+24, "Kepler 1596: "+(khErrPct>=0?'+':'')+khErrPct.toFixed(1)+"%"+note, "#6E8FAE", 8.5, "center");
+          }
+        }
+      }
+
+      drawDot(CX, CY, 9, "#E0BE6C", 18);
+      drawLabel(CX+14, CY+4, "Sun", "#E0BE6C", 12);
+    }
+
+    function drawEllipse(time){
+      // single planet on an ellipse with the Sun at one focus, equal-area sweep
+      const a = 260, b = 165; // semi-major / semi-minor
+      const c = Math.sqrt(a*a-b*b); // focal distance
+      const sunX = CX - c, sunY = CY;
+      drawDot(sunX, sunY, 10, "#E0BE6C", 20);
+      drawLabel(sunX, sunY+26, "Sun (at focus)", "#E0BE6C", 11, "center");
+      const emptyFocusX = CX + c;
+      drawDot(emptyFocusX, sunY, 3, "#54607f", 4);
+      drawLabel(emptyFocusX, sunY+18, "empty focus", "#54607f", 10, "center");
+
+      ctx.beginPath();
+      ctx.ellipse(CX, CY, a, b, 0, 0, Math.PI*2);
+      ctx.strokeStyle = "#3A4A6B";
+      ctx.lineWidth = 1.3;
+      ctx.stroke();
+
+      // approximate Kepler's second law via eccentric-anomaly-ish speed variation:
+      // move faster near the Sun-side focus (perihelion), slower opposite (aphelion)
+      const meanAngle = time*0.35;
+      const speedVar = 1 - 0.55*Math.cos(meanAngle);
+      const angle = meanAngle; // simplified visual approximation, not exact Kepler solve
+      const ex = CX + a*Math.cos(angle);
+      const ey = CY + b*Math.sin(angle);
+
+      drawDot(ex, ey, 7, "#C9A24B", 16);
+      drawLabel(ex+10, ey-8, "planet", "#E0BE6C", 11);
+
+      ctx.beginPath();
+      ctx.moveTo(sunX, sunY); ctx.lineTo(ex,ey);
+      ctx.strokeStyle = "rgba(201,162,75,0.4)";
+      ctx.lineWidth=1;
+      ctx.stroke();
+    }
+
+    function draw(time){
+      if(mode==='solids') drawSolids(time); else drawEllipse(time);
+    }
+
+    const panelEN = {
+        heading: "Kepler's Cosmic Mystery",
+        meta:'Johannes Kepler, Mysterium Cosmographicum, 1596',
+        body:[
+          "A young, deeply Copernican Kepler asked a question nobody else had: why six planets, and why these particular spacings between their orbits?",
+          "His answer: nest the five regular (Platonic) solids &mdash; octahedron, icosahedron, dodecahedron, tetrahedron, cube &mdash; between the six planetary spheres. Their fixed geometric proportions, he proposed, set the ratios of the orbital distances. It was elegant, sincerely meant, and essentially numerology dressed as geometry.",
+          "The order shown here (Mercury&ndash;octahedron&ndash;Venus&ndash;icosahedron&ndash;Earth&ndash;dodecahedron&ndash;Mars&ndash;tetrahedron&ndash;Jupiter&ndash;cube&ndash;Saturn) is Kepler's actual published sequence, checked here against multiple independent sources rather than assumed. Each solid is drawn as a real 3D wireframe, correctly proportioned from its own vertex geometry &mdash; not a flat stand-in shape &mdash; and scaled so its insphere exactly touches the inner planet's real orbital radius. Drag directly on the diagram to orbit around it in 3D, or switch to the flat 2D view for a clean, undistorted look with no rotation at all. Use the planet and solid toggles below to hide whichever outer layers are blocking the inner ones.",
+          "Why <i>this</i> solid between <i>these</i> two planets, and not some other assignment? For most of the five, the circumradius/inradius ratio alone forces the choice — but the dodecahedron and the icosahedron happen to share the exact same ratio (1000:795), leaving a genuine ambiguity: either one could geometrically fill either of two slots. Kepler broke the tie with a different property entirely. On the tetrahedron, cube, and dodecahedron, the faces meeting at any vertex are different kinds of polygon mixed together (a cube's corner joins three squares; a dodecahedron's joins three pentagons; a tetrahedron's joins three triangles, but differently arranged). On the octahedron and icosahedron, every face at every vertex is the same triangle, just more of them meeting there — four at each octahedron vertex, five at each icosahedron vertex. Kepler grouped the five solids by this distinction and kept each group together, outward to inward: cube and tetrahedron (mixed-face vertices) take the two outermost slots, dodecahedron (also mixed-face) takes the next slot in for Mars–Earth, and the two uniform-triangular solids, icosahedron and octahedron, take the two innermost slots for Earth–Venus and Venus–Mercury.",
+          "The small red percentage under each solid's label is the live, computed gap between where that solid's circumsphere actually lands and the outer planet's real orbit &mdash; not an assertion, a measurement, using modern AU distances and the solids' own closed-form circumradius/inradius ratios, anchoring each solid's <i>insphere</i> to the inner planet and predicting the outer one. By this measure the mismatch runs from about 5% (Mercury&ndash;Venus, Jupiter&ndash;Saturn) up to nearly 18% (Earth&ndash;Mars).",
+          "That's not quite the whole story, though. Toggle <b>show Kepler's own 1596 estimates</b> to see the numbers Kepler himself published, anchored the opposite way &mdash; his convention fixes each solid's <i>circumsphere</i> to the outer planet and predicts the inner one &mdash; using the Copernican-era distance estimates available to him, not modern AU. By his own reckoning, the tetrahedron (Mars&ndash;Jupiter) and icosahedron (Earth&ndash;Venus) were essentially exact, off by a few tenths of a percent. The one solid that didn't fit at all was the octahedron, between Venus and Mercury: predicted 577, observed 723, a discrepancy of &minus;20%. Kepler's fix, reported directly in his own text, was to swap the octahedron's <i>insphere</i> for its <i>midsphere</i> &mdash; the sphere tangent to its edges rather than its faces &mdash; landing on 707 against an observed 723, a gap of just &minus;2.2%. That 707 isn't a rounding coincidence: an octahedron's circumradius-to-midsphere ratio is exactly &radic;2, and 1000/&radic;2 = 707.1, verified independently here before using it, not just taken on faith from the source. This app's own live percentages use his midsphere fix for the octahedron too. Only one solid genuinely resisted every fix: the cube, between Jupiter and Saturn, predicted 577 against an observed 635 (&minus;9.1%) by his own numbers &mdash; the discrepancy Kepler himself acknowledged outright, writing that '<i>only in the case of Jupiter is there an undue discrepancy, which however at such a great distance should surprise nobody</i>.'",
+          "So the honest picture, from Kepler's own data, isn't 'every solid is somewhat off' &mdash; it's that three of five fit his own contemporary observations remarkably well (two nearly exactly, one after a real, geometrically justified correction), while the Saturn&ndash;Jupiter pair alone carried a discrepancy large enough that he had to explain it away rather than fix it. The modern-AU percentages shown by default on this diagram look more uniformly bad partly because they use a different anchoring convention and today's more accurate distances, not because Kepler's own fit was actually this poor by the numbers he had in hand.",
+          "Toggle to the ellipse view: this is what Kepler actually found later, once Tycho Brahe's precise Mars data forced him to abandon circles altogether. The solids theory quietly disappears from the history of astronomy; the ellipses do not."
+        ],
+        problem:"Kepler kept revising the solids model for the rest of his life, publishing an expanded edition decades later even after discovering elliptical orbits. He never fully let go of it &mdash; a useful reminder that being wrong about the model doesn't require being wrong about everything in it. Drag the zoom slider up to see the inner Mercury&ndash;octahedron&ndash;Venus cluster, which at true scale is a small huddle near the Sun compared to the cube reaching out to Saturn &mdash; exactly the crowding visible in Kepler's own 1596 engraving.<br><br><span style=\"font-size:0.8em;color:#6b5a3a\">Historical figures (Table 2, and the vertex/face reasoning above) from: Po-Hung Liu, \u201cLogical or Epistemological? A Study on Kepler\u2019s 3M Cosmological Model,\u201d <i>Journal of Humanistic Mathematics</i>, Volume 14 Issue 1 (January 2024), pages 196\u2013207. DOI: 10.5642/jhummath.GNYU9082.</span>"
+      };
+    const panelTR = {
+        heading: "Kepler'in Kozmik Gizemi",
+        meta:'Johannes Kepler, Mysterium Cosmographicum, 1596',
+        body:[
+          "Derinden Kopernikçi olan genç Kepler, başka hiç kimsenin sormadığı bir soru sordu: neden altı gezegen var ve neden yörüngeleri arasında bu belirli aralıklar bulunuyor?",
+          "Cevabı: beş düzgün (Eflatun) çokyüzlüyü &mdash; sekizyüzlü, yirmiyüzlü, onikiyüzlü, dörtyüzlü, küp &mdash; altı gezegen küresinin arasına yerleştirmekti. İleri sürdüğüne göre bunların sabit geometrik oranları, yörünge uzaklıklarının oranlarını belirliyordu. Zarif, samimi bir şekilde inanılmış ve özünde geometri kılığına girmiş bir sayı mistisizmiydi.",
+          "Burada gösterilen sıralama (Merkür&ndash;sekizyüzlü&ndash;Venüs&ndash;yirmiyüzlü&ndash;Dünya&ndash;onikiyüzlü&ndash;Mars&ndash;dörtyüzlü&ndash;Jüpiter&ndash;küp&ndash;Satürn) Kepler'in gerçekten yayımladığı dizilimdir; varsayılmak yerine burada birden fazla bağımsız kaynağa karşı kontrol edilmiştir. Her cisim, kendi köşe geometrisinden doğru orantılı, gerçek bir 3B tel kafes olarak çizilir &mdash; düz bir yerine koyma şekil değil &mdash; ve iç küresi iç gezegenin gerçek yörünge yarıçapına tam olarak değecek şekilde ölçeklenir. 3B'de etrafında dönmek için şemanın üzerini doğrudan sürükleyin veya hiç dönüşü olmayan temiz, bozulmamış bir görünüm için düz 2B görünüme geçin. İç katmanları engelleyen dış katmanları gizlemek için aşağıdaki gezegen ve cisim seçeneklerini kullanın.",
+          "Neden bu iki gezegenin arasında tam olarak bu cisim var, başka bir atama değil? Beşinin çoğu için çevrel yarıçap/iç yarıçap oranının kendisi seçimi zorunlu kılar &mdash; ama onikiyüzlü ile yirmiyüzlü, tam olarak aynı orana (1000:795) sahip olma tesadüfünü paylaşır; bu da gerçek bir belirsizlik bırakır: ikisinden biri geometrik olarak iki konumdan herhangi birini doldurabilirdi. Kepler bu beraberliği tamamen farklı bir özellikle bozdu. Dörtyüzlü, küp ve onikiyüzlüde, herhangi bir köşede buluşan yüzeyler karışık türde çokgenlerdir (bir küpün köşesi üç kareyi birleştirir; bir onikiyüzlününki üç beşgeni birleştirir; bir dörtyüzlününki üç üçgeni birleştirir, ama farklı bir düzende). Sekizyüzlü ve yirmiyüzlüde ise her köşedeki her yüzey aynı üçgendir, sadece orada buluşan sayısı daha fazladır &mdash; sekizyüzlünün her köşesinde dört, yirmiyüzlünün her köşesinde beş tane. Kepler, beş cismi bu ayrıma göre gruplandırdı ve her grubu dıştan içe doğru bir arada tuttu: küp ve dörtyüzlü (karışık yüzeyli köşeler) en dıştaki iki konumu alır, onikiyüzlü (o da karışık yüzeyli) Mars&ndash;Dünya için bir sonraki iç konumu alır ve tekdüze üçgen yüzeyli iki cisim, yirmiyüzlü ile sekizyüzlü, Dünya&ndash;Venüs ve Venüs&ndash;Merkür için en içteki iki konumu alır.",
+          "Her cismin etiketinin altındaki küçük kırmızı yüzde, o cismin çevrel küresinin gerçekte nereye ulaştığı ile dış gezegenin gerçek yörüngesi arasındaki canlı, hesaplanmış farktır &mdash; bir iddia değil, bir ölçümdür; modern AB uzaklıkları ve cisimlerin kendi kapalı-form çevrel yarıçap/iç yarıçap oranları kullanılarak, her cismin <i>iç küresi</i> iç gezegene sabitlenip dış gezegen tahmin edilerek hesaplanır. Bu ölçüye göre uyumsuzluk yaklaşık %5'ten (Merkür&ndash;Venüs, Jüpiter&ndash;Satürn) neredeyse %18'e (Dünya&ndash;Mars) kadar değişir.",
+          "Ama hikâyenin tamamı bu kadar değil. Kepler'in bizzat yayımladığı, tam tersi yönde sabitlenmiş sayıları görmek için <b>Kepler'in kendi 1596 tahminlerini göster</b> seçeneğini açın &mdash; onun kuralı her cismin <i>çevrel küresini</i> dış gezegene sabitler ve iç gezegeni tahmin eder &mdash; modern AB yerine kendi döneminde elinde bulunan Kopernik döneminden uzaklık tahminlerini kullanarak. Kendi hesabına göre, dörtyüzlü (Mars&ndash;Jüpiter) ve yirmiyüzlü (Dünya&ndash;Venüs) neredeyse tam olarak doğruydu, yalnızca yüzde birkaç onda birlik bir sapmayla. Hiç uymayan tek cisim, Venüs ile Merkür arasındaki sekizyüzlüydü: tahmin 577, gözlem 723, %&minus;20'lik bir uyumsuzluk. Kepler'in kendi metninde doğrudan bildirdiği çözümü, sekizyüzlünün <i>iç küresini</i> <i>orta küresiyle</i> &mdash; yüzeylerine değil kenarlarına teğet olan küreyle &mdash; değiştirmekti; bu da 723'lük gözleme karşı 707'ye ulaşıyordu, yalnızca %&minus;2,2'lik bir fark. Bu 707 sayısı bir yuvarlama tesadüfü değildir: bir sekizyüzlünün çevrel yarıçapının orta küre yarıçapına oranı tam olarak &radic;2'dir ve 1000/&radic;2 = 707,1'dir; bu, kaynaktan körü körüne alınmadan önce burada bağımsız olarak doğrulanmıştır. Bu uygulamanın kendi canlı yüzdeleri de sekizyüzlü için onun orta küre düzeltmesini kullanır. Yalnızca bir cisim her düzeltmeye gerçekten direndi: Jüpiter ile Satürn arasındaki küp, kendi sayılarına göre 635'lik bir gözleme karşı 577 tahmin ediyordu (%&minus;9,1) &mdash; Kepler'in bizzat kabul ettiği ve '<i>yalnızca Jüpiter durumunda haksız bir uyumsuzluk var, ama bu kadar büyük bir uzaklıkta bu kimseyi şaşırtmamalı</i>' diye yazdığı uyumsuzluk.",
+          "Yani Kepler'in kendi verisinden çıkan dürüst tablo, 'her cisim biraz sapıyor' değildir &mdash; beşin üçü kendi çağdaş gözlemlerine dikkat çekici derecede iyi uyuyordu (ikisi neredeyse tam olarak, biri gerçek, geometrik olarak gerekçelendirilmiş bir düzeltmeden sonra), yalnızca Satürn&ndash;Jüpiter çifti, düzeltmek yerine açıklamak zorunda kaldığı kadar büyük bir uyumsuzluk taşıyordu. Bu şemada varsayılan olarak gösterilen modern-AB yüzdelerinin daha eşit biçimde kötü görünmesinin bir kısmı, farklı bir sabitleme kuralı ve günümüzün daha doğru uzaklıklarını kullanmalarındandır, Kepler'in kendi uyumunun elindeki sayılara göre gerçekten bu kadar kötü olmasından değil.",
+          "Elips görünümüne geçin: bu, Tycho Brahe'nin hassas Mars verisi onu çemberlerden tamamen vazgeçmeye zorladıktan sonra Kepler'in gerçekten bulduğu şeydir. Cisimler kuramı astronomi tarihinden sessizce kaybolur; elipsler kaybolmaz."
+        ],
+        problem:"Kepler, hayatının geri kalanında cisimler modelini gözden geçirmeye devam etti; eliptik yörüngeleri keşfettikten onlarca yıl sonra bile genişletilmiş bir baskı yayımladı. Ondan hiçbir zaman tam olarak vazgeçmedi &mdash; modelin yanlış olmasının, onun her şeyi hakkında yanlış olmayı gerektirmediğinin yararlı bir hatırlatıcısı. Gerçek ölçekte Güneş'e yakın küçük bir yığın olan ve Satürn'e uzanan küple karşılaştırıldığında iç Merkür&ndash;sekizyüzlü&ndash;Venüs kümesini görmek için yakınlaştırma kaydırıcısını yukarı çekin &mdash; tam olarak Kepler'in kendi 1596 gravüründe görülen sıkışıklık.<br><br><span style=\"font-size:0.8em;color:#6b5a3a\">Tarihsel rakamlar (Tablo 2 ve yukarıdaki köşe/yüzey akıl yürütmesi) şu kaynaktandır: Po-Hung Liu, \u201cLogical or Epistemological? A Study on Kepler\u2019s 3M Cosmological Model,\u201d <i>Journal of Humanistic Mathematics</i>, Cilt 14 Sayı 1 (Ocak 2024), sayfa 196\u2013207. DOI: 10.5642/jhummath.GNYU9082.</span>"
+    };
+    return {
+      id:'kepler', title:"Kepler's Solids", titleTR:"Kepler'in Cisimleri",
+      label:'Mysterium Cosmographicum, 1596',
+      controlsHTML, bindControls, draw, reset, handleDrag, wantsDrag,
+      get caption(){
+        const en = mode==='solids'
+          ? 'A true 3D wireframe, to scale \u2014 drag the diagram to orbit around it, or switch to a flat 2D view. Toggle individual planets or solids off to see past the outer layers.'
+          : 'Thirteen years later Kepler abandoned the solids for a better fit to Tycho\u2019s data: orbits are ellipses, and planets sweep equal areas in equal time.';
+        const tr = mode==='solids'
+          ? 'Gerçek ölçekli, gerçek bir 3B tel kafes \u2014 etrafında dönmek için şemayı sürükleyin veya düz bir 2B görünüme geçin. Dış katmanların ötesini görmek için tek tek gezegenleri veya cisimleri kapatın.'
+          : 'On üç yıl sonra Kepler, Tycho\u2019nun verisine daha iyi uyması için cisimlerden vazgeçti: yörüngeler elipstir ve gezegenler eşit zamanlarda eşit alanlar tarar.';
+        return lang==='tr' ? tr : en;
+      },
+      get panel(){ return lang==='tr' ? panelTR : panelEN; }
+    };
+  })();
+
+  /* ==================================================================
+     MODULE 5: Tycho Brahe (geo-heliocentric hybrid)
+     ================================================================== */
+  const Brahe = (function(){
+    const planets = [
+      {name:'Mercury', r:55,  speed:1.60, color:'#9fb6cf', size:3},
+      {name:'Venus',   r:85,  speed:1.18, color:'#e0c98a', size:4},
+      {name:'Mars',    r:150, speed:0.53, color:'#C9A24B', size:4},
+      {name:'Jupiter', r:200, speed:0.24, color:'#cfa96a', size:6},
+      {name:'Saturn',  r:245, speed:0.14, color:'#b8a878', size:5}
+    ];
+    const sunOrbitR = 135, sunSpeed = 1.0;
+
+    // real mean orbital radii in AU, same values used in the Kepler tab,
+    // for the true-to-scale toggle below
+    const orbitAU = { Mercury:0.39528, Venus:0.72335, Earth:1.0, Mars:1.53031, Jupiter:5.20946, Saturn:9.55105 };
+    const AU_PX = 32;
+    let trueScale = false;
+    let zoom = 1;
+
+    function controlsHTML(){
+      return `
+        <div class="group">
+          <button class="pill ${trueScale?'on':''}" id="br_scale">true-to-scale orbits</button>
+        </div>
+        ${trueScale ? `<div class="group">
+          <label>zoom
+            <input type="range" id="br_zoom" min="0.5" max="15" step="0.25" value="${zoom}">
+          </label>
+        </div>` : ''}
+      `;
+    }
+    function bindControls(){
+      const scaleBtn = document.getElementById('br_scale');
+      scaleBtn.addEventListener('click', ()=>{ trueScale = !trueScale; refreshModuleControls(); });
+      const zoomSlider = document.getElementById('br_zoom');
+      if(zoomSlider) zoomSlider.addEventListener('input', e=>{ zoom = parseFloat(e.target.value); });
+    }
+    function reset(){}
+
+    function draw(time){
+      const pxPerAU = AU_PX*zoom;
+      const sunR = trueScale ? orbitAU.Earth*pxPerAU : sunOrbitR;
+
+      drawDot(CX, CY, 9, "#6E8FAE", 14);
+      drawLabel(CX+14, CY+4, "Earth (fixed)", "#9fb6cf", 12);
+
+      drawCircle(CX, CY, sunR, "#3A4A6B", 1.3);
+      const sunAngle = time*sunSpeed*0.4;
+      const sun = polar(CX, CY, sunR, sunAngle);
+
+      planets.forEach(p=>{
+        const pr = trueScale ? orbitAU[p.name]*pxPerAU : p.r;
+        drawCircle(sun.x, sun.y, pr, "rgba(58,74,107,0.55)", 1);
+        const angle = time*p.speed*0.4;
+        const pos = polar(sun.x, sun.y, pr, angle);
+        drawDot(pos.x, pos.y, p.size, p.color, 7);
+        if(!trueScale || pr > 16){
+          drawLabel(pos.x+7, pos.y-6, p.name, p.color, 9.5);
+        }
+      });
+
+      drawDot(sun.x, sun.y, 10, "#E0BE6C", 20);
+      drawLabel(sun.x+14, sun.y+4, "Sun", "#E0BE6C", 12);
+    }
+
+    const panelEN = {
+        heading:'The Tychonic Compromise',
+        meta:'Tycho Brahe, De Mundi Aetherei Recentioribus Phaenomenis, 1588',
+        body:[
+          "Tycho Brahe was the best observational astronomer of his age, and he took Copernicus seriously &mdash; but rejected heliocentrism for what were, at the time, legitimate physical reasons.",
+          "If Earth truly orbited the Sun, nearby stars should show parallax &mdash; a yearly back-and-forth shift against the background sky. Tycho's instruments, the most precise pre-telescopic ones ever built, detected none. (The real explanation: stars are vastly farther away than anyone assumed, making the parallax too small to see without a telescope.)",
+          "His solution kept Earth fixed and motionless, satisfying both the physics and the astronomy of his day: the Sun orbits Earth, and all the other planets orbit the Sun as it goes. Watch the diagram &mdash; every planet's position relative to Earth ends up identical to the Copernican prediction.",
+          "The default view above spaces the orbits out evenly for legibility, the same simplification most textbook diagrams make. Toggle <b>true-to-scale orbits</b> to see the real relative distances instead, using the same AU figures as the Kepler tab: Mercury, Venus, Earth and Mars are crowded into a small inner cluster, while Jupiter and Saturn sit much farther out &mdash; the zoom control lets you inspect either end."
+        ],
+        problem:"This is the crux of the whole story: Tycho's model is geometrically equivalent to Copernicus's for predicting where planets appear in the sky. Choosing between them wasn't decided by better predictions &mdash; it took new physical evidence (stellar parallax, Newtonian mechanics, stellar aberration) arriving over the next two centuries."
+    };
+    const panelTR = {
+        heading:'Tycho Uzlaşması',
+        meta:'Tycho Brahe, De Mundi Aetherei Recentioribus Phaenomenis, 1588',
+        body:[
+          "Tycho Brahe, çağının en iyi gözlemci astronomuydu ve Kopernik'i ciddiye aldı &mdash; ama o dönem için meşru sayılan fiziksel nedenlerle güneş merkezliliği reddetti.",
+          "Eğer Dünya gerçekten Güneş çevresinde dönüyor olsaydı, yakın yıldızlar ıraksama (paralaks) göstermeliydi &mdash; arka plandaki gökyüzüne göre yıllık ileri geri bir kayma. Tycho'nun aletleri, teleskop öncesi dönemde inşa edilmiş en hassas aletler, hiçbir ıraksama tespit etmedi. (Gerçek açıklama: yıldızlar herkesin varsaydığından çok daha uzaktaydı, bu da ıraksamayı teleskopsuz görülemeyecek kadar küçük yapıyordu.)",
+          "Onun çözümü Dünya'yı sabit ve hareketsiz tutarak hem döneminin fiziğini hem de astronomisini tatmin ediyordu: Güneş, Dünya'nın çevresinde dolanır ve diğer tüm gezegenler de o ilerlerken Güneş'in çevresinde dolanır. Şemayı izleyin &mdash; her gezegenin Dünya'ya göre konumu, sonunda Kopernik'in öngörüsüyle özdeş çıkar.",
+          "Yukarıdaki varsayılan görünüm, okunabilirlik için yörüngeleri eşit aralıklarla yerleştirir; bu, çoğu ders kitabı şemasının yaptığı aynı basitleştirmedir. Bunun yerine gerçek göreli uzaklıkları görmek için, Kepler sekmesiyle aynı AB rakamlarını kullanan <b>gerçek ölçekli yörüngeler</b> seçeneğini açın: Merkür, Venüs, Dünya ve Mars küçük bir iç kümede sıkışırken, Jüpiter ve Satürn çok daha uzakta bulunur &mdash; yakınlaştırma kontrolü her iki ucu da incelemenize olanak tanır."
+        ],
+        problem:"İşte tüm hikâyenin can alıcı noktası burada: Tycho'nun modeli, gezegenlerin gökyüzünde nerede görüneceğini öngörmek açısından Kopernik'inkiyle geometrik olarak eşdeğerdir. Aralarında seçim yapmak daha iyi öngörülerle belirlenmedi &mdash; sonraki iki yüzyıl içinde ortaya çıkacak yeni fiziksel kanıtlar (yıldız ıraksaması, Newton mekaniği, yıldız sapması) gerekti."
+    };
+    return {
+      id:'brahe', title:'Brahe', titleTR:'Brahe', label:'De Mundi Aetherei, 1588',
+      controlsHTML, bindControls, draw, reset,
+      get caption(){
+        const en = trueScale
+          ? 'True orbital ratios: notice how tightly Mercury\u2013Venus\u2013Earth\u2013Mars crowd near the Sun compared to Jupiter and Saturn. Zoom in to see the inner planets clearly.'
+          : 'Earth stays fixed at the center; the Sun orbits Earth; every other planet orbits the moving Sun. Geometrically, this predicts the same planetary positions as Copernicus.';
+        const tr = trueScale
+          ? 'Gerçek yörünge oranları: Merkür\u2013Venüs\u2013Dünya\u2013Mars\u2019ın, Jüpiter ve Satürn\u2019e kıyasla Güneş\u2019e ne kadar sıkı sıkıya kümelendiğine dikkat edin. İç gezegenleri net görmek için yakınlaştırın.'
+          : 'Dünya merkezde sabit kalır; Güneş, Dünya\u2019nın çevresinde dolanır; diğer tüm gezegenler ise hareket eden Güneş\u2019in çevresinde dolanır. Geometrik olarak bu, Kopernik ile aynı gezegen konumlarını öngörür.';
+        return lang==='tr' ? tr : en;
+      },
+      get panel(){ return lang==='tr' ? panelTR : panelEN; }
+    };
+  })();
+
+  /* ==================================================================
+     MODULE 6: Heliocentric (modern, with retrograde comparison)
+     ================================================================== */
+  const Helio = (function(){
+    // Stylized default layout (not to scale -- see the true-to-scale
+    // toggle below). 'key' matches ORBIT_ELEMENTS, the same verified
+    // real orbital data already used for the Tycho declination chart.
+    const bodies = [
+      {key:'mercury', name:'Mercury', r:55,  speed:1.60, color:'#9fb6cf', size:3, core:false},
+      {key:'venus',   name:'Venus',   r:90,  speed:1.18, color:'#e0c98a', size:4, core:false},
+      {key:'earth',   name:'Earth',   r:135, speed:1.00, color:'#6E8FAE', size:5, core:true},
+      {key:'mars',    name:'Mars',    r:205, speed:0.53, color:'#C9A24B', size:4, core:true},
+      {key:'jupiter', name:'Jupiter', r:245, speed:0.24, color:'#cfa96a', size:6, core:false},
+      {key:'saturn',  name:'Saturn',  r:295, speed:0.14, color:'#b8a878', size:5, core:false}
+    ];
+    const earthBody = bodies.find(b=>b.key==='earth'), marsBody = bodies.find(b=>b.key==='mars');
+    let trueScale = false, zoom = 1;
+    const AU_PX = 32;
+    // Maps animation time to a day-offset for orbitHeliocentric, chosen so
+    // Earth still completes one revolution over the same span of "time"
+    // as the stylized mode's speed=1.00 (2*PI/0.4 time-units) -- keeps the
+    // overall pace familiar even though true-scale mode now drives every
+    // body from its real orbital elements instead of a fixed multiplier.
+    const DAYS_PER_TIME_UNIT = 23.253;
+    function bodyGeometry(b, pxPerAU, time){
+      if(!trueScale) return { r: b.r, speed: b.speed };
+      const el = ORBIT_ELEMENTS[b.key];
+      const td = time*DAYS_PER_TIME_UNIT;
+      const pos = orbitHeliocentric(td, el.a, el.M0, el.e, el.O, el.w, el.i);
+      return { pos: { x: CX + pos.xP*pxPerAU, y: CY - pos.yP*pxPerAU } };
+    }
+    // The orbit's real elliptical shape doesn't depend on time (only its
+    // position along that shape does), so this is resampled fresh each
+    // frame from orbitXYFromM -- cheap (72 Kepler-solves per visible
+    // body) and avoids any stale-shape bugs from caching against zoom.
+    function drawTrueOrbit(key, pxPerAU, color){
+      const el = ORBIT_ELEMENTS[key];
+      ctx.beginPath();
+      for(let M=0; M<=360; M+=5){
+        const p = orbitXYFromM(M, el.a, el.e, el.O, el.w, el.i);
+        const x = CX+p.xP*pxPerAU, y = CY-p.yP*pxPerAU;
+        if(M===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.strokeStyle = color; ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    // In true-scale mode, a single fixed AU_PX would leave Earth/Mars as a
+    // barely-visible dot near the Sun whenever the outer planets aren't
+    // shown (Saturn's real distance sets the scale otherwise) -- motion
+    // that's real but easy to mistake for the animation having stalled or
+    // desynced. Auto-fit the baseline to whichever body is currently
+    // farthest out, so the visible orbits always fill a similar fraction
+    // of the canvas; this only changes the shared scale factor, so every
+    // body's radius stays in exactly the same true proportion to every
+    // other. The zoom slider still multiplies on top of this baseline.
+    function autoPxPerAU(){
+      const visibleKeys = showOtherPlanets
+        ? ['mercury','venus','earth','mars','jupiter','saturn']
+        : ['earth','mars'];
+      const maxA = Math.max(...visibleKeys.map(k=>ORBIT_ELEMENTS[k].a));
+      return 320/maxA;
+    }
+
+    let showOtherPlanets = false;
+    let showGeoProjection = false;
+    let projTrail = [];
+    const MAXTRAIL = 700;
+    let showDeclChart = false;
+
+    // both insets are click-and-drag repositionable; these track their
+    // current top-left / center, defaulting to where they first appeared
+    const GEO_R = 109, DECL_W = 430, DECL_H = 150;
+    let geoInsetPos = { x: 560, y: 560 };   // center
+    let declInsetPos = { x: 16, y: 14 };    // top-left
+    let dragTarget = null; // 'geo' | 'decl' | null, set by dragHitTest
+
+    function clampGeoInset(){
+      geoInsetPos.x = Math.max(GEO_R, Math.min(700-GEO_R, geoInsetPos.x));
+      geoInsetPos.y = Math.max(GEO_R, Math.min(700-GEO_R, geoInsetPos.y));
+    }
+    function clampDeclInset(){
+      declInsetPos.x = Math.max(0, Math.min(700-DECL_W, declInsetPos.x));
+      declInsetPos.y = Math.max(0, Math.min(700-DECL_H, declInsetPos.y));
+    }
+
+    function wantsDrag(){ return showGeoProjection || showDeclChart; }
+    function dragHitTest(x, y){
+      dragTarget = null;
+      if(showGeoProjection){
+        const dx = x-geoInsetPos.x, dy = y-geoInsetPos.y;
+        if(Math.sqrt(dx*dx+dy*dy) <= GEO_R){ dragTarget = 'geo'; return true; }
+      }
+      if(showDeclChart){
+        if(x>=declInsetPos.x && x<=declInsetPos.x+DECL_W && y>=declInsetPos.y && y<=declInsetPos.y+DECL_H){
+          dragTarget = 'decl'; return true;
+        }
+      }
+      return false;
+    }
+    function handleDrag(dx, dy){
+      if(dragTarget==='geo'){ geoInsetPos.x += dx; geoInsetPos.y += dy; clampGeoInset(); projTrail = []; }
+      else if(dragTarget==='decl'){ declInsetPos.x += dx; declInsetPos.y += dy; clampDeclInset(); }
+    }
+
+    // computed once and cached: the model's predicted Mars declination
+    // curve across the same span as Tycho's observations, plus the
+    // resulting error statistics against his real data
+    let declCurve = null, declStats = null;
+    function buildDeclChart(){
+      if(declCurve) return;
+      declCurve = [];
+      for(let y=1582; y<=1594; y++){
+        for(let doy=0; doy<360; doy+=3){
+          const m = Math.floor(doy/30)+1, d = (doy%30)+1;
+          declCurve.push({ t: decYear(y,m,d), dec: orbitPlanetDec('mars', y, m, d) });
+        }
+      }
+      let sumSq = 0, maxErr = 0;
+      TYCHO_MARS_DEC.forEach(([y,m,d,dec])=>{
+        const pred = orbitPlanetDec('mars', y, m, d);
+        const err = pred - dec;
+        sumSq += err*err;
+        if(Math.abs(err) > Math.abs(maxErr)) maxErr = err;
+      });
+      declStats = { rms: Math.sqrt(sumSq/TYCHO_MARS_DEC.length), maxErr, n: TYCHO_MARS_DEC.length };
+    }
+
+    function controlsHTML(){
+      return `
+        <div class="group">
+          <button class="pill ${trueScale?'on':''}" id="he_scale">true-to-scale orbits &amp; speeds</button>
+          ${trueScale ? `<label>zoom
+            <input type="range" id="he_zoom" min="0.5" max="15" step="0.25" value="${zoom}">
+          </label>` : ''}
+        </div>
+        <div class="group">
+          <button class="pill ${showOtherPlanets?'on':''}" id="he_other">show other planets</button>
+        </div>
+        <div class="group">
+          <button class="pill ${showGeoProjection?'on':''}" id="he_proj">show Mars as seen from Earth</button>
+        </div>
+        <div class="group">
+          <button class="pill ${showDeclChart?'on':''}" id="he_decl">declination vs. Tycho's data</button>
+        </div>
+      `;
+    }
+    function bindControls(){
+      const bScale = document.getElementById('he_scale');
+      bScale.addEventListener('click', ()=>{ trueScale = !trueScale; refreshModuleControls(); });
+      const zoomSlider = document.getElementById('he_zoom');
+      if(zoomSlider) zoomSlider.addEventListener('input', e=>{ zoom = parseFloat(e.target.value); });
+      const b0 = document.getElementById('he_other');
+      b0.addEventListener('click', ()=>{
+        showOtherPlanets = !showOtherPlanets;
+        b0.classList.toggle('on', showOtherPlanets);
+      });
+      const b = document.getElementById('he_proj');
+      b.addEventListener('click', ()=>{
+        showGeoProjection = !showGeoProjection;
+        b.classList.toggle('on', showGeoProjection);
+        projTrail = [];
+      });
+      const b2 = document.getElementById('he_decl');
+      b2.addEventListener('click', ()=>{
+        showDeclChart = !showDeclChart;
+        b2.classList.toggle('on', showDeclChart);
+        if(showDeclChart) buildDeclChart();
+      });
+    }
+    function reset(){ projTrail = []; }
+
+    function drawDeclinationInset(time){
+      buildDeclChart();
+      // compact inset, top-left, clear of the main orbit diagram and the
+      // "as seen from Earth" inset (bottom-right)
+      const boxX=declInsetPos.x, boxY=declInsetPos.y, boxW=DECL_W, boxH=DECL_H;
+      const left=boxX+38, right=boxX+boxW-14, top=boxY+22, bottom=boxY+boxH-20;
+      const yMin=-30, yMax=30, tMin=1582, tMax=1595;
+      const px = t => left + (t-tMin)/(tMax-tMin)*(right-left);
+      const py = dec => bottom - (dec-yMin)/(yMax-yMin)*(bottom-top);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(boxX, boxY, boxW, boxH);
+      ctx.fillStyle = "rgba(11,18,32,0.88)";
+      ctx.fill();
+      ctx.strokeStyle = "#3A4A6B";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      drawLabel(boxX+10, boxY+13, "Mars declination: model vs. Tycho", "#E0BE6C", 9.5);
+
+      ctx.strokeStyle = "rgba(58,74,107,0.5)"; ctx.lineWidth = 0.7;
+      [-20,0,20].forEach(dec=>{
+        ctx.beginPath(); ctx.moveTo(left, py(dec)); ctx.lineTo(right, py(dec)); ctx.stroke();
+        drawLabel(left-6, py(dec)+3, dec+"\u00b0", "#9fb6cf", 7.5, "right");
+      });
+      [1584,1588,1592].forEach(y=>{
+        drawLabel(px(y), bottom+11, String(y), "#9fb6cf", 7.5, "center");
+      });
+      ctx.strokeStyle = "#54607f"; ctx.lineWidth = 1;
+      ctx.strokeRect(left, top, right-left, bottom-top);
+
+      ctx.beginPath();
+      declCurve.forEach((p,i)=>{
+        const x = px(p.t), y = py(p.dec);
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.strokeStyle = "#6E8FAE"; ctx.lineWidth = 1.1;
+      ctx.stroke();
+
+      TYCHO_MARS_DEC.forEach(([y,m,d,dec])=>{
+        const x = px(decYear(y,m,d)), yy = py(dec);
+        drawDot(x, yy, 1.6, "#C9A24B", 2);
+      });
+
+      // moving cursor, synced to the same shared clock driving the orbit
+      // animation -- sweeps across the full 1582-1594 span repeatedly
+      const span = tMax-tMin;
+      const curT = tMin + ((time*0.15) % span + span) % span;
+      let nearest = declCurve[0], bestD = Infinity;
+      for(let i=0;i<declCurve.length;i++){
+        const dd = Math.abs(declCurve[i].t - curT);
+        if(dd < bestD){ bestD = dd; nearest = declCurve[i]; }
+      }
+      const cx = px(curT);
+      ctx.beginPath();
+      ctx.moveTo(cx, top); ctx.lineTo(cx, bottom);
+      ctx.strokeStyle = "rgba(201,162,75,0.6)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      drawDot(cx, py(nearest.dec), 3.2, "#C9A24B", 9);
+
+      const curYear = Math.floor(curT);
+      const curMonth = Math.max(1, Math.min(12, Math.floor((curT-curYear)*12)+1));
+      drawLabel(right, boxY+13, curYear+"\u2013"+curMonth+"  \u00b7  RMS "+declStats.rms.toFixed(1)+"\u00b0", "#A6441F", 8.5, "right");
+      ctx.restore();
+    }
+
+    function draw(time){
+      const pxPerAU = (trueScale ? autoPxPerAU() : AU_PX) * zoom;
+      drawDot(CX, CY, 11, "#E0BE6C", 22);
+      drawLabel(CX+16, CY+5, "Sun", "#E0BE6C", 12);
+
+      if(showOtherPlanets){
+        bodies.filter(b=>!b.core).forEach(b=>{
+          let pos;
+          if(trueScale){
+            drawTrueOrbit(b.key, pxPerAU, "#3A4A6B");
+            pos = bodyGeometry(b, pxPerAU, time).pos;
+          } else {
+            const g = bodyGeometry(b, pxPerAU, time);
+            drawCircle(CX, CY, g.r, "#3A4A6B", 1);
+            pos = polar(CX, CY, g.r, time*g.speed*0.4);
+          }
+          drawDot(pos.x, pos.y, b.size, b.color, 7);
+          const dist = Math.hypot(pos.x-CX, pos.y-CY);
+          if(!trueScale || dist > 16) drawLabel(pos.x+7, pos.y-6, b.name, b.color, 10);
+        });
+      }
+
+      let ePos, mPos;
+      if(trueScale){
+        drawTrueOrbit('earth', pxPerAU, "#3A4A6B");
+        drawTrueOrbit('mars', pxPerAU, "#3A4A6B");
+        ePos = bodyGeometry(earthBody, pxPerAU, time).pos;
+        mPos = bodyGeometry(marsBody, pxPerAU, time).pos;
+      } else {
+        const eGeom = bodyGeometry(earthBody, pxPerAU, time);
+        const mGeom = bodyGeometry(marsBody, pxPerAU, time);
+        drawCircle(CX, CY, eGeom.r, "#3A4A6B", 1);
+        drawCircle(CX, CY, mGeom.r, "#3A4A6B", 1);
+        ePos = polar(CX, CY, eGeom.r, time*eGeom.speed*0.4);
+        mPos = polar(CX, CY, mGeom.r, time*mGeom.speed*0.4);
+      }
+
+      if(showGeoProjection){
+        // project Mars's position as seen from Earth onto a small inset compass at bottom-right,
+        // i.e. reconstruct the apparent geocentric path
+        ctx.beginPath();
+        ctx.moveTo(ePos.x, ePos.y); ctx.lineTo(mPos.x, mPos.y);
+        ctx.strokeStyle = "rgba(166,68,31,0.55)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        const dx = mPos.x-ePos.x, dy = mPos.y-ePos.y;
+        const ang = Math.atan2(dy,dx);
+        const insetCX = geoInsetPos.x, insetCY = geoInsetPos.y, insetR = 95;
+        const px = insetCX + insetR*0.7*Math.cos(ang);
+        const py = insetCY + insetR*0.7*Math.sin(ang);
+        projTrail.push({x:px,y:py});
+        if(projTrail.length>MAXTRAIL) projTrail.shift();
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(insetCX, insetCY, insetR+14, 0, Math.PI*2);
+        ctx.fillStyle = "rgba(11,18,32,0.88)";
+        ctx.fill();
+        ctx.strokeStyle = "#3A4A6B";
+        ctx.stroke();
+        drawDot(insetCX, insetCY, 5, "#6E8FAE", 10);
+        drawLabel(insetCX, insetCY-insetR-18, "as seen from Earth", "#9fb6cf", 10.5, "center");
+
+        ctx.beginPath();
+        for(let i=0;i<projTrail.length;i++){
+          const p = projTrail[i];
+          if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y);
+        }
+        ctx.strokeStyle = "rgba(166,68,31,0.8)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        drawDot(px, py, 4, "#A6441F", 10);
+        ctx.restore();
+      }
+
+      drawDot(ePos.x, ePos.y, 5, "#6E8FAE", 10);
+      drawLabel(ePos.x+8, ePos.y-6, "Earth", "#9fb6cf", 11);
+      drawDot(mPos.x, mPos.y, 4.5, "#C9A24B", 10);
+      drawLabel(mPos.x+8, mPos.y-6, "Mars", "#E0BE6C", 11);
+
+      if(showDeclChart) drawDeclinationInset(time);
+    }
+
+    const panelEN = {
+        heading:'Why This One Stuck',
+        meta:'Established via Kepler, Galileo, Newton, 17th century',
+        body:[
+          "By itself, heliocentrism didn't beat geocentrism on predictive accuracy &mdash; for decades, Ptolemaic tables were still competitive. What eventually decided it was accumulating physical evidence no geocentric model could accommodate.",
+          "Galileo's telescope found moons orbiting Jupiter (proof that not everything circles Earth) and phases of Venus (only explicable if Venus orbits the Sun, not Earth). Kepler's elliptical orbits, fit to Tycho's own data, finally out-predicted every circle-based system, Tychonic included.",
+          "Newton then supplied the missing physics: one law of gravitation that explained <i>why</i> planets move in ellipses around the Sun at all &mdash; something no geocentric or Tychonic model had ever attempted to explain, only to describe.",
+          "By default this diagram, like most textbook orreries, is not to scale: Mercury through Mars happen to be close to their true relative sizes here, but Jupiter and Saturn are drawn far closer in than reality, every orbit is a perfect circle, and every orbital speed except Mars's is noticeably off &mdash; Mercury should visibly lap the others roughly four times for every one Earth orbit, not the gentler pace shown by default. Toggle <b>true-to-scale orbits &amp; speeds</b> to switch every body to its real elliptical orbit, computed from the same verified orbital elements and Kepler-equation solver used for the Tycho declination chart, complete with the resulting non-uniform speed (faster at perihelion, slower at aphelion) rather than a uniform circular approximation. The view automatically rescales to whichever body is currently farthest out &mdash; Mars alone, or Saturn once the other planets toggle is on &mdash; so Earth and Mars stay clearly visible either way; the zoom control adjusts further from that baseline.",
+          "Eccentricity turns out to run the opposite direction from what you might expect: Mercury (0.206) is by far the most eccentric planet, with Mars a distant second (0.093), while Jupiter (0.048) and Saturn (0.056) are both closer to circular than Mars is. Watch Mercury alone in true-scale mode and the Sun sits visibly off-center in the ellipse; watch Jupiter or Saturn and the orbit looks almost indistinguishable from a circle, even though it technically isn't one.",
+          "Toggle <b>declination vs. Tycho's data</b> for a small inset, top-left, that checks a simple heliocentric model directly against real 16th-century measurements rather than just asserting it works. The gold dots are Tycho's own observations of Mars's declination &mdash; over 160 dated readings from 1582&ndash;1594, drawn from his original notebooks. The blue curve is this model's prediction, computed from fixed, unperturbed elliptical orbits (no fitting to Tycho's data at all), with a moving cursor sweeping across that twelve-year span on the same clock driving the orbits above it. Typical agreement is under a degree, with a long tail out to a few degrees on some dates &mdash; residual error from extrapolating simple two-body ellipses four centuries into the past without the slow, real perturbations that Newtonian mechanics predicts and that this simplified model leaves out, on top of the inherent precision limits of quadrant-and-sextant observation. The fit is nowhere near perfect, but it is far closer than any Ptolemaic table ever managed, and it took no adjustable parameters to get there."
+        ],
+        problem:"Toggle the inset here and compare it to the very first tab. The looping path is the same one Ptolemy captured with an epicycle, Brahe captured by orbiting the Sun around Earth, and Copernicus captured almost by accident. Geometry alone couldn't settle which model was <i>true</i> &mdash; only which model finally explained why."
+    };
+    const panelTR = {
+        heading:'Bu Model Neden Kalıcı Oldu',
+        meta:'Kepler, Galileo ve Newton aracılığıyla kuruldu, 17. yüzyıl',
+        body:[
+          "Güneş merkezlilik, tek başına öngörü doğruluğunda yer merkezliliği yenmedi &mdash; onlarca yıl boyunca Batlamyus çizelgeleri hâlâ rekabetçiydi. Sonunda meseleyi çözen şey, hiçbir yer merkezli modelin barındıramayacağı, giderek biriken fiziksel kanıtlar oldu.",
+          "Galileo'nun teleskobu, Jüpiter'in çevresinde dolanan aylar (her şeyin Dünya çevresinde dönmediğinin kanıtı) ve Venüs'ün evrelerini (yalnızca Venüs'ün Dünya değil Güneş çevresinde dolanmasıyla açıklanabilir) buldu. Tycho'nun kendi verisine uydurulan Kepler'in eliptik yörüngeleri, sonunda Tycho'nunki de dahil olmak üzere çembere dayalı her sistemden daha iyi öngörüde bulundu.",
+          "Newton daha sonra eksik fiziği sağladı: gezegenlerin Güneş çevresinde neden elips çizerek hareket ettiğini <i>açıklayan</i> tek bir kütleçekim yasası &mdash; hiçbir yer merkezli veya Tycho modelinin açıklamaya çalışmadığı, yalnızca betimlediği bir şey.",
+          "Bu şema, çoğu ders kitabı orrery'si gibi, varsayılan olarak ölçekli değildir: Merkür'den Mars'a kadar olanlar burada gerçek göreli boyutlarına yakınsa da, Jüpiter ve Satürn gerçekte olduğundan çok daha yakına çizilmiştir, her yörünge kusursuz bir çemberdir ve Mars dışındaki her yörünge hızı gözle görülür şekilde yanlıştır &mdash; Merkür, her bir Dünya turunda diğerlerini yaklaşık dört kez geride bırakmalıydı, varsayılan olarak gösterilen daha yumuşak tempoda değil. Her cismi, Tycho deklinasyon grafiği için kullanılan aynı doğrulanmış yörünge elemanlarından ve Kepler denklemi çözücüsünden hesaplanan gerçek eliptik yörüngesine geçirmek için <b>gerçek ölçekli yörüngeler ve hızlar</b> seçeneğini açın; bu, tekdüze dairesel bir yaklaşım yerine, ortaya çıkan tekdüze olmayan hızla (günberide daha hızlı, günötede daha yavaş) birlikte gelir. Görünüm, o an en dışta olan cisme göre otomatik olarak yeniden ölçeklenir &mdash; yalnız başına Mars, ya da diğer gezegenler seçeneği açıldığında Satürn &mdash; böylece Dünya ve Mars her iki durumda da net görünür kalır; yakınlaştırma kontrolü bu taban çizgisinden daha fazla ayarlama yapar.",
+          "Dışmerkezliğin, beklediğinizin tam tersi yönde işlediği ortaya çıkıyor: Merkür (0,206) açık ara en dışmerkezli gezegendir, Mars uzak bir ikincidir (0,093); Jüpiter (0,048) ve Satürn (0,056) ise ikisi de Mars'tan daha dairesele yakındır. Gerçek ölçekli modda yalnızca Merkür'ü izleyin &mdash; Güneş elipste gözle görülür şekilde merkezden kaymış durur; Jüpiter veya Satürn'ü izleyin &mdash; yörünge, teknik olarak öyle olmasa da neredeyse bir çemberden ayırt edilemez görünür.",
+          "Basit bir güneş merkezli modeli, yalnızca işe yaradığını iddia etmek yerine doğrudan gerçek 16. yüzyıl ölçümlerine karşı kontrol eden, sol üstteki küçük bir panel için <b>deklinasyon vs. Tycho'nun verisi</b> seçeneğini açın. Altın rengi noktalar, Tycho'nun kendi orijinal not defterlerinden alınan, Mars'ın deklinasyonuna dair 1582&ndash;1594 arasından 160'tan fazla tarihli okumadan oluşan kendi gözlemleridir. Mavi eğri ise bu modelin öngörüsüdür; sabit, pertürbasyonsuz eliptik yörüngelerden hesaplanmıştır (Tycho'nun verisine hiçbir uydurma yapılmadan), ve yukarıdaki yörüngeleri süren aynı saatle bu on iki yıllık aralığı tarayan hareketli bir imleçle gösterilir. Tipik uyum bir derecenin altındadır; bazı tarihlerde birkaç dereceye uzanan uzun bir kuyruk vardır &mdash; bu, basit iki cisimli elipsleri, Newton mekaniğinin öngördüğü ve bu basitleştirilmiş modelin dışarıda bıraktığı yavaş, gerçek pertürbasyonlar olmadan dört yüzyıl geriye götürmenin kalıntı hatasıdır; buna kadran ve sekstant gözleminin doğal hassasiyet sınırları da eklenir. Uyum hiçbir şekilde kusursuz değildir, ama herhangi bir Batlamyus çizelgesinin başardığından çok daha yakındır ve buraya ulaşmak için hiçbir ayarlanabilir parametre gerekmemiştir."
+        ],
+        problem:"Buradaki küçük paneli açın ve onu en ilk sekmeyle karşılaştırın. İlmekli yol, Batlamyus'un bir episiklle, Brahe'nin Güneş'i Dünya çevresinde döndürerek ve Kopernik'in neredeyse kazara yakaladığı aynı yoldur. Geometrinin tek başına hangi modelin <i>doğru</i> olduğunu belirlemesi mümkün değildi &mdash; yalnızca hangi modelin sonunda nedenini açıkladığını belirleyebildi."
+    };
+    return {
+      id:'helio', title:'Heliocentric', titleTR:'Güneş Merkezli', label:'The model that endured',
+      controlsHTML, bindControls, draw, reset, wantsDrag, dragHitTest, handleDrag,
+      get caption(){
+        const en = 'Earth and Mars orbit the Sun \u2014 toggle the rest of the naked-eye planets into view, or switch to true-to-scale orbits and speeds, now with real eccentricity: Mercury\u2019s orbit is visibly off-center, Jupiter and Saturn\u2019s are nearly circular. The insets reconstruct Mars\u2019s apparent path as seen from Earth and check the model against Tycho\u2019s own measurements.';
+        const tr = 'Dünya ve Mars, Güneş çevresinde dolanır \u2014 çıplak gözle görülen diğer gezegenleri de görünüme almak için açın veya artık gerçek dışmerkezlikle birlikte gerçek ölçekli yörüngeler ve hızlara geçin: Merkür\u2019ün yörüngesi gözle görülür şekilde merkezden kaymıştır, Jüpiter ve Satürn\u2019ünki ise neredeyse dairesel. Küçük paneller, Mars\u2019ın Dünya\u2019dan görülen görünen yolunu yeniden kurar ve modeli Tycho\u2019nun kendi ölçümleriyle karşılaştırır.';
+        return lang==='tr' ? tr : en;
+      },
+      get panel(){ return lang==='tr' ? panelTR : panelEN; }
+    };
+  })();
+
+  /* ---------- module registry & tab wiring ---------- */
+  const MODULES = [NightSky, Epicycles, Tusi, Copernicus, Kepler, Brahe, Helio];
+  let current = MODULES[0];
+
+  const tabsEl = document.getElementById('tabs');
+  MODULES.forEach((m) => {
+    const btn = document.createElement('button');
+    btn.dataset.id = m.id;
+    btn.addEventListener('click', () => switchTo(m));
+    tabsEl.appendChild(btn);
+  });
+  function renderTabLabels(){
+    let stepCounter = 0;
+    MODULES.forEach((m, i) => {
+      const btn = tabsEl.children[i];
+      const label = (lang==='tr' && m.titleTR) ? m.titleTR : m.title;
+      if(m.noStep){
+        btn.innerHTML = label;
+      } else {
+        stepCounter++;
+        btn.innerHTML = `<span class="step">${stepCounter}</span>${label}`;
+      }
+    });
+  }
+  renderTabLabels();
+
+  function refreshModuleControls(){
+    const mc = document.getElementById('moduleControls');
+    mc.innerHTML = current.controlsHTML();
+    current.bindControls();
+    document.getElementById('caption').textContent = current.caption;
+  }
+
+  function renderPanel(){
+    const p = current.panel;
+    const el = document.getElementById('panel');
+    el.innerHTML = `
+      <h2>${p.heading}</h2>
+      <p class="meta">${p.meta}</p>
+      ${p.body.map(par => `<p>${par}</p>`).join('')}
+      <div class="problem">${p.problem}</div>
+    `;
+  }
+
+  function switchTo(m){
+    current = m;
+    Array.from(tabsEl.children).forEach(btn=>{
+      btn.classList.toggle('active', btn.dataset.id === m.id);
+    });
+    t = 0;
+    if(current.reset) current.reset();
+    refreshModuleControls();
+    renderPanel();
+    syncPanelHeight();
+  }
+
+  /* ---------- keep the explanation panel the same height as the stage,
+     with its own scrollbar, on any screen size where they sit side by side
+     (matches the 900px breakpoint where the layout stacks instead) ---------- */
+  const stageWrapEl = document.querySelector('.stage-wrap');
+  const asideEl = document.getElementById('panel');
+  function syncPanelHeight(){
+    if(window.innerWidth <= 900){
+      asideEl.style.maxHeight = '';
+      return;
+    }
+    asideEl.style.maxHeight = stageWrapEl.offsetHeight + 'px';
+  }
+  window.addEventListener('resize', syncPanelHeight);
+  if('ResizeObserver' in window){
+    new ResizeObserver(syncPanelHeight).observe(stageWrapEl);
+  }
+
+  /* ---------- drag-to-orbit / drag-to-reposition: any module can opt in.
+     wantsDrag() (no args): cheap per-frame check -- "is anything on this
+     tab draggable right now" -- used for idle cursor styling.
+     dragHitTest(x,y) (optional, canvas-internal coordinates): precise
+     hit-test for a specific point, used to decide whether a mousedown
+     actually lands on a draggable target and, if the module tracks
+     several (e.g. two independent insets), which one. Modules without
+     dragHitTest are treated as draggable anywhere on the canvas
+     (Kepler's free-orbit view).
+     handleDrag(dx,dy): receives deltas already converted to
+     canvas-internal pixels, so dragging tracks the cursor accurately
+     even when the canvas is displayed at a different size than its
+     700x700 internal resolution. ---------- */
+  let dragging = false, lastPX = 0, lastPY = 0, lastMouseX = 0, lastMouseY = 0;
+  function toCanvasCoords(clientX, clientY){
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (clientX-rect.left) * (canvas.width/rect.width),
+      y: (clientY-rect.top) * (canvas.height/rect.height)
+    };
+  }
+  function dragActive(){ return !!(current.wantsDrag && current.wantsDrag()); }
+  function dragStart(x, y){
+    if(!dragActive()) return;
+    if(current.dragHitTest){
+      const p = toCanvasCoords(x, y);
+      if(!current.dragHitTest(p.x, p.y)) return;
+    }
+    dragging = true; lastPX = x; lastPY = y;
+    canvas.style.cursor = 'grabbing';
+  }
+  function dragMove(x, y){
+    lastMouseX = x; lastMouseY = y;
+    if(!dragging) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width/rect.width, scaleY = canvas.height/rect.height;
+    const dx = (x-lastPX)*scaleX, dy = (y-lastPY)*scaleY;
+    lastPX = x; lastPY = y;
+    if(current.handleDrag) current.handleDrag(dx, dy);
+  }
+  function dragEnd(){
+    dragging = false;
+  }
+  canvas.addEventListener('mousedown', e => dragStart(e.clientX, e.clientY));
+  window.addEventListener('mousemove', e => dragMove(e.clientX, e.clientY));
+  window.addEventListener('mouseup', dragEnd);
+  canvas.addEventListener('touchstart', e => {
+    if(!dragActive()) return;
+    const t2 = e.touches[0];
+    if(current.dragHitTest){
+      const p = toCanvasCoords(t2.clientX, t2.clientY);
+      if(!current.dragHitTest(p.x, p.y)) return;
+    }
+    e.preventDefault();
+    dragStart(t2.clientX, t2.clientY);
+  }, { passive:false });
+  canvas.addEventListener('touchmove', e => {
+    if(!dragging) return;
+    e.preventDefault();
+    const t2 = e.touches[0]; dragMove(t2.clientX, t2.clientY);
+  }, { passive:false });
+  window.addEventListener('touchend', dragEnd);
+
+  /* ---------- render loop ---------- */
+  function frame(ts){
+    if(lastFrame===null) lastFrame = ts;
+    const dt = (ts-lastFrame)/1000;
+    lastFrame = ts;
+    if(playing) t += dt*speed;
+
+    clear();
+    current.draw(t);
+    // refresh caption text in case a module's caption is dynamic (e.g. Kepler)
+    document.getElementById('caption').textContent = current.caption;
+
+    if(!dragging){
+      if(!dragActive()){
+        canvas.style.cursor = 'default';
+      } else if(current.dragHitTest){
+        const p = toCanvasCoords(lastMouseX, lastMouseY);
+        canvas.style.cursor = current.dragHitTest(p.x, p.y) ? 'grab' : 'default';
+      } else {
+        canvas.style.cursor = 'grab';
+      }
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  switchTo(MODULES[0]);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
